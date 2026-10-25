@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", "Source Sans 3", ui-sans-serif, sans-serif;
+  --color-ink: #141311;
+  --color-ink-raise: #211f1c;
+  --color-ink-line: #34312c;
+  --color-ink-mute: #a8a194;
+  --color-paper: #e4dfd6;
+  --color-cream: #f6f3ec;
+  --color-sheet: #fffdf8;
+  --color-line: #d5cfc4;
+  --color-mute: #6f6a62;
+  --color-signal: #d6372a;
+  --color-signal-ink: #fff8f6;
+  --radius-ui: 0.625rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+  }
+
+  input[type="range"] {
+    accent-color: var(--color-ink);
+  }
+}
+
+.sheet-shadow {
+  box-shadow:
+    0 1px 2px rgb(20 19 17 / 0.06),
+    0 12px 40px rgb(20 19 17 / 0.08);
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-root {
+    display: block !important;
+  }
+
+  .print-sheet {
+    break-after: page;
+    page-break-after: always;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .studio {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .print-root .sheet-shadow {
+    box-shadow: none !important;
+  }
+}
+
+.print-root {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

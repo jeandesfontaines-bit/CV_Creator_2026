@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Designer Pro - Studio WYSIWYG</title>
+
+  <!-- Polices typographiques du CV -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS & React 18 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-page {
+        box-shadow: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        page-break-after: always;
+        transform: none !important;
+      }
+    }
+
+    /* Grille fine conforme au design d'origine */
+    .grid-bg {
+      background-image: 
+        linear-gradient(to right, #e7e5e4 1px, transparent 1px),
+        linear-gradient(to bottom, #e7e5e4 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Poignées de redimensionnement Figma/Canva */
+    .resize-handle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background-color: #ffffff;
+      border: 1.5px solid #3b82f6;
+      border-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+      z-index: 60;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #a1a1aa;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #71717a;
+    }
+  </style>
+</head>
+<body class="bg-[#e8e5df] text-[#0f0f10] overflow-hidden select-none font-['Inter',sans-serif]">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+    const uid = () => Math.random().toString(36).substr(2, 9);
+
+    // Profil par défaut conforme
+    const DEFAULT_PROFILE = {
+      name: "Alexandra Dubois",
+      role: "Product Designer Senior",
+      email: "alexandra.dubois@email.com",
+      phone: "+33 6 12 34 56 78",
+      location: "Paris, France",
+      linkedin: "linkedin.com/in/alexandra",
+      summary: "Designer produit avec 8 ans d'expérience dans la création d'expériences digitales centrées utilisateur. Spécialisée en design system, recherche UX et prototypage haute fidélité. Passionnée par l'intersection entre esthétique et fonctionnalité.",
+      experiences: [
+        {
+          role: "Lead Product Designer",
+          company: "Mira Studio — Paris",
+          date: "2021 — Aujourd'hui",
+          desc: "Pilotage d'une équipe de 6 designers. Refonte complète de la plateforme SaaS (+34% rétention). Création du design system Mira UI utilisé par 40+ produits."
+        },
+        {
+          role: "Senior UI/UX Designer",
+          company: "Atelier Noir — Lyon",
+          date: "2018 — 2021",
+          desc: "Conception d'applications mobile pour clients luxe et culture. Prix Design Lumen 2020. Direction artistique sur 12 projets internationaux."
+        },
+        {
+          role: "UI Designer",
+          company: "Freelance",
+          date: "2015 — 2018",
+          desc: "Accompagnement startups early-stage. Plus de 30 produits lancés, de la fintech à l'éducation."
+        }
+      ],
+      educations: [
+        { degree: "Master Design d'Interaction", school: "ENSAD Paris", date: "2013 — 2015" },
+        { degree: "Bachelor Arts Appliqués", school: "École Boulle", date: "2010 — 2013" }
+      ],
+      skills: ["Figma", "Design System", "Prototypage", "User Research", "Motion", "HTML/CSS", "Design Strategy", "Workshop"],
+      languages: [
+        { label: "Français", val: 95 },
+        { label: "Anglais", val: 90 },
+        { label: "Espagnol", val: 60 }
+      ]
+    };
+
+    const makeEl = (extra) => ({
+      id: uid(),
+      x: 40,
+      y: 40,
+      w: 200,
+      h: 40,
+      rotation: 0,
+      zIndex: 10,
+      locked: false,
+      visible: true,
+      content: "",
+      style: {
+        fontFamily: "Inter",
+        fontSize: 13,
+        fontWeight: "400",
+        color: "#27272a",
+        textAlign: "left",
+        lineHeight: 1.5,
+        backgroundColor: "transparent",
+        borderRadius: 0,
+        opacity: 1
+      },
+      ...extra,
+      style: {
+        fontFamily: "Inter",
+        fontSize: 13,
+        fontWeight: "400",
+        color: "#27272a",
+        textAlign: "left",
+        lineHeight: 1.5,
+        backgroundColor: "transparent",
+        borderRadius: 0,
+        opacity: 1,
+        ...(extra.style || {})
+      }
+    });
+
+    // 6 Templates identiques au fichier
+    const TEMPLATES = {
+      modern: {
+        name: "Modern",
+        desc: "Header sombre",
+        bg: "#0f0f10",
+        build: (data) => [
+          makeEl({ type: "rect", x: 0, y: 0, w: 794, h: 168, zIndex: 1, style: { backgroundColor: "#0f0f10" } }),
+          makeEl({ type: "heading", x: 40, y: 28, w: 380, h: 42, zIndex: 2, content: data.name, style: { fontFamily: "Playfair Display", fontSize: 32, fontWeight: "700", color: "#ffffff", lineHeight: 1.1 } }),
+          makeEl({ type: "text", x: 40, y: 74, w: 380, h: 22, zIndex: 3, content: data.role.toUpperCase(), style: { fontSize: 13, fontWeight: "500", color: "#a1a1aa", letterSpacing: 0.6 } }),
+          makeEl({ type: "icon", x: 440, y: 32, w: 300, h: 20, zIndex: 4, content: { icon: "✉", text: data.email }, style: { color: "#d4d4d8", fontSize: 12 } }),
+          makeEl({ type: "icon", x: 440, y: 56, w: 300, h: 20, zIndex: 5, content: { icon: "☎", text: data.phone }, style: { color: "#d4d4d8", fontSize: 12 } }),
+          makeEl({ type: "icon", x: 440, y: 80, w: 300, h: 20, zIndex: 6, content: { icon: "📍", text: data.location }, style: { color: "#d4d4d8", fontSize: 12 } }),
+          makeEl({ type: "icon", x: 440, y: 104, w: 300, h: 20, zIndex: 7, content: { icon: "🔗", text: data.linkedin }, style: { color: "#d4d4d8", fontSize: 12 } }),
+
+          makeEl({ type: "heading", x: 40, y: 196, w: 200, h: 24, zIndex: 8, content: "À PROPOS", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          makeEl({ type: "text", x: 40, y: 226, w: 714, h: 64, zIndex: 9, content: data.summary, style: { fontSize: 13, color: "#3f3f46", lineHeight: 1.6 } }),
+          makeEl({ type: "dividerH", x: 40, y: 304, w: 714, h: 2, zIndex: 10, style: { backgroundColor: "#e4e4e7" } }),
+
+          makeEl({ type: "heading", x: 40, y: 328, w: 200, h: 24, zIndex: 11, content: "EXPÉRIENCE", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          ...data.experiences.flatMap((exp, i) => [
+            makeEl({ type: "experience", x: 40, y: 360 + i * 132, w: 714, h: 118, zIndex: 12 + i, content: exp })
+          ]),
+
+          makeEl({ type: "heading", x: 40, y: 764, w: 200, h: 24, zIndex: 16, content: "FORMATION", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          ...data.educations.flatMap((edu, i) => [
+            makeEl({ type: "education", x: 40, y: 796 + i * 56, w: 714, h: 48, zIndex: 17 + i, content: edu })
+          ]),
+
+          makeEl({ type: "heading", x: 40, y: 914, w: 200, h: 24, zIndex: 20, content: "COMPÉTENCES", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          makeEl({ type: "skills", x: 40, y: 946, w: 714, h: 72, zIndex: 21, content: data.skills }),
+          makeEl({ type: "progress", x: 40, y: 1034, w: 714, h: 64, zIndex: 22, content: data.languages })
+        ]
+      },
+
+      minimal: {
+        name: "Minimal",
+        desc: "Centré serif",
+        bg: "#ffffff",
+        build: (data) => [
+          makeEl({ type: "heading", x: 0, y: 64, w: 794, h: 48, zIndex: 1, content: data.name, style: { fontFamily: "Merriweather", fontSize: 38, fontWeight: "300", textAlign: "center", color: "#0f0f10" } }),
+          makeEl({ type: "text", x: 0, y: 116, w: 794, h: 22, zIndex: 2, content: data.role.toUpperCase(), style: { fontSize: 12, color: "#71717a", textAlign: "center", letterSpacing: 2 } }),
+          makeEl({ type: "dividerH", x: 347, y: 156, w: 100, h: 2, zIndex: 3, style: { backgroundColor: "#0f0f10" } }),
+          makeEl({ type: "text", x: 197, y: 182, w: 400, h: 18, zIndex: 4, content: `${data.email} • ${data.phone} • ${data.location}`, style: { fontSize: 11, color: "#71717a", textAlign: "center" } }),
+          makeEl({ type: "text", x: 80, y: 232, w: 634, h: 72, zIndex: 5, content: data.summary, style: { fontFamily: "Merriweather", fontSize: 13, color: "#27272a", lineHeight: 1.8, textAlign: "center" } }),
+          makeEl({ type: "heading", x: 0, y: 336, w: 794, h: 20, zIndex: 6, content: "EXPÉRIENCE", style: { fontSize: 11, fontWeight: "700", textAlign: "center", letterSpacing: 2 } }),
+          ...data.experiences.map((exp, i) => makeEl({ type: "experience", x: 80, y: 376 + i * 140, w: 634, h: 120, zIndex: 7 + i, content: exp })),
+          makeEl({ type: "heading", x: 0, y: 806, w: 794, h: 20, zIndex: 12, content: "FORMATION & COMPÉTENCES", style: { fontSize: 11, fontWeight: "700", textAlign: "center", letterSpacing: 2 } }),
+          makeEl({ type: "skills", x: 80, y: 846, w: 634, h: 60, zIndex: 13, content: data.skills, style: { textAlign: "center" } }),
+          makeEl({ type: "progress", x: 80, y: 926, w: 634, h: 60, zIndex: 14, content: data.languages })
+        ]
+      },
+
+      executive: {
+        name: "Executive",
+        desc: "Sidebar sombre",
+        bg: "#18181b",
+        build: (data) => [
+          makeEl({ type: "rect", x: 0, y: 0, w: 248, h: 1123, zIndex: 1, style: { backgroundColor: "#18181b" } }),
+          makeEl({ type: "image", x: 32, y: 32, w: 84, h: 84, zIndex: 2, content: "", style: { borderRadius: 42, backgroundColor: "#27272a" } }),
+          makeEl({ type: "heading", x: 24, y: 136, w: 200, h: 54, zIndex: 3, content: data.name, style: { fontSize: 20, fontWeight: "700", color: "#ffffff", lineHeight: 1.2 } }),
+          makeEl({ type: "text", x: 24, y: 194, w: 200, h: 18, zIndex: 4, content: data.role.toUpperCase(), style: { fontSize: 11, color: "#a1a1aa", letterSpacing: 1 } }),
+          makeEl({ type: "dividerH", x: 24, y: 228, w: 200, h: 1, zIndex: 5, style: { backgroundColor: "#27272a" } }),
+          makeEl({ type: "heading", x: 24, y: 248, w: 200, h: 16, zIndex: 6, content: "CONTACT", style: { fontSize: 10, fontWeight: "700", color: "#71717a", letterSpacing: 1.5 } }),
+          makeEl({ type: "icon", x: 24, y: 272, w: 200, h: 18, zIndex: 7, content: { icon: "✉", text: data.email }, style: { fontSize: 11, color: "#d4d4d8" } }),
+          makeEl({ type: "icon", x: 24, y: 294, w: 200, h: 18, zIndex: 8, content: { icon: "☎", text: data.phone }, style: { fontSize: 11, color: "#d4d4d8" } }),
+          makeEl({ type: "icon", x: 24, y: 316, w: 200, h: 18, zIndex: 9, content: { icon: "📍", text: data.location }, style: { fontSize: 11, color: "#d4d4d8" } }),
+          makeEl({ type: "skills", x: 24, y: 384, w: 200, h: 160, zIndex: 10, content: data.skills, style: { color: "#ffffff" } }),
+          makeEl({ type: "progress", x: 24, y: 588, w: 200, h: 120, zIndex: 11, content: data.languages, style: { color: "#ffffff" } }),
+
+          makeEl({ type: "heading", x: 288, y: 48, w: 200, h: 20, zIndex: 12, content: "PROFIL", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          makeEl({ type: "text", x: 288, y: 76, w: 466, h: 64, zIndex: 13, content: data.summary, style: { fontSize: 13, color: "#3f3f46", lineHeight: 1.6 } }),
+          makeEl({ type: "heading", x: 288, y: 168, w: 200, h: 20, zIndex: 14, content: "EXPÉRIENCE", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          ...data.experiences.map((exp, i) => makeEl({ type: "experience", x: 288, y: 200 + i * 156, w: 466, h: 140, zIndex: 15 + i, content: exp })),
+          makeEl({ type: "heading", x: 288, y: 688, w: 200, h: 20, zIndex: 20, content: "FORMATION", style: { fontSize: 12, fontWeight: "700", color: "#0f0f10", letterSpacing: 1.2 } }),
+          ...data.educations.map((edu, i) => makeEl({ type: "education", x: 288, y: 720 + i * 60, w: 466, h: 48, zIndex: 21 + i, content: edu }))
+        ]
+      },
+
+      creative: {
+        name: "Créatif",
+        desc: "Formes audacieuses",
+        bg: "#ff4d5a",
+        build: (data) => [
+          makeEl({ type: "circle", x: 520, y: -60, w: 340, h: 340, zIndex: 1, style: { backgroundColor: "#ff4d5a", borderRadius: 999 } }),
+          makeEl({ type: "rect", x: -20, y: 820, w: 400, h: 400, zIndex: 2, style: { backgroundColor: "#0f0f10", borderRadius: 24 } }),
+          makeEl({ type: "heading", x: 40, y: 40, w: 400, h: 84, zIndex: 3, content: data.name, style: { fontFamily: "Space Grotesk", fontSize: 44, fontWeight: "700", color: "#0f0f10", lineHeight: 0.95 } }),
+          makeEl({ type: "text", x: 40, y: 132, w: 300, h: 22, zIndex: 4, content: data.role, style: { fontFamily: "Space Grotesk", fontSize: 14, fontWeight: "700", backgroundColor: "#ffea00", borderRadius: 20 } }),
+          makeEl({ type: "text", x: 40, y: 174, w: 460, h: 60, zIndex: 5, content: data.summary, style: { fontFamily: "Space Grotesk", fontSize: 13, lineHeight: 1.5 } }),
+          makeEl({ type: "dividerH", x: 40, y: 250, w: 100, h: 4, zIndex: 6, style: { backgroundColor: "#0f0f10" } }),
+          makeEl({ type: "heading", x: 40, y: 278, w: 200, h: 20, zIndex: 7, content: "Expériences →", style: { fontFamily: "Space Grotesk", fontSize: 16, fontWeight: "700" } }),
+          ...data.experiences.map((exp, i) => makeEl({ type: "experience", x: 40, y: 310 + i * 132, w: 460, h: 118, zIndex: 8 + i, content: exp })),
+          makeEl({ type: "rect", x: 540, y: 260, w: 214, h: 680, zIndex: 12, style: { backgroundColor: "#f4f4f5", borderRadius: 16, borderWidth: 1, borderColor: "#e4e4e7" } }),
+          makeEl({ type: "skills", x: 564, y: 406, w: 166, h: 200, zIndex: 13, content: data.skills })
+        ]
+      },
+
+      swiss: {
+        name: "Swiss",
+        desc: "Grille + rouge",
+        bg: "#ff3b30",
+        build: (data) => [
+          makeEl({ type: "rect", x: 0, y: 0, w: 16, h: 1123, zIndex: 1, style: { backgroundColor: "#ff3b30" } }),
+          makeEl({ type: "heading", x: 96, y: 44, w: 400, h: 20, zIndex: 2, content: data.name.toUpperCase(), style: { fontSize: 18, fontWeight: "900", letterSpacing: 2 } }),
+          makeEl({ type: "text", x: 96, y: 66, w: 300, h: 16, zIndex: 3, content: data.role, style: { fontFamily: "JetBrains Mono", fontSize: 11, color: "#71717a" } }),
+          makeEl({ type: "dividerH", x: 40, y: 100, w: 714, h: 1, zIndex: 4, style: { backgroundColor: "#e4e4e7" } }),
+          makeEl({ type: "dividerV", x: 397, y: 100, w: 1, h: 1023, zIndex: 5, style: { backgroundColor: "#e4e4e7" } }),
+          makeEl({ type: "text", x: 40, y: 140, w: 320, h: 80, zIndex: 6, content: data.summary, style: { fontSize: 12, lineHeight: 1.6 } }),
+          ...data.experiences.map((exp, i) => makeEl({ type: "experience", x: 420, y: 140 + i * 162, w: 320, h: 148, zIndex: 7 + i, content: exp }))
+        ]
+      },
+
+      editorial: {
+        name: "Éditorial",
+        desc: "Magazine",
+        bg: "#fafaf9",
+        build: (data) => [
+          makeEl({ type: "heading", x: 40, y: 40, w: 714, h: 92, zIndex: 1, content: data.name, style: { fontFamily: "Playfair Display", fontSize: 64, fontWeight: "400", lineHeight: 0.9, letterSpacing: -2 } }),
+          makeEl({ type: "text", x: 40, y: 138, w: 714, h: 20, zIndex: 2, content: `— ${data.role.toUpperCase()}`, style: { fontSize: 11, letterSpacing: 3, fontWeight: "700" } }),
+          makeEl({ type: "dividerH", x: 40, y: 176, w: 714, h: 1, zIndex: 3, style: { backgroundColor: "#0f0f10" } }),
+          makeEl({ type: "text", x: 40, y: 192, w: 380, h: 90, zIndex: 4, content: data.summary, style: { fontFamily: "Merriweather", fontSize: 13, lineHeight: 1.7, fontStyle: "italic" } }),
+          ...data.experiences.map((exp, i) => makeEl({ type: "experience", x: 40, y: 360 + i * 150, w: 714, h: 136, zIndex: 5 + i, content: exp, style: { fontFamily: "Merriweather" } }))
+        ]
+      }
+    };
+
+    function App() {
+      // Pages A4
+      const [pages, setPages] = useState(() => [
+        { id: "page-1", elements: TEMPLATES.modern.build(DEFAULT_PROFILE) }
+      ]);
+      const [currentPageId, setCurrentPageId] = useState("page-1");
+
+      // Paramètres d'affichage & Grille
+      const [zoom, setZoom] = useState(85);
+      const [showGrid, setShowGrid] = useState(true);
+      const [smartGuides, setSmartGuides] = useState(true);
+      const [showRulers, setShowRulers] = useState(true);
+      const [snapToGrid, setSnapToGrid] = useState(true);
+
+      // Sélection & Outils
+      const [selectedIds, setSelectedIds] = useState([]);
+      const [editingId, setEditingId] = useState(null);
+      const [activeGuides, setActiveGuides] = useState({ x: [], y: [] });
+      const [toastMsg, setToastMsg] = useState(null);
+
+      // Drag, Resize, Rotate & Pan
+      const [dragState, setDragState] = useState(null);
+      const [resizeState, setResizeState] = useState(null);
+      const [rotateState, setRotateState] = useState(null);
+      const [panState, setPanState] = useState({ x: 0, y: 0, isPanning: false, startX: 0, startY: 0 });
+      const [isSpacePressed, setIsSpacePressed] = useState(false);
+      const [lassoState, setLassoState] = useState(null);
+
+      // Historique Undo / Redo
+      const [history, setHistory] = useState([]);
+      const [histIdx, setHistIdx] = useState(-1);
+
+      // Modale d'import
+      const [isImportOpen, setIsImportOpen] = useState(false);
+      const [importText, setImportText] = useState("");
+
+      const canvasRef = useRef(null);
+      const jsonInputRef = useRef(null);
+
+      // Gestion native des gestes Trackpad Apple (Pinch-to-zoom & Pan fluide à 2 doigts)
+      useEffect(() => {
+        const canvasEl = canvasRef.current;
+        if (!canvasEl) return;
+
+        // Gestionnaire d'événement Wheel (Chrome, Edge, Firefox, Safari)
+        const handleWheel = (e) => {
+          // Bloquer le zoom natif du navigateur si l'utilisateur pince le trackpad
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            
+            // Calcul du facteur de zoom selon deltaY
+            // Sur Trackpad Mac, deltaY est très précis
+            const zoomSensitivity = 0.01;
+            const factor = 1 - e.deltaY * zoomSensitivity;
+            
+            setZoom((prevZoom) => {
+              const newZoom = Math.min(300, Math.max(25, Math.round(prevZoom * factor)));
+              return newZoom;
+            });
+            return;
+          }
+
+          // Si pas de touche Ctrl/Cmd enfoncée : Défilement fluide (Pan) à deux doigts sur Trackpad Mac
+          // On évite le scroll natif si on souhaite garder un pan infini fluide façon Figma
+          if (!isSpacePressed && (Math.abs(e.deltaX) > 0 || Math.abs(e.deltaY) > 0)) {
+            // Si on survole le canvas ou un élément hors d'un textarea scrollable
+            if (!e.target.closest('textarea') && !e.target.closest('.overflow-y-auto')) {
+              e.preventDefault();
+              setPanState((prev) => ({
+                ...prev,
+                x: prev.x - e.deltaX,
+                y: prev.y - e.deltaY
+              }));
+            }
+          }
+        };
+
+        // Événements spécifiques à WebKit / Safari pour le gesture pinch natif
+        let gestureStartZoom = 85;
+        const handleGestureStart = (e) => {
+          e.preventDefault();
+          setZoom((current) => {
+            gestureStartZoom = current;
+            return current;
+          });
+        };
+
+        const handleGestureChange = (e) => {
+          e.preventDefault();
+          // e.scale est le multiplicateur transmis par le trackpad Apple sur Safari
+          const newZoom = Math.min(300, Math.max(25, Math.round(gestureStartZoom * e.scale)));
+          setZoom(newZoom);
+        };
+
+        const handleGestureEnd = (e) => {
+          e.preventDefault();
+        };
+
+        // Important: passive: false est requis pour pouvoir e.preventDefault() sur le zoom trackpad
+        canvasEl.addEventListener("wheel", handleWheel, { passive: false });
+        canvasEl.addEventListener("gesturestart", handleGestureStart, { passive: false });
+        canvasEl.addEventListener("gesturechange", handleGestureChange, { passive: false });
+        canvasEl.addEventListener("gestureend", handleGestureEnd, { passive: false });
+
+        return () => {
+          canvasEl.removeEventListener("wheel", handleWheel);
+          canvasEl.removeEventListener("gesturestart", handleGestureStart);
+          canvasEl.removeEventListener("gesturechange", handleGestureChange);
+          canvasEl.removeEventListener("gestureend", handleGestureEnd);
+        };
+      }, [isSpacePressed]);
+
+      const currentPage = useMemo(() => {
+        return pages.find(p => p.id === currentPageId) || pages[0];
+      }, [pages, currentPageId]);
+
+      const selectedEls = useMemo(() => {
+        return currentPage.elements.filter(el => selectedIds.includes(el.id));
+      }, [currentPage, selectedIds]);
+
+      const primarySelected = selectedEls.length === 1 ? selectedEls[0] : null;
+
+      const showToast = (txt) => {
+        setToastMsg(txt);
+        setTimeout(() => setToastMsg(null), 2400);
+      };
+
+      const pushHistory = (newPages) => {
+        const snap = JSON.parse(JSON.stringify(newPages));
+        const updated = history.slice(0, histIdx + 1);
+        if (updated.length > 40) updated.shift();
+        updated.push(snap);
+        setHistory(updated);
+        setHistIdx(updated.length - 1);
+      };
+
+      const updatePages = (newPages, record = true) => {
+        if (record) pushHistory(pages);
+        setPages(newPages);
+      };
+
+      const undo = () => {
+        if (histIdx > 0) {
+          const prev = history[histIdx - 1];
+          setHistIdx(histIdx - 1);
+          setPages(JSON.parse(JSON.stringify(prev)));
+        }
+      };
+
+      const redo = () => {
+        if (histIdx < history.length - 1) {
+          const next = history[histIdx + 1];
+          setHistIdx(histIdx + 1);
+          setPages(JSON.parse(JSON.stringify(next)));
+        }
+      };
+
+      // Raccourcis Clavier
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.code === "Space") setIsSpacePressed(true);
+
+          if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            if (e.shiftKey) redo();
+            else undo();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault();
+            redo();
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+            e.preventDefault();
+            duplicateSelected();
+          }
+          if (e.key === "Backspace" || e.key === "Delete") {
+            e.preventDefault();
+            deleteSelected();
+          }
+
+          if (e.key.startsWith("Arrow") && selectedIds.length > 0) {
+            e.preventDefault();
+            const step = e.shiftKey ? 10 : 1;
+            const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+            const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+            const updated = pages.map(p => p.id === currentPageId ? {
+              ...p,
+              elements: p.elements.map(el => selectedIds.includes(el.id) ? { ...el, x: el.x + dx, y: el.y + dy } : el)
+            } : p);
+            updatePages(updated, false);
+          }
+        };
+
+        const handleKeyUp = (e) => {
+          if (e.code === "Space") setIsSpacePressed(false);
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+        return () => {
+          window.removeEventListener("keydown", handleKeyDown);
+          window.removeEventListener("keyup", handleKeyUp);
+        };
+      }, [selectedIds, pages, currentPageId, histIdx, history]);
+
+      const updateElement = (id, partial) => {
+        const updated = pages.map(p => p.id === currentPageId ? {
+          ...p,
+          elements: p.elements.map(el => el.id === id ? {
+            ...el,
+            ...partial,
+            style: { ...el.style, ...(partial.style || {}) }
+          } : el)
+        } : p);
+        setPages(updated);
+      };
+
+      const deleteSelected = () => {
+        if (selectedIds.length === 0) return;
+        const updated = pages.map(p => p.id === currentPageId ? {
+          ...p,
+          elements: p.elements.filter(el => !selectedIds.includes(el.id))
+        } : p);
+        updatePages(updated);
+        setSelectedIds([]);
+        showToast("Élément(s) supprimé(s)");
+      };
+
+      const duplicateSelected = () => {
+        if (selectedIds.length === 0) return;
+        const newIds = [];
+        const updated = pages.map(p => {
+          if (p.id !== currentPageId) return p;
+          const cloned = p.elements.filter(el => selectedIds.includes(el.id)).map(el => {
+            const newId = uid();
+            newIds.push(newId);
+            return {
+              ...JSON.parse(JSON.stringify(el)),
+              id: newId,
+              x: el.x + 20,
+              y: el.y + 20,
+              zIndex: Math.max(...p.elements.map(e => e.zIndex), 0) + 1
+            };
+          });
+          return { ...p, elements: [...p.elements, ...cloned] };
+        });
+        updatePages(updated);
+        setSelectedIds(newIds);
+        showToast("Élément(s) dupliqué(s)");
+      };
+
+      const addElement = (type) => {
+        let el;
+        const centerX = 80;
+        const centerY = 120;
+
+        switch (type) {
+          case 'heading':
+            el = makeEl({ type: 'heading', x: centerX, y: centerY, w: 320, h: 36, content: "Nouveau Titre", style: { fontSize: 20, fontWeight: "700", color: "#0f0f10" } });
+            break;
+          case 'text':
+            el = makeEl({ type: 'text', x: centerX, y: centerY, w: 300, h: 48, content: "Double-cliquez pour saisir votre texte librement.", style: { fontSize: 13, color: "#27272a" } });
+            break;
+          case 'experience':
+            el = makeEl({ type: 'experience', x: centerX, y: centerY, w: 600, h: 110, content: { role: "Nouveau Poste", company: "Entreprise — Ville", date: "2023 — Présent", desc: "Description du rôle et réalisations clés." } });
+            break;
+          case 'education':
+            el = makeEl({ type: 'education', x: centerX, y: centerY, w: 600, h: 50, content: { degree: "Diplôme / Certificat", school: "École / Université", date: "2020 — 2023" } });
+            break;
+          case 'skills':
+            el = makeEl({ type: 'skills', x: centerX, y: centerY, w: 600, h: 60, content: ["Figma", "UI/UX", "Tailwind", "React"] });
+            break;
+          case 'progress':
+            el = makeEl({ type: 'progress', x: centerX, y: centerY, w: 300, h: 80, content: [{ label: "Compétence", val: 80 }] });
+            break;
+          case 'image':
+            el = makeEl({ type: 'image', x: centerX, y: centerY, w: 110, h: 110, content: "", style: { borderRadius: 12, backgroundColor: "#e4e4e7" } });
+            break;
+          case 'rect':
+            el = makeEl({ type: 'rect', x: centerX, y: centerY, w: 200, h: 100, style: { backgroundColor: "#f4f4f5", borderRadius: 8, borderWidth: 1, borderColor: "#e4e4e7" } });
+            break;
+          case 'circle':
+            el = makeEl({ type: 'circle', x: centerX, y: centerY, w: 100, h: 100, style: { backgroundColor: "#0f0f10", borderRadius: 999 } });
+            break;
+          case 'dividerH':
+            el = makeEl({ type: 'dividerH', x: centerX, y: centerY, w: 300, h: 2, style: { backgroundColor: "#e4e4e7" } });
+            break;
+          case 'dividerV':
+            el = makeEl({ type: 'dividerV', x: centerX, y: centerY, w: 2, h: 200, style: { backgroundColor: "#e4e4e7" } });
+            break;
+          case 'icon':
+            el = makeEl({ type: 'icon', x: centerX, y: centerY, w: 220, h: 20, content: { icon: "✉", text: "contact@email.com" } });
+            break;
+          default:
+            el = makeEl({ type: 'text', x: centerX, y: centerY, w: 200, h: 30, content: "Texte" });
+        }
+
+        const maxZ = Math.max(...currentPage.elements.map(e => e.zIndex), 0);
+        el.zIndex = maxZ + 1;
+
+        const updated = pages.map(p => p.id === currentPageId ? { ...p, elements: [...p.elements, el] } : p);
+        updatePages(updated);
+        setSelectedIds([el.id]);
+        showToast("Élément ajouté");
+      };
+
+      const handleImageUpload = (id, file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          updateElement(id, { content: e.target.result });
+          showToast("Image importée");
+        };
+        reader.readAsDataURL(file);
+      };
+
+      // Mouse Handlers
+      const handleElementMouseDown = (e, el) => {
+        if (el.locked || isSpacePressed) return;
+        e.stopPropagation();
+
+        let newSelected = selectedIds;
+        if (e.shiftKey) {
+          newSelected = selectedIds.includes(el.id)
+            ? selectedIds.filter(id => id !== el.id)
+            : [...selectedIds, el.id];
+          setSelectedIds(newSelected);
+        } else if (!selectedIds.includes(el.id)) {
+          newSelected = [el.id];
+          setSelectedIds(newSelected);
+        }
+
+        const origins = new Map();
+        currentPage.elements
+          .filter(item => newSelected.includes(item.id))
+          .forEach(item => origins.set(item.id, { x: item.x, y: item.y }));
+
+        setDragState({
+          startX: e.clientX,
+          startY: e.clientY,
+          origins,
+          ids: newSelected
+        });
+      };
+
+      const handleMouseMove = (e) => {
+        const scale = zoom / 100;
+
+        if (panState.isPanning) {
+          setPanState(prev => ({
+            ...prev,
+            x: e.clientX - prev.startX,
+            y: e.clientY - prev.startY
+          }));
+          return;
+        }
+
+        if (dragState) {
+          const deltaX = (e.clientX - dragState.startX) / scale;
+          const deltaY = (e.clientY - dragState.startY) / scale;
+
+          let guideX = [];
+          let guideY = [];
+          let finalDeltaX = deltaX;
+          let finalDeltaY = deltaY;
+
+          if (smartGuides) {
+            const others = currentPage.elements.filter(el => !dragState.ids.includes(el.id));
+            const primaryId = dragState.ids[0];
+            const primaryOrig = dragState.origins.get(primaryId);
+            const primaryEl = currentPage.elements.find(el => el.id === primaryId);
+
+            if (primaryOrig && primaryEl) {
+              const curX = primaryOrig.x + deltaX;
+              const curY = primaryOrig.y + deltaY;
+
+              // Centre A4 (397px)
+              if (Math.abs(curX + primaryEl.w / 2 - 397) < 6) {
+                finalDeltaX = 397 - primaryEl.w / 2 - primaryOrig.x;
+                guideX.push(397);
+              }
+
+              for (const o of others) {
+                if (Math.abs(curX - o.x) < 5) {
+                  finalDeltaX = o.x - primaryOrig.x;
+                  guideX.push(o.x);
+                }
+                if (Math.abs(curX + primaryEl.w - (o.x + o.w)) < 5) {
+                  finalDeltaX = o.x + o.w - primaryEl.w - primaryOrig.x;
+                  guideX.push(o.x + o.w);
+                }
+                if (Math.abs(curY - o.y) < 5) {
+                  finalDeltaY = o.y - primaryOrig.y;
+                  guideY.push(o.y);
+                }
+              }
+            }
+          }
+
+          setActiveGuides({ x: guideX, y: guideY });
+
+          const updatedElements = currentPage.elements.map(el => {
+            if (!dragState.ids.includes(el.id)) return el;
+            const orig = dragState.origins.get(el.id);
+            if (!orig) return el;
+            let nx = orig.x + finalDeltaX;
+            let ny = orig.y + finalDeltaY;
+
+            if (snapToGrid && guideX.length === 0 && guideY.length === 0) {
+              nx = Math.round(nx / 20) * 20;
+              ny = Math.round(ny / 20) * 20;
+            }
+
+            return { ...el, x: Math.round(nx), y: Math.round(ny) };
+          });
+
+          setPages(pages.map(p => p.id === currentPageId ? { ...p, elements: updatedElements } : p));
+        }
+
+        if (resizeState) {
+          const { id, handle, startX, startY, orig, aspectRatio } = resizeState;
+          const dx = (e.clientX - startX) / scale;
+          const dy = (e.clientY - startY) / scale;
+
+          let newW = orig.w;
+          let newH = orig.h;
+          let newX = orig.x;
+          let newY = orig.y;
+
+          if (handle.includes('e')) newW = Math.max(20, orig.w + dx);
+          if (handle.includes('s')) newH = Math.max(10, orig.h + dy);
+          if (handle.includes('w')) {
+            const pW = orig.w - dx;
+            if (pW > 20) { newW = pW; newX = orig.x + dx; }
+          }
+          if (handle.includes('n')) {
+            const pH = orig.h - dy;
+            if (pH > 10) { newH = pH; newY = orig.y + dy; }
+          }
+
+          if (e.shiftKey && ['se', 'nw', 'ne', 'sw'].includes(handle)) {
+            newH = newW / aspectRatio;
+          }
+
+          if (snapToGrid) {
+            newW = Math.round(newW / 20) * 20;
+            newH = Math.round(newH / 20) * 20;
+          }
+
+          updateElement(id, { x: Math.round(newX), y: Math.round(newY), w: Math.round(newW), h: Math.round(newH) });
+        }
+
+        if (rotateState) {
+          const { id, center } = rotateState;
+          const rad = Math.atan2(e.clientY - center.y, e.clientX - center.x);
+          let deg = Math.round(rad * (180 / Math.PI)) + 90;
+          if (e.shiftKey) deg = Math.round(deg / 15) * 15;
+          updateElement(id, { rotation: deg });
+        }
+
+        if (lassoState?.active) {
+          const rect = canvasRef.current?.getBoundingClientRect();
+          if (!rect) return;
+          const curX = (e.clientX - rect.left - panState.x) / scale;
+          const curY = (e.clientY - rect.top - panState.y) / scale;
+          setLassoState(prev => ({ ...prev, curX, curY }));
+        }
+      };
+
+      const handleMouseUp = () => {
+        if (dragState) {
+          pushHistory(pages);
+          setDragState(null);
+          setActiveGuides({ x: [], y: [] });
+        }
+        if (resizeState) {
+          pushHistory(pages);
+          setResizeState(null);
+        }
+        if (rotateState) {
+          pushHistory(pages);
+          setRotateState(null);
+        }
+        if (lassoState?.active) {
+          const minX = Math.min(lassoState.startX, lassoState.curX);
+          const maxX = Math.max(lassoState.startX, lassoState.curX);
+          const minY = Math.min(lassoState.startY, lassoState.curY);
+          const maxY = Math.max(lassoState.startY, lassoState.curY);
+
+          const found = currentPage.elements.filter(el => {
+            return el.x >= minX && (el.x + el.w) <= maxX && el.y >= minY && (el.y + el.h) <= maxY;
+          }).map(e => e.id);
+
+          setSelectedIds(found);
+          setLassoState(null);
+        }
+        if (panState.isPanning) {
+          setPanState(prev => ({ ...prev, isPanning: false }));
+        }
+      };
+
+      // Export PNG & Print
+      const exportPNG = async () => {
+        showToast("Export PNG haute résolution...");
+        try {
+          const sheet = document.getElementById(`a4-sheet-${currentPageId}`);
+          if (!sheet) return;
+          const dataUrl = await window.htmlToImage.toPng(sheet, { pixelRatio: 2.5, quality: 1 });
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `CV-${DEFAULT_PROFILE.name.replace(/\s+/g, '_')}.png`;
+          a.click();
+          showToast("PNG téléchargé avec succès !");
+        } catch (err) {
+          console.error(err);
+          showToast("Erreur lors de l'export PNG");
+        }
+      };
+
+      const exportPrint = () => {
+        setSelectedIds([]);
+        setTimeout(() => window.print(), 120);
+      };
+
+      const exportJSON = () => {
+        const blob = new Blob([JSON.stringify(pages, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `cv-project-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Projet exporté en JSON");
+      };
+
+      const handleJSONImport = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (Array.isArray(data)) {
+              updatePages(data);
+              setCurrentPageId(data[0].id);
+              showToast("Projet JSON restauré !");
+            }
+          } catch (err) {
+            alert("Fichier JSON invalide.");
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      return (
+        <div 
+          className="flex h-screen w-screen overflow-hidden bg-[#e8e5df] text-[#0f0f10]"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
+          {/* BARRE LATÉRALE GAUCHE (DESIGN ORIGINAL FONCÉ #0f0f10) */}
+          <aside className="no-print w-[300px] shrink-0 bg-[#0f0f10] text-[#fafafa] flex flex-col border-r border-[#27272a] shadow-2xl z-30 select-none">
+            {/* Header Pro */}
+            <div className="h-[64px] px-5 flex items-center justify-between border-b border-[#1f1f23] shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-[8px] bg-white text-black flex items-center justify-center font-black text-[14px]">
+                  CV
+                </div>
+                <div>
+                  <div className="text-[13px] font-bold tracking-wide leading-none">CV DESIGNER PRO</div>
+                  <div className="text-[10px] text-[#71717a] tracking-[1.5px] mt-[3px]">ÉDITION LIBRE</div>
+                </div>
+              </div>
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Auto-save actif"></div>
+            </div>
+
+            {/* Contenu Déroulant */}
+            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+              {/* Import */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold tracking-[1.2px] text-[#a1a1aa] uppercase">Import Rapide</div>
+                <div className="rounded-xl bg-[#18181b] border border-[#27272a] p-3 space-y-2">
+                  <div 
+                    onClick={() => setIsImportOpen(true)}
+                    className="border border-dashed border-[#3f3f46] rounded-lg p-3 text-center cursor-pointer hover:border-[#52525b] transition"
+                  >
+                    <div className="text-[11px] text-[#d4d4d8] font-medium">Glisser texte CV / LinkedIn</div>
+                    <div className="text-[10px] text-[#71717a] mt-1">Extraction automatique</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => jsonInputRef.current?.click()} 
+                      className="flex-1 h-7 rounded-md bg-[#27272a] border border-[#3f3f46] text-[10px] hover:bg-[#3f3f46] transition"
+                    >
+                      Charger JSON
+                    </button>
+                    <input ref={jsonInputRef} type="file" accept=".json" onChange={handleJSONImport} className="hidden" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Templates (6) */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold tracking-[1.2px] text-[#a1a1aa] uppercase">Templates ({Object.keys(TEMPLATES).length})</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(TEMPLATES).map(([key, tpl]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        const built = tpl.build(DEFAULT_PROFILE);
+                        const updated = pages.map(p => p.id === currentPageId ? { ...p, elements: built } : p);
+                        updatePages(updated);
+                        setSelectedIds([]);
+                        showToast(`Modèle "${tpl.name}" appliqué`);
+                      }}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-[#18181b] border border-[#27272a] hover:border-[#3f3f46] transition text-left"
+                    >
+                      <div className="absolute inset-[6px] rounded-lg bg-white overflow-hidden pointer-events-none">
+                        <div className="h-[28%] w-full" style={{ background: tpl.bg }}></div>
+                        <div className="p-[6px] space-y-[3px]">
+                          <div className="h-[4px] w-[70%] bg-zinc-900 rounded-full"></div>
+                          <div className="h-[3px] w-[90%] bg-zinc-300 rounded-full"></div>
+                          <div className="h-[3px] w-[60%] bg-zinc-300 rounded-full"></div>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                        <div className="text-[11px] font-bold text-white leading-none">{tpl.name}</div>
+                        <div className="text-[9px] text-zinc-400 mt-[2px]">{tpl.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ajouter des Éléments */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold tracking-[1.2px] text-[#a1a1aa] uppercase">Ajouter</div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { t: 'heading', label: 'Titre' },
+                    { t: 'text', label: 'Texte' },
+                    { t: 'experience', label: 'Exp.' },
+                    { t: 'education', label: 'Educ.' },
+                    { t: 'skills', label: 'Skills' },
+                    { t: 'progress', label: 'Jauge' },
+                    { t: 'image', label: 'Photo' },
+                    { t: 'rect', label: 'Rect.' },
+                    { t: 'circle', label: 'Cercle' },
+                    { t: 'dividerH', label: '— H' },
+                    { t: 'dividerV', label: '| V' },
+                    { t: 'icon', label: 'Icône' }
+                  ].map(item => (
+                    <button
+                      key={item.t}
+                      onClick={() => addElement(item.t)}
+                      className="h-[52px] rounded-lg bg-[#18181b] border border-[#27272a] hover:bg-[#232326] hover:border-[#3f3f46] flex flex-col items-center justify-center gap-1 transition"
+                    >
+                      <span className="text-xs text-zinc-300 font-bold">✦</span>
+                      <span className="text-[9px] text-zinc-400">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pages Multi-A4 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold tracking-[1.2px] text-[#a1a1aa] uppercase">Pages ({pages.length})</div>
+                  <button
+                    onClick={() => {
+                      const newPage = { id: `page-${pages.length + 1}`, elements: [] };
+                      updatePages([...pages, newPage]);
+                      setCurrentPageId(newPage.id);
+                      showToast("Nouvelle page A4");
+                    }}
+                    className="w-6 h-6 rounded-md bg-white text-black flex items-center justify-center font-bold text-xs hover:bg-zinc-200"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {pages.map((p, idx) => (
+                    <div
+                      key={p.id}
+                      onClick={() => {
+                        setCurrentPageId(p.id);
+                        setSelectedIds([]);
+                      }}
+                      className={`rounded-xl border p-2 flex items-center justify-between cursor-pointer transition ${currentPageId === p.id ? 'bg-white text-black border-white' : 'bg-[#18181b] text-white border-[#27272a] hover:border-[#3f3f46]'}`}
+                    >
+                      <span className="text-[11px] font-bold">Page {idx + 1} ({p.elements.length} éléments)</span>
+                      {pages.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const filtered = pages.filter(x => x.id !== p.id);
+                            updatePages(filtered);
+                            if (currentPageId === p.id) setCurrentPageId(filtered[0].id);
+                          }}
+                          className="text-xs text-red-400 hover:text-red-600 px-1.5 py-0.5"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Affichage & Magnétisme */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold tracking-[1.2px] text-[#a1a1aa] uppercase">Affichage & Magnétisme</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Grille", val: showGrid, set: setShowGrid },
+                    { label: "Guides", val: smartGuides, set: setSmartGuides },
+                    { label: "Règles", val: showRulers, set: setShowRulers },
+                    { label: "Magnétisme", val: snapToGrid, set: setSnapToGrid }
+                  ].map(s => (
+                    <button
+                      key={s.label}
+                      onClick={() => s.set(!s.val)}
+                      className={`h-9 rounded-lg border flex items-center justify-between px-2.5 text-[11px] font-medium transition ${s.val ? 'bg-white text-black border-white' : 'bg-[#18181b] text-zinc-400 border-[#27272a]'}`}
+                    >
+                      <span>{s.label}</span>
+                      <span className="text-[10px]">{s.val ? '✓' : ''}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bas de Barre Latérale : Exports */}
+            <div className="shrink-0 border-t border-[#1f1f23] p-3 space-y-2 bg-[#0f0f10]">
+              <div className="flex gap-2">
+                <button
+                  onClick={undo}
+                  disabled={histIdx <= 0}
+                  className="flex-1 h-9 rounded-lg bg-[#18181b] border border-[#27272a] text-[11px] font-medium disabled:opacity-30 hover:bg-[#232326]"
+                >
+                  ↩ Undo
+                </button>
+                <button
+                  onClick={redo}
+                  disabled={histIdx >= history.length - 1}
+                  className="flex-1 h-9 rounded-lg bg-[#18181b] border border-[#27272a] text-[11px] font-medium disabled:opacity-30 hover:bg-[#232326]"
+                >
+                  ↪ Redo
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5">
+                <button onClick={exportJSON} className="h-9 rounded-lg bg-white text-black text-[11px] font-bold hover:bg-zinc-200">
+                  JSON
+                </button>
+                <button onClick={exportPrint} className="h-9 rounded-lg bg-[#18181b] border border-[#27272a] text-[11px] font-bold hover:bg-[#232326]">
+                  PDF / Print
+                </button>
+                <button onClick={exportPNG} className="h-9 rounded-lg bg-[#18181b] border border-[#27272a] text-[11px] font-bold hover:bg-[#232326]">
+                  PNG HD
+                </button>
+              </div>
+
+              <div className="text-[9px] text-[#52525b] text-center pt-1">
+                Format A4 réel • 794×1123px • 300 DPI
+              </div>
+            </div>
+          </aside>
+
+          {/* ESPACE DE TRAVAIL CENTRAL EN COULEURS DOUCES D'ORIGINE (#e8e5df & #fcfbf9) */}
+          <main className="flex-1 flex flex-col min-w-0 bg-[#e8e5df] relative overflow-hidden">
+            {/* Header supérieur crème clair d'origine (#fcfbf9) */}
+            <header className="no-print h-[48px] shrink-0 bg-[#fcfbf9] border-b border-[#e7e5e4] flex items-center px-4 justify-between select-none z-20">
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="font-medium text-zinc-700">Canvas A4 réel</span>
+                <span className="px-2 py-[2px] rounded-full bg-[#0f0f10] text-white text-[10px] font-mono">794×1123px</span>
+                <span className="text-zinc-400">|</span>
+                <span className="text-zinc-500">{currentPage.elements.length} éléments • {selectedIds.length} sélectionné(s)</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                <span className="px-1.5 py-[1px] rounded border bg-white shadow-xs font-medium">Trackpad Mac</span> Pincer pour zoomer • 2 doigts pour naviguer
+              </div>
+            </header>
+
+            {/* Zone de Canevas avec scroll et règles X/Y */}
+            <div
+              ref={canvasRef}
+              className="flex-1 relative overflow-auto"
+              onMouseDown={(e) => {
+                if (isSpacePressed || e.button === 1) {
+                  e.preventDefault();
+                  setPanState(prev => ({ ...prev, isPanning: true, startX: e.clientX - prev.x, startY: e.clientY - prev.y }));
+                  return;
+                }
+                if (e.target === canvasRef.current) {
+                  const rect = canvasRef.current.getBoundingClientRect();
+                  const curX = (e.clientX - rect.left - panState.x) / (zoom / 100);
+                  const curY = (e.clientY - rect.top - panState.y) / (zoom / 100);
+                  setLassoState({ active: true, startX: curX, startY: curY, curX, curY });
+                  if (!e.shiftKey) setSelectedIds([]);
+                }
+              }}
+              style={{ cursor: isSpacePressed || panState.isPanning ? 'grab' : 'default' }}
+            >
+              {/* Règles Claires X & Y */}
+              {showRulers && (
+                <React.Fragment>
+                  <div className="no-print sticky top-0 left-0 z-20 h-[20px] bg-[#fcfbf9] border-b border-[#e7e5e4] flex" style={{ marginLeft: "20px" }}>
+                    <div className="relative h-full flex-1 overflow-hidden pointer-events-none">
+                      {Array.from({ length: 40 }).map((_, i) => {
+                        const cm = i * 10;
+                        const pos = cm * 3.78 * (zoom / 100);
+                        return (
+                          <div key={i} className="absolute top-0 bottom-0 border-l border-zinc-300" style={{ left: pos + panState.x }}>
+                            <span className="absolute top-[2px] left-[2px] text-[8px] text-zinc-400 font-mono">{cm}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="no-print sticky left-0 top-0 z-20 w-[20px] bg-[#fcfbf9] border-r border-[#e7e5e4] absolute" style={{ height: "100%" }}>
+                    <div className="relative w-full h-full overflow-hidden pointer-events-none">
+                      {Array.from({ length: 60 }).map((_, i) => {
+                        const cm = i * 10;
+                        const pos = cm * 3.78 * (zoom / 100);
+                        return (
+                          <div key={i} className="absolute left-0 right-0 border-t border-zinc-300" style={{ top: pos + panState.y }}>
+                            <span className="absolute left-[1px] top-[1px] text-[7px] text-zinc-400 font-mono rotate-90 origin-left">{cm}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </React.Fragment>
+              )}
+
+              {/* Conteneur d'affichage des Pages A4 */}
+              <div 
+                className="relative mx-auto py-16 px-8 flex flex-col items-center gap-12"
+                style={{
+                  transform: `translate(${panState.x}px, ${panState.y}px) scale(${zoom / 100})`,
+                  transformOrigin: "top center",
+                  width: showRulers ? "calc(100% + 20px)" : "100%"
+                }}
+              >
+                {pages.map((p) => (
+                  <div
+                    key={p.id}
+                    id={`a4-sheet-${p.id}`}
+                    data-page-id={p.id}
+                    onClick={() => setCurrentPageId(p.id)}
+                    className={`print-page relative bg-white rounded-[4px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.06)] transition-all ${currentPageId === p.id ? 'ring-2 ring-blue-500/30' : ''}`}
+                    style={{ width: 794, height: 1123, minWidth: 794, minHeight: 1123, flexShrink: 0 }}
+                  >
+                    {/* Grille millimétrée d'origine */}
+                    {showGrid && <div className="absolute inset-0 pointer-events-none opacity-[0.6] grid-bg rounded-[4px]" />}
+
+                    {/* Guides bleus intelligents */}
+                    {activeGuides.x.map((gx, idx) => (
+                      <div key={`gx-${idx}`} className="absolute top-0 bottom-0 w-[1px] bg-[#3b82f6] pointer-events-none z-50" style={{ left: gx }} />
+                    ))}
+                    {activeGuides.y.map((gy, idx) => (
+                      <div key={`gy-${idx}`} className="absolute left-0 right-0 h-[1px] bg-[#3b82f6] pointer-events-none z-50" style={{ top: gy }} />
+                    ))}
+
+                    {/* Rendu des Éléments de la page */}
+                    {p.elements.filter(el => el.visible).map((el) => {
+                      const isSelected = selectedIds.includes(el.id);
+
+                      return (
+                        <div
+                          key={el.id}
+                          data-element={el.id}
+                          onMouseDown={(e) => handleElementMouseDown(e, el)}
+                          onDoubleClick={() => {
+                            if (['text', 'heading'].includes(el.type)) {
+                              setEditingId(el.id);
+                              setSelectedIds([el.id]);
+                            }
+                          }}
+                          className={`absolute select-none ${el.locked ? 'cursor-not-allowed' : 'cursor-move'}`}
+                          style={{
+                            left: el.x,
+                            top: el.y,
+                            width: el.w,
+                            height: el.h,
+                            zIndex: el.zIndex,
+                            transform: `rotate(${el.rotation || 0}deg)`,
+                            opacity: el.style.opacity ?? 1
+                          }}
+                        >
+                          {/* Composant interne */}
+                          <div
+                            className="w-full h-full relative overflow-hidden"
+                            style={{
+                              backgroundColor: el.style.backgroundColor || (el.type === 'rect' ? el.style.backgroundColor : 'transparent'),
+                              borderRadius: el.style.borderRadius ?? (el.type === 'circle' ? 999 : 0),
+                              borderWidth: el.style.borderWidth ? `${el.style.borderWidth}px` : undefined,
+                              borderColor: el.style.borderColor,
+                              borderStyle: el.style.borderStyle || 'solid'
+                            }}
+                          >
+                            {/* Titres */}
+                            {el.type === 'heading' && (
+                              <div
+                                contentEditable={editingId === el.id}
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                  updateElement(el.id, { content: e.currentTarget.innerText });
+                                  setEditingId(null);
+                                }}
+                                className="w-full h-full outline-none font-bold"
+                                style={{
+                                  fontFamily: el.style.fontFamily || "Inter",
+                                  fontSize: `${el.style.fontSize || 20}px`,
+                                  fontWeight: el.style.fontWeight || "700",
+                                  color: el.style.color || "#0f0f10",
+                                  lineHeight: el.style.lineHeight || 1.2,
+                                  textAlign: el.style.textAlign || "left"
+                                }}
+                              >
+                                {el.content}
+                              </div>
+                            )}
+
+                            {/* Textes éditables */}
+                            {el.type === 'text' && (
+                              <div
+                                contentEditable={editingId === el.id}
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                  updateElement(el.id, { content: e.currentTarget.innerText });
+                                  setEditingId(null);
+                                }}
+                                className="w-full h-full outline-none"
+                                style={{
+                                  fontFamily: el.style.fontFamily || "Inter",
+                                  fontSize: `${el.style.fontSize || 13}px`,
+                                  fontWeight: el.style.fontWeight || "400",
+                                  color: el.style.color || "#27272a",
+                                  lineHeight: el.style.lineHeight || 1.5,
+                                  textAlign: el.style.textAlign || "left",
+                                  whiteSpace: "pre-wrap"
+                                }}
+                              >
+                                {el.content}
+                              </div>
+                            )}
+
+                            {/* Expériences */}
+                            {el.type === 'experience' && (
+                              <div className="w-full h-full" style={{ fontFamily: el.style.fontFamily || "Inter" }}>
+                                <div className="text-[13px] font-bold leading-tight" style={{ color: el.style.color || "#0f0f10" }}>
+                                  {el.content?.role}
+                                </div>
+                                <div className="text-[11px] font-medium text-zinc-500 mt-[2px]">
+                                  {el.content?.company} • {el.content?.date}
+                                </div>
+                                <div className="text-[12px] text-zinc-600 mt-2 leading-[1.5] line-clamp-3">
+                                  {el.content?.desc}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Formations */}
+                            {el.type === 'education' && (
+                              <div className="w-full" style={{ fontFamily: el.style.fontFamily || "Inter" }}>
+                                <div className="text-[12px] font-bold text-zinc-900">{el.content?.degree}</div>
+                                <div className="text-[11px] text-zinc-500">{el.content?.school} • {el.content?.date}</div>
+                              </div>
+                            )}
+
+                            {/* Compétences / Badges */}
+                            {el.type === 'skills' && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {(Array.isArray(el.content) ? el.content : []).map((s, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2.5 py-1 rounded-full text-[11px] font-medium border"
+                                    style={{
+                                      backgroundColor: el.style?.color === "#ffffff" ? "#27272a" : "#f4f4f5",
+                                      color: el.style?.color === "#ffffff" ? "#ffffff" : "#27272a",
+                                      borderColor: el.style?.color === "#ffffff" ? "#3f3f46" : "#e4e4e7"
+                                    }}
+                                  >
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Barres de progression / Jauges */}
+                            {el.type === 'progress' && (
+                              <div className="space-y-2">
+                                {(Array.isArray(el.content) ? el.content : []).map((item, idx) => (
+                                  <div key={idx} className="space-y-1">
+                                    <div className="flex justify-between text-[10px] font-medium text-zinc-600">
+                                      <span>{item.label}</span>
+                                      <span>{item.val}%</span>
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-zinc-200 overflow-hidden">
+                                      <div className="h-full bg-[#0f0f10]" style={{ width: `${item.val}%` }}></div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Photo de profil */}
+                            {el.type === 'image' && (
+                              <div className="w-full h-full relative group">
+                                {el.content ? (
+                                  <img src={el.content} alt="Profil" className="w-full h-full object-cover" style={{ borderRadius: el.style.borderRadius || 12 }} />
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-100 text-zinc-400">
+                                    <span className="text-xs font-bold">Photo</span>
+                                  </div>
+                                )}
+                                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition text-white text-[11px] font-bold">
+                                  Changer
+                                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(el.id, e.target.files?.[0])} />
+                                </label>
+                              </div>
+                            )}
+
+                            {/* Formes géométriques */}
+                            {el.type === 'rect' && <div className="w-full h-full"></div>}
+                            {el.type === 'circle' && <div className="w-full h-full rounded-full" style={{ backgroundColor: el.style.backgroundColor || "#0f0f10" }}></div>}
+                            {el.type === 'dividerH' && <div className="w-full h-full" style={{ backgroundColor: el.style.backgroundColor || "#e4e4e7" }}></div>}
+                            {el.type === 'dividerV' && <div className="w-full h-full" style={{ backgroundColor: el.style.backgroundColor || "#e4e4e7" }}></div>}
+
+                            {/* Icônes de contact */}
+                            {el.type === 'icon' && (
+                              <div className="flex items-center gap-1.5 text-[12px]" style={{ color: el.style.color || "#27272a" }}>
+                                <span className="font-bold">{el.content?.icon || "✉"}</span>
+                                <span className="truncate">{el.content?.text}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Cadre de Sélection Figma (Bordure bleue + 8 Poignées + Rotation) */}
+                          {isSelected && !el.locked && (
+                            <React.Fragment>
+                              <div className="absolute inset-0 border-2 border-[#3b82f6] pointer-events-none rounded-[2px]" />
+
+                              {/* Poignées */}
+                              {[
+                                { h: 'nw', cls: 'top-0 left-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize' },
+                                { h: 'n',  cls: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-ns-resize' },
+                                { h: 'ne', cls: 'top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize' },
+                                { h: 'e',  cls: 'top-1/2 right-0 translate-x-1/2 -translate-y-1/2 cursor-ew-resize' },
+                                { h: 'se', cls: 'bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize' },
+                                { h: 's',  cls: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 cursor-ns-resize' },
+                                { h: 'sw', cls: 'bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize' },
+                                { h: 'w',  cls: 'top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize' },
+                              ].map(pos => (
+                                <div
+                                  key={pos.h}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    setResizeState({
+                                      id: el.id,
+                                      handle: pos.h,
+                                      startX: e.clientX,
+                                      startY: e.clientY,
+                                      orig: { x: el.x, y: el.y, w: el.w, h: el.h },
+                                      aspectRatio: el.w / el.h
+                                    });
+                                  }}
+                                  className={`resize-handle ${pos.cls}`}
+                                />
+                              ))}
+
+                              {/* Poignée de Rotation */}
+                              <div className="absolute left-1/2 -translate-x-1/2 -top-8 flex flex-col items-center gap-1">
+                                <div className="w-[1px] h-5 bg-[#3b82f6]"></div>
+                                <div
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    const bbox = e.currentTarget.closest('[data-element]').getBoundingClientRect();
+                                    setRotateState({
+                                      id: el.id,
+                                      center: { x: bbox.left + bbox.width / 2, y: bbox.top + bbox.height / 2 }
+                                    });
+                                  }}
+                                  className="w-3 h-3 rounded-full bg-white border-2 border-[#3b82f6] cursor-grab active:cursor-grabbing shadow-sm"
+                                  title="Faire pivoter"
+                                />
+                              </div>
+                            </React.Fragment>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Rectangle de sélection Lasso */}
+                    {lassoState?.active && currentPageId === p.id && (
+                      <div
+                        className="absolute border border-dashed border-[#3b82f6] bg-[#3b82f6]/10 pointer-events-none z-50"
+                        style={{
+                          left: Math.min(lassoState.startX, lassoState.curX),
+                          top: Math.min(lassoState.startY, lassoState.curY),
+                          width: Math.abs(lassoState.curX - lassoState.startX),
+                          height: Math.abs(lassoState.curY - lassoState.startY)
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CONTRÔLE DE ZOOM FLOTTANT (STYLE D'ORIGINE) */}
+            <div className="no-print absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-full bg-[#0f0f10] text-white shadow-[0_8px_24px_rgba(0,0,0,0.2)] border border-[#27272a]">
+              <div className="flex items-center gap-1">
+                {[50, 75, 100, 150].map(val => (
+                  <button
+                    key={val}
+                    onClick={() => setZoom(val)}
+                    className={`h-7 px-2.5 rounded-full text-[11px] font-bold transition ${zoom === val ? 'bg-white text-black' : 'text-zinc-400 hover:text-white hover:bg-[#27272a]'}`}
+                  >
+                    {val}%
+                  </button>
+                ))}
+                <button onClick={() => setZoom(85)} className="h-7 px-2.5 rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
+                  Fit
+                </button>
+              </div>
+
+              <div className="w-[1px] h-4 bg-[#27272a] mx-1"></div>
+              <input
+                type="range"
+                min="25"
+                max="200"
+                value={zoom}
+                onChange={(e) => setZoom(parseInt(e.target.value))}
+                className="w-20 accent-white h-1 cursor-pointer"
+              />
+              <span className="text-[11px] font-bold w-9 text-right font-mono">{zoom}%</span>
+            </div>
+
+            {/* BARRE D'OUTILS CONTEXTUELLE FLOTTANTE (CANVA / FIGMA) */}
+            {primarySelected && !primarySelected.locked && (
+              <div className="no-print absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-[#0f0f10] border border-[#27272a] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.24)] p-2 flex items-center gap-2 text-white text-xs">
+                {/* Typographie */}
+                {['text', 'heading'].includes(primarySelected.type) && (
+                  <React.Fragment>
+                    <select
+                      value={primarySelected.style.fontFamily || "Inter"}
+                      onChange={(e) => updateElement(primarySelected.id, { style: { fontFamily: e.target.value } })}
+                      className="h-7 rounded-lg bg-[#18181b] border border-[#27272a] text-[11px] px-2 text-white"
+                    >
+                      <option value="Inter">Inter</option>
+                      <option value="Playfair Display">Playfair</option>
+                      <option value="Space Grotesk">Space Grotesk</option>
+                      <option value="JetBrains Mono">JetBrains</option>
+                      <option value="Merriweather">Merriweather</option>
+                    </select>
+
+                    <input
+                      type="number"
+                      value={primarySelected.style.fontSize || 14}
+                      onChange={(e) => updateElement(primarySelected.id, { style: { fontSize: parseInt(e.target.value) || 12 } })}
+                      className="w-14 h-7 rounded-lg bg-[#18181b] border border-[#27272a] text-[11px] px-2 text-white text-center"
+                      min="8"
+                      max="120"
+                    />
+
+                    <input
+                      type="color"
+                      value={primarySelected.style.color || "#0f0f10"}
+                      onChange={(e) => updateElement(primarySelected.id, { style: { color: e.target.value } })}
+                      className="w-7 h-7 rounded-lg overflow-hidden border border-[#27272a] bg-transparent p-0 cursor-pointer"
+                    />
+
+                    <button
+                      onClick={() => updateElement(primarySelected.id, { style: { fontWeight: primarySelected.style.fontWeight === '700' ? '400' : '700' } })}
+                      className={`w-7 h-7 rounded-lg font-bold ${primarySelected.style.fontWeight === '700' ? 'bg-white text-black' : 'bg-[#18181b] text-zinc-300'}`}
+                    >
+                      B
+                    </button>
+                  </React.Fragment>
+                )}
+
+                {/* Couleur de fond */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-zinc-400">Fond:</span>
+                  <input
+                    type="color"
+                    value={primarySelected.style.backgroundColor !== 'transparent' ? primarySelected.style.backgroundColor : "#ffffff"}
+                    onChange={(e) => updateElement(primarySelected.id, { style: { backgroundColor: e.target.value } })}
+                    className="w-7 h-7 rounded-lg border border-[#27272a] bg-transparent cursor-pointer"
+                  />
+                </div>
+
+                <div className="w-[1px] h-4 bg-[#27272a]"></div>
+
+                {/* Plans & Actions */}
+                <button
+                  onClick={() => updateElement(primarySelected.id, { zIndex: primarySelected.zIndex + 1 })}
+                  className="px-2 py-1 rounded bg-[#18181b] hover:bg-[#27272a] text-[11px]"
+                >
+                  Avancer
+                </button>
+                <button
+                  onClick={() => updateElement(primarySelected.id, { zIndex: Math.max(1, primarySelected.zIndex - 1) })}
+                  className="px-2 py-1 rounded bg-[#18181b] hover:bg-[#27272a] text-[11px]"
+                >
+                  Reculer
+                </button>
+                <button
+                  onClick={duplicateSelected}
+                  className="px-2 py-1 rounded bg-[#18181b] hover:bg-[#27272a] text-[11px]"
+                >
+                  Dupliquer
+                </button>
+                <button
+                  onClick={deleteSelected}
+                  className="px-2 py-1 rounded bg-red-900/40 text-red-300 hover:bg-red-800 text-[11px]"
+                >
+                  Supprimer
+                </button>
+              </div>
+            )}
+          </main>
+
+          {/* MODALE D'IMPORT INTELLIGENT */}
+          {isImportOpen && (
+            <div className="no-print fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="w-full max-w-[520px] bg-[#fcfbf9] rounded-2xl shadow-2xl border border-[#e7e5e4] overflow-hidden">
+                <div className="p-5 border-b border-[#e7e5e4] flex items-center justify-between">
+                  <span className="font-bold text-[14px]">Import intelligent (simulation)</span>
+                  <button onClick={() => setIsImportOpen(false)} className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">
+                    ✕
+                  </button>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="text-[12px] text-zinc-600">
+                    Collez le texte brut de votre profil LinkedIn ou CV. L'algorithme structurera automatiquement vos informations.
+                  </div>
+                  <textarea
+                    rows="6"
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    placeholder="Alexandra Dubois&#10;Product Designer Senior&#10;Designer produit avec 8 ans d'expérience..."
+                    className="w-full rounded-xl border border-[#e7e5e4] bg-white p-3 text-[13px] outline-none font-mono"
+                  ></textarea>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => setIsImportOpen(false)} className="h-10 px-5 rounded-xl bg-zinc-100 text-[13px] font-medium">
+                      Annuler
+                    </button>
+                    <button
+                      onClick={() => {
+                        const lines = importText.split('\n').filter(Boolean);
+                        const custom = {
+                          ...DEFAULT_PROFILE,
+                          name: lines[0] || DEFAULT_PROFILE.name,
+                          role: lines[1] || DEFAULT_PROFILE.role,
+                          summary: lines.slice(2).join(' ') || DEFAULT_PROFILE.summary
+                        };
+                        const updated = pages.map(p => p.id === currentPageId ? { ...p, elements: TEMPLATES.modern.build(custom) } : p);
+                        updatePages(updated);
+                        setIsImportOpen(false);
+                        setImportText("");
+                        showToast("CV analysé & appliqué !");
+                      }}
+                      className="h-10 px-5 rounded-xl bg-[#0f0f10] text-white text-[13px] font-bold"
+                    >
+                      Parser & Appliquer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TOAST FLOTTANT DE NOTIFICATION */}
+          {toastMsg && (
+            <div className="no-print fixed bottom-6 left-[320px] z-[200] bg-[#0f0f10] text-white border border-[#27272a] px-4 py-2 rounded-full text-[12px] font-medium shadow-xl flex items-center gap-2">
+              <span className="text-emerald-400">✓</span>
+              <span>{toastMsg}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
