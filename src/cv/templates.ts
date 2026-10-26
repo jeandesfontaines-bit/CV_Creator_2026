@@ -1,5 +1,5 @@
 import type { CVElement, ElStyle, ElType, Profile, TemplateId } from "@/cv/types";
-import { baseStyle, CREAM, HAIR, INK, MUTE, SHEET, SIGNAL } from "@/cv/types";
+import { baseStyle, CREAM, HAIR, INK, MUTE, SIGNAL } from "@/cv/types";
 
 const DARK_MUTE = "#b7b1a6";
 

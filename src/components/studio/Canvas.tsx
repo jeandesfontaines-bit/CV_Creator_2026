@@ -248,7 +248,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
     };
   };
 
-  const onRotate = (pageId: string) => (id: string, event: ReactPointerEvent) => {
+  const onRotate = (pageId: string) => (id: string, _event: ReactPointerEvent) => {
     const store = useStudio.getState();
     const el = activePage(store.doc, pageId).elements.find((item) => item.id === id);
     if (!el) return;
