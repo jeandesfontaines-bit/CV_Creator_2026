@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Briefcase,
   Circle,
@@ -15,14 +15,20 @@ import {
   Link,
   Magnet,
   Minus,
+  Package,
+  Palette,
   Printer,
   Square,
   Tags,
   Type,
   Upload,
+  Wand2,
 } from "lucide-react";
 import { activePage, useStudio } from "@/cv/store";
 import { TEMPLATES } from "@/cv/templates";
+import { JOB_PRESETS } from "@/cv/presets";
+import { COLOR_PALETTES } from "@/cv/palettes";
+import { SECTION_PACKS } from "@/cv/packs";
 import type { ElType, TemplateId } from "@/cv/types";
 import { snippet } from "@/cv/types";
 import { cn } from "@/lib/utils";
@@ -118,108 +124,302 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
   const margins = useStudio((s) => s.margins);
   const past = useStudio((s) => s.past.length);
   const future = useStudio((s) => s.future.length);
+  const saveStatus = useStudio((s) => s.saveStatus);
+  const lastSavedAt = useStudio((s) => s.lastSavedAt);
   const page = activePage(doc, activePageId);
   const jsonRef = useRef<HTMLInputElement>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
   const [importTemplate, setImportTemplate] = useState<TemplateId>("modern");
+  const [activeTab, setActiveTab] = useState<"presets" | "blocks" | "templates">("presets");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const done = () => onDone?.();
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col bg-ink text-cream">
-      <div className="flex h-12 items-center gap-2 border-b border-ink-line px-3">
-        <span className="flex size-7 items-center justify-center rounded-ui bg-signal font-display text-sm font-bold text-signal-ink">L</span>
-        <div className="min-w-0">
-          <div className="font-display text-sm leading-none font-bold tracking-wide">LIBRE</div>
-          <div className="mt-1 text-xs tracking-wide text-ink-mute">Éditeur de CV</div>
+    <aside className="flex h-full w-72 shrink-0 flex-col bg-ink text-cream">
+      {/* En-tête avec indicateur d'Auto-Save en direct */}
+      <div className="flex h-13 items-center justify-between border-b border-ink-line px-3.5">
+        <div className="flex items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-ui bg-signal font-display text-sm font-bold text-signal-ink">
+            CV
+          </span>
+          <div className="min-w-0">
+            <div className="font-display text-sm leading-none font-bold tracking-wide">STUDIO PRO</div>
+            <div className="mt-0.5 text-[10px] tracking-wide text-ink-mute">Éditeur & Remplissage</div>
+          </div>
+        </div>
+
+        {/* Badge d'Auto-Save temps réel */}
+        <div
+          className="flex items-center gap-1.5 rounded-full border border-ink-line bg-ink-raise px-2 py-0.5 text-[11px] text-ink-mute"
+          title="Vos modifications sont automatiquement sauvegardées en continu dans le navigateur"
+        >
+          <span
+            className={cn(
+              "size-2 rounded-full transition-all duration-300",
+              saveStatus === "saving" ? "bg-amber-400 animate-ping" : "bg-emerald-400",
+            )}
+          />
+          <span className="font-mono text-[10px] text-cream">
+            {saveStatus === "saving" ? "Sauvegarde..." : mounted && lastSavedAt ? `Sauvegardé` : "Auto-save"}
+          </span>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4">
-        <section className="space-y-2">
-          <h2 className="text-xs font-semibold tracking-widest text-ink-mute uppercase">Modèles</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {TEMPLATES.map((tpl) => (
-              <button
-                key={tpl.id}
-                type="button"
-                onClick={() => {
-                  useStudio.getState().applyTemplate(tpl.id);
-                  done();
-                }}
-                className="overflow-hidden rounded-ui border border-ink-line bg-ink-raise text-left hover:border-ink-mute"
-              >
-                <div className="h-14">{<Thumb id={tpl.id} />}</div>
-                <div className="px-2 py-1.5">
-                  <div className="text-xs font-semibold">{tpl.name}</div>
-                  <div className="text-xs text-ink-mute">{tpl.note}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
+      {/* Onglets de navigation rapide */}
+      <div className="grid grid-cols-3 border-b border-ink-line bg-ink-raise/40 p-1 text-[11px] font-medium">
+        <button
+          type="button"
+          onClick={() => setActiveTab("presets")}
+          className={cn(
+            "flex items-center justify-center gap-1 rounded-md py-1.5 transition",
+            activeTab === "presets" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream",
+          )}
+        >
+          <Wand2 size={12} />
+          Métiers
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("blocks")}
+          className={cn(
+            "flex items-center justify-center gap-1 rounded-md py-1.5 transition",
+            activeTab === "blocks" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream",
+          )}
+        >
+          <Package size={12} />
+          Packs
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("templates")}
+          className={cn(
+            "flex items-center justify-center gap-1 rounded-md py-1.5 transition",
+            activeTab === "templates" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream",
+          )}
+        >
+          <Palette size={12} />
+          Modèles
+        </button>
+      </div>
 
-        <section className="space-y-2">
-          <h2 className="text-xs font-semibold tracking-widest text-ink-mute uppercase">Ajouter</h2>
-          <div className="grid grid-cols-4 gap-1.5">
-            {ADD.map((item) => (
-              <button
-                key={item.type}
-                type="button"
-                onClick={() => {
-                  useStudio.getState().addElement(item.type);
-                  done();
-                }}
-                className="flex h-14 flex-col items-center justify-center gap-1 rounded-ui border border-ink-line bg-ink-raise text-ink-mute hover:text-cream"
-              >
-                <item.icon size={14} strokeWidth={1.75} aria-hidden />
-                <span className="text-xs">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="text-xs font-semibold tracking-widest text-ink-mute uppercase">Calques</h2>
-          <div className="max-h-48 space-y-1 overflow-y-auto">
-            {[...page.elements].sort((a, b) => b.z - a.z).map((el) => (
-              <div
-                key={el.id}
-                className={cn(
-                  "flex items-center gap-1 rounded-ui border px-1.5 py-1",
-                  selectedIds.includes(el.id) ? "border-cream bg-cream text-ink" : "border-ink-line bg-ink-raise",
-                )}
-              >
-                <button
-                  type="button"
-                  className="min-w-0 flex-1 truncate text-left text-xs"
-                  onClick={() => {
-                    useStudio.getState().setActive(page.id);
-                    useStudio.getState().select([el.id]);
-                  }}
-                >
-                  {snippet(el)}
-                </button>
-                <button
-                  type="button"
-                  aria-label={el.hidden ? "Afficher" : "Masquer"}
-                  className="flex size-7 items-center justify-center"
-                  onClick={() => useStudio.getState().toggleHidden(page.id, el.id)}
-                >
-                  {el.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
-                </button>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
+        {/* ONGLET 1: LA BAGUETTE MAGIQUE (REMPLIR PAR MÉTIER EN 1 CLIC) */}
+        {activeTab === "presets" && (
+          <div className="space-y-4">
+            <div className="rounded-ui border border-amber-500/30 bg-amber-500/10 p-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                <Wand2 size={13} className="shrink-0" />
+                <span>Zéro page blanche en 1 clic</span>
               </div>
-            ))}
-            {page.elements.length === 0 && <p className="text-xs text-ink-mute">Page vide. Ajoute un bloc, ou pose un modèle.</p>}
+              <p className="mt-1 text-[11px] leading-snug text-ink-mute">
+                Sélectionnez votre métier : l'ensemble du CV est instantanément rempli avec des textes réalistes, des chiffres d'impact et des compétences percutantes.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">8 Métiers pré-rédigés</h2>
+              <div className="grid grid-cols-1 gap-1.5">
+                {JOB_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      useStudio.getState().applyJobPreset(preset.id);
+                      done();
+                    }}
+                    className="group flex items-center justify-between rounded-ui border border-ink-line bg-ink-raise px-3 py-2 text-left transition hover:border-amber-400/60 hover:bg-ink-line/50"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold text-cream group-hover:text-amber-200 truncate">
+                        {preset.label}
+                      </div>
+                      <div className="text-[10px] text-ink-mute truncate">{preset.badge}</div>
+                    </div>
+                    <span className="shrink-0 text-xs font-bold text-amber-400 opacity-60 group-hover:opacity-100 transition-opacity">
+                      Remplir →
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* HARMONIES COULEURS EN 1 CLIC */}
+            <div className="space-y-2 border-t border-ink-line pt-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Harmonies Couleurs (1 clic)</h2>
+                <span className="text-[10px] text-ink-mute">Harmonise tout</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {COLOR_PALETTES.map((palette) => (
+                  <button
+                    key={palette.id}
+                    type="button"
+                    onClick={() => useStudio.getState().applyPalette(palette.id)}
+                    className="group flex flex-col items-center gap-1 rounded-ui border border-ink-line bg-ink-raise p-2 hover:border-cream"
+                    title={palette.desc}
+                  >
+                    <div
+                      className="size-7 rounded-full border-2 border-ink-line group-hover:scale-105 group-hover:border-cream transition flex items-center justify-center"
+                      style={{ backgroundColor: palette.primary }}
+                    >
+                      <div className="size-2.5 rounded-full" style={{ backgroundColor: palette.accent }} />
+                    </div>
+                    <span className="text-[9px] font-medium text-cream text-center leading-tight truncate w-full">
+                      {palette.name.split("/")[0].trim()}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ONGLET 2: PACKS DE BLOCS TOUTS-FAITS & AJOUT INDIVIDUEL */}
+        {activeTab === "blocks" && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Packs de sections pré-groupées</h2>
+                <span className="text-[10px] text-amber-400 font-medium">Prêts à poser</span>
+              </div>
+              <div className="space-y-1.5">
+                {SECTION_PACKS.map((pack) => (
+                  <button
+                    key={pack.id}
+                    type="button"
+                    onClick={() => {
+                      useStudio.getState().addSectionPack(pack.id);
+                      done();
+                    }}
+                    className="group flex w-full items-center gap-2.5 rounded-ui border border-ink-line bg-ink-raise p-2 text-left transition hover:border-cream hover:bg-ink-line/40"
+                  >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-ink-line text-sm">
+                      {pack.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold text-cream leading-tight">{pack.name}</div>
+                      <div className="text-[10px] text-ink-mute truncate">{pack.desc}</div>
+                    </div>
+                    <span className="text-xs text-ink-mute group-hover:text-cream">+</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 border-t border-ink-line pt-3">
+              <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Blocs unitaires</h2>
+              <div className="grid grid-cols-4 gap-1.5">
+                {ADD.map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => {
+                      useStudio.getState().addElement(item.type);
+                      done();
+                    }}
+                    className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-ui border border-ink-line bg-ink-raise text-ink-mute hover:text-cream transition"
+                  >
+                    <item.icon size={13} strokeWidth={1.75} aria-hidden />
+                    <span className="text-[10px]">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ONGLET 3: MODÈLES ET THÈMES */}
+        {activeTab === "templates" && (
+          <div className="space-y-4">
+            <section className="space-y-2">
+              <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Templates Graphiques</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => {
+                      useStudio.getState().applyTemplate(tpl.id);
+                      done();
+                    }}
+                    className="overflow-hidden rounded-ui border border-ink-line bg-ink-raise text-left hover:border-cream transition"
+                  >
+                    <div className="h-14">{<Thumb id={tpl.id} />}</div>
+                    <div className="px-2 py-1.5">
+                      <div className="text-xs font-semibold">{tpl.name}</div>
+                      <div className="text-[10px] text-ink-mute">{tpl.note}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* SECTION CALQUES */}
+        <section className="space-y-2 border-t border-ink-line pt-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
+              Calques ({page.elements.length})
+            </h2>
+            <span className="text-[10px] text-ink-mute">Ordre Z</span>
+          </div>
+          <div className="max-h-36 space-y-1 overflow-y-auto pr-0.5">
+            {[...page.elements]
+              .sort((a, b) => b.z - a.z)
+              .map((el) => (
+                <div
+                  key={el.id}
+                  className={cn(
+                    "flex items-center gap-1 rounded-ui border px-1.5 py-1",
+                    selectedIds.includes(el.id)
+                      ? "border-cream bg-cream text-ink"
+                      : "border-ink-line bg-ink-raise",
+                  )}
+                >
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 truncate text-left text-xs"
+                    onClick={() => {
+                      useStudio.getState().setActive(page.id);
+                      useStudio.getState().select([el.id]);
+                    }}
+                  >
+                    {snippet(el)}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={el.hidden ? "Afficher" : "Masquer"}
+                    className="flex size-6 items-center justify-center text-ink-mute hover:text-cream"
+                    onClick={() => useStudio.getState().toggleHidden(page.id, el.id)}
+                  >
+                    {el.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+                  </button>
+                </div>
+              ))}
+            {page.elements.length === 0 && (
+              <p className="text-xs text-ink-mute">Page vide. Choisissez un métier ou un pack.</p>
+            )}
           </div>
         </section>
 
-        <section className="space-y-2">
+        {/* SECTION PAGES & PLANCHE */}
+        <section className="space-y-2 border-t border-ink-line pt-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold tracking-widest text-ink-mute uppercase">Pages</h2>
-            <button type="button" aria-label="Nouvelle page" className="flex size-7 items-center justify-center rounded-ui bg-cream text-ink" onClick={() => useStudio.getState().addPage()}>
-              <FilePlus size={14} />
+            <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Pages ({doc.pages.length})</h2>
+            <button
+              type="button"
+              aria-label="Nouvelle page"
+              className="flex size-6 items-center justify-center rounded-ui bg-cream text-xs font-bold text-ink hover:bg-white"
+              onClick={() => useStudio.getState().addPage()}
+            >
+              <FilePlus size={13} />
             </button>
           </div>
           <div className="space-y-1">
@@ -227,17 +427,34 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
               <div
                 key={item.id}
                 className={cn(
-                  "flex items-center gap-1 rounded-ui border px-2 py-1",
-                  item.id === activePageId ? "border-cream bg-cream text-ink" : "border-ink-line",
+                  "flex items-center gap-1 rounded-ui border px-2 py-1 text-xs",
+                  item.id === activePageId ? "border-cream bg-cream text-ink font-semibold" : "border-ink-line",
                 )}
               >
-                <button type="button" className="min-w-0 flex-1 truncate text-left text-xs font-medium" onClick={() => useStudio.getState().setActive(item.id)}>
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 truncate text-left"
+                  onClick={() => useStudio.getState().setActive(item.id)}
+                >
                   {index + 1}. {item.name}
                 </button>
-                <button type="button" aria-label="Dupliquer la page" className="flex size-7 items-center justify-center" onClick={() => { useStudio.getState().setActive(item.id); useStudio.getState().duplicatePage(); }}>
-                  <Copy size={12} />
+                <button
+                  type="button"
+                  aria-label="Dupliquer la page"
+                  className="flex size-6 items-center justify-center text-ink-mute hover:text-cream"
+                  onClick={() => {
+                    useStudio.getState().setActive(item.id);
+                    useStudio.getState().duplicatePage();
+                  }}
+                >
+                  <Copy size={11} />
                 </button>
-                <button type="button" aria-label="Supprimer la page" className="px-1 text-xs text-signal" onClick={() => useStudio.getState().deletePage(item.id)}>
+                <button
+                  type="button"
+                  aria-label="Supprimer la page"
+                  className="px-1 text-signal hover:text-red-300"
+                  onClick={() => useStudio.getState().deletePage(item.id)}
+                >
                   ×
                 </button>
               </div>
@@ -245,8 +462,9 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
           </div>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-xs font-semibold tracking-widest text-ink-mute uppercase">Planche</h2>
+        {/* AFFICHAGE & REPERES */}
+        <section className="space-y-2 border-t border-ink-line pt-3">
+          <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">Affichage & Planche</h2>
           <div className="grid grid-cols-2 gap-1.5">
             {(
               [
@@ -261,11 +479,12 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                 type="button"
                 onClick={() => useStudio.getState().toggle(key)}
                 className={cn(
-                  "h-9 rounded-ui border px-2 text-left text-xs font-medium",
-                  on ? "border-cream bg-cream text-ink" : "border-ink-line text-ink-mute",
+                  "flex h-8 items-center justify-between rounded-ui border px-2 text-[11px] font-medium transition",
+                  on ? "border-cream bg-cream text-ink font-semibold" : "border-ink-line bg-ink-raise text-ink-mute hover:text-cream",
                 )}
               >
-                {label}
+                <span>{label}</span>
+                <span className="text-[10px]">{on ? "✓" : ""}</span>
               </button>
             ))}
           </div>

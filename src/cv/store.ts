@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { uid } from "@/cv/geometry";
 import { applyIdentity, parseProfile, SAMPLE, syncProfile } from "@/cv/profile";
 import { buildTemplate } from "@/cv/templates";
+import { JOB_PRESETS, getRandomBoost } from "@/cv/presets";
+import { COLOR_PALETTES, applyPaletteToElements } from "@/cv/palettes";
+import { SECTION_PACKS } from "@/cv/packs";
 import type {
   Bind,
   ContactIcon,
@@ -25,6 +28,8 @@ export type ElementPatch = Partial<Pick<CVElement, "x" | "y" | "w" | "h" | "rota
 
 type Flags = "showGrid" | "snap" | "guides" | "margins";
 
+export type SaveStatus = "saved" | "saving" | "unsaved";
+
 type State = {
   doc: Doc;
   past: Doc[];
@@ -40,7 +45,10 @@ type State = {
   margins: boolean;
   notice: string | null;
   clipboard: CVElement[];
+  saveStatus: SaveStatus;
+  lastSavedAt: string | null;
   hydrate: () => void;
+  saveNow: () => void;
   setZoom: (z: number) => void;
   toggle: (key: Flags) => void;
   notify: (msg: string) => void;
@@ -66,6 +74,10 @@ type State = {
   toggleHidden: (pageId: string, id: string) => void;
   addElement: (type: ElType) => void;
   applyTemplate: (id: TemplateId) => void;
+  applyJobPreset: (id: string) => void;
+  applyPalette: (paletteId: string) => void;
+  addSectionPack: (packId: string) => void;
+  boostElementText: (id: string, phrase?: string) => void;
   addPage: () => void;
   duplicatePage: () => void;
   deletePage: (id: string) => void;
@@ -78,6 +90,13 @@ type State = {
 
 let noticeTimer = 0;
 let persistTimer = 0;
+
+function formatTime(d = new Date()) {
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const s = String(d.getSeconds()).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
 
 function freshDoc(): Doc {
   const profile = structuredClone(SAMPLE);
@@ -94,16 +113,34 @@ function freshDoc(): Doc {
   };
 }
 
+function flushSave(doc: Doc) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(KEY, JSON.stringify(doc));
+    useStudio.setState({ saveStatus: "saved", lastSavedAt: formatTime() });
+  } catch {
+    useStudio.getState().notify("Enregistrement local saturé — exporte le JSON");
+  }
+}
+
 function persist(doc: Doc) {
   if (typeof window === "undefined") return;
+  useStudio.setState({ saveStatus: "saving" });
   window.clearTimeout(persistTimer);
   persistTimer = window.setTimeout(() => {
+    flushSave(doc);
+  }, 250);
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(doc));
+      const doc = useStudio.getState().doc;
+      if (doc) localStorage.setItem(KEY, JSON.stringify(doc));
     } catch {
-      useStudio.getState().notify("Enregistrement local saturé — exporte le JSON");
+      // ignore
     }
-  }, 200);
+  });
 }
 
 function readStorage(): Doc | null {
@@ -181,6 +218,8 @@ export const useStudio = create<State>((set, get) => {
     margins: true,
     notice: null,
     clipboard: [],
+    saveStatus: "saved",
+    lastSavedAt: null,
 
     hydrate: () => {
       const loaded = readStorage();
@@ -193,7 +232,14 @@ export const useStudio = create<State>((set, get) => {
         past: [],
         future: [],
         historyHeld: false,
+        saveStatus: "saved",
+        lastSavedAt: formatTime(),
       });
+    },
+
+    saveNow: () => {
+      flushSave(get().doc);
+      get().notify("✓ Sauvegardé en temps réel");
     },
 
     setZoom: (z) => set({ zoom: Math.min(2, Math.max(0.25, z)) }),
@@ -583,6 +629,72 @@ export const useStudio = create<State>((set, get) => {
       set({ selectedIds: [], editingId: null });
       const name = id;
       get().notify(`Modèle ${name} posé sur la page`);
+    },
+
+    applyJobPreset: (presetId) => {
+      const preset = JOB_PRESETS.find((p) => p.id === presetId);
+      if (!preset) return;
+      const pageId = get().activePageId;
+      commit((doc) => {
+        const page = doc.pages.find((p) => p.id === pageId) ?? doc.pages[0];
+        const nextProfile = structuredClone(preset.profile);
+        return mapPage({ ...doc, profile: nextProfile }, page.id, (p) => ({
+          ...p,
+          elements: buildTemplate("modern", nextProfile, `preset-${uid()}`),
+        }));
+      }, false);
+      set({ selectedIds: [], editingId: null });
+      get().notify(`⚡ Métier "${preset.label}" chargé !`);
+    },
+
+    applyPalette: (paletteId) => {
+      const palette = COLOR_PALETTES.find((p) => p.id === paletteId);
+      if (!palette) return;
+      const pageId = get().activePageId;
+      commit((doc) => {
+        return mapPage(doc, pageId, (p) => ({
+          ...p,
+          elements: applyPaletteToElements(p.elements, palette),
+        }));
+      }, false);
+      get().notify(`Harmonie "${palette.name}" appliquée`);
+    },
+
+    addSectionPack: (packId) => {
+      const pack = SECTION_PACKS.find((p) => p.id === packId);
+      if (!pack) return;
+      const page = get().doc.pages.find((p) => p.id === get().activePageId) ?? get().doc.pages[0];
+      const bottom = page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48);
+      const startY = Math.min(PAGE_H - 120, bottom + 20);
+      const maxZ = Math.max(1, ...page.elements.map((e) => e.z)) + 1;
+      const { elements: newElements } = pack.createElements(startY, maxZ);
+
+      commit((doc) => {
+        return mapPage(doc, page.id, (p) => ({
+          ...p,
+          elements: [...p.elements, ...newElements],
+        }));
+      }, false);
+      set({ selectedIds: newElements.map((e) => e.id), editingId: null });
+      get().notify(`Pack "${pack.name}" ajouté`);
+    },
+
+    boostElementText: (id, customPhrase) => {
+      const pageId = get().activePageId;
+      const phrase = customPhrase || getRandomBoost();
+      const page = get().doc.pages.find((p) => p.id === pageId) ?? get().doc.pages[0];
+      const el = page.elements.find((e) => e.id === id);
+      if (!el) return;
+
+      if (el.type === "experience") {
+        const curDesc = el.content.desc ? el.content.desc.trim() : "";
+        const updatedDesc = curDesc ? `${curDesc}\n• ${phrase}` : `• ${phrase}`;
+        get().patchElement(pageId, id, { content: { desc: updatedDesc } });
+        get().notify("✨ Réalisation chiffrée ajoutée au poste !");
+      } else if (el.type === "text" || el.type === "heading") {
+        get().patchElement(pageId, id, { content: { text: phrase } });
+        get().notify("✨ Formulation professionnelle appliquée !");
+      }
     },
 
     addPage: () => {

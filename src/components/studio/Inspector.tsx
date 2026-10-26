@@ -9,10 +9,14 @@ import {
   Italic,
   Lock,
   SendToBack,
+  Sparkles,
   Trash2,
   Unlock,
+  Wand2,
 } from "lucide-react";
 import { activePage, useStudio, type ElementPatch } from "@/cv/store";
+import { JOB_PRESETS } from "@/cv/presets";
+import { COLOR_PALETTES } from "@/cv/palettes";
 import type { ContactIcon, CVElement, ElStyle } from "@/cv/types";
 import { FONTS, TYPE_LABEL } from "@/cv/types";
 import { cn } from "@/lib/utils";
@@ -57,6 +61,52 @@ export function Inspector() {
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {!selected.length && (
           <>
+            {/* RACCOURCI BAGUETTE MAGIQUE DANS L'INSPECTEUR */}
+            <div className="rounded-ui border border-amber-400/40 bg-amber-400/10 p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                <Wand2 size={13} />
+                <span>Remplir par métier (1 clic)</span>
+              </div>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    useStudio.getState().applyJobPreset(e.target.value);
+                    e.target.value = "";
+                  }
+                }}
+                defaultValue=""
+                className="h-9 w-full rounded-ui border border-amber-300 bg-sheet px-2 text-xs font-medium text-ink outline-none"
+              >
+                <option value="" disabled>
+                  Choisir un profil pré-rédigé...
+                </option>
+                {JOB_PRESETS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label} ({p.category})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* HARMONIE COULEUR RAPIDE */}
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-mute">Harmonie couleurs en 1 clic</span>
+              <div className="flex items-center justify-between gap-1 rounded-ui border border-line bg-sheet p-1.5">
+                {COLOR_PALETTES.map((pal) => (
+                  <button
+                    key={pal.id}
+                    type="button"
+                    title={pal.name}
+                    onClick={() => useStudio.getState().applyPalette(pal.id)}
+                    className="flex size-7 items-center justify-center rounded-full transition hover:scale-110"
+                    style={{ backgroundColor: pal.primary }}
+                  >
+                    <div className="size-2 rounded-full" style={{ backgroundColor: pal.accent }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Field label="Nom">
               <input className={input} value={profile.name} onChange={(e) => identity("name", e.target.value)} onBlur={release} />
             </Field>
@@ -75,7 +125,7 @@ export function Inspector() {
             <Field label="Lien">
               <input className={input} value={profile.link} onChange={(e) => identity("link", e.target.value)} onBlur={release} />
             </Field>
-            <Field label="Profil">
+            <Field label="Profil / Bio">
               <textarea className={`${input} h-28 resize-none py-2`} value={profile.summary} onChange={(e) => identity("summary", e.target.value)} onBlur={release} />
             </Field>
             <Field label="Fond de page">
@@ -212,9 +262,21 @@ function ContentFields({ el, pageId }: { el: CVElement; pageId: string }) {
             </select>
           </Field>
         )}
-        <Field label="Texte">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-mute">Texte</span>
+            <button
+              type="button"
+              onClick={() => useStudio.getState().boostElementText(el.id)}
+              className="flex items-center gap-1 rounded-md bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-900 hover:bg-amber-400/30 transition"
+              title="Formuler ce texte de manière percutante"
+            >
+              <Sparkles size={11} />
+              <span>✨ Formuler comme un pro</span>
+            </button>
+          </div>
           <textarea className={`${input} h-24 resize-none py-2`} value={c.text ?? ""} onChange={(e) => patch({ text: e.target.value })} onBlur={release} />
-        </Field>
+        </div>
       </div>
     );
   }
@@ -230,9 +292,21 @@ function ContentFields({ el, pageId }: { el: CVElement; pageId: string }) {
         <Field label="Dates">
           <input className={input} value={c.date ?? ""} onChange={(e) => patch({ date: e.target.value })} onBlur={release} />
         </Field>
-        <Field label="Récit">
-          <textarea className={`${input} h-24 resize-none py-2`} value={c.desc ?? ""} onChange={(e) => patch({ desc: e.target.value })} onBlur={release} />
-        </Field>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-mute">Récit & Réalisations</span>
+            <button
+              type="button"
+              onClick={() => useStudio.getState().boostElementText(el.id)}
+              className="flex items-center gap-1 rounded-md bg-amber-400/25 px-2 py-0.5 text-[10px] font-bold text-amber-900 hover:bg-amber-400/40 transition"
+              title="Ajoute une réalisation concrète et chiffrée"
+            >
+              <Sparkles size={11} />
+              <span>✨ Chiffrer comme un pro</span>
+            </button>
+          </div>
+          <textarea className={`${input} h-28 resize-none py-2`} value={c.desc ?? ""} onChange={(e) => patch({ desc: e.target.value })} onBlur={release} />
+        </div>
       </div>
     );
   }
