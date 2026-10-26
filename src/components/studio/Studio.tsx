@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Layers, SlidersHorizontal } from "lucide-react";
+import { Cloud, Layers, SlidersHorizontal, Smartphone } from "lucide-react";
 import { Canvas } from "@/components/studio/Canvas";
 import { Inspector } from "@/components/studio/Inspector";
 import { PageSheet } from "@/components/studio/PageSheet";
 import { Sidebar } from "@/components/studio/Sidebar";
+import { CloudSyncModal } from "@/components/studio/CloudSyncModal";
+import { MobileTouchEditor } from "@/components/studio/MobileTouchEditor";
+import { CvExtractorModal } from "@/components/studio/CvExtractorModal";
 import { activePage, useStudio } from "@/cv/store";
 import { PAGE_H, PAGE_W } from "@/cv/types";
 
@@ -25,6 +28,10 @@ export function Studio() {
   const doc = useStudio((s) => s.doc);
   const activePageId = useStudio((s) => s.activePageId);
   const notice = useStudio((s) => s.notice);
+  const cloudModalOpen = useStudio((s) => s.cloudModalOpen);
+  const setCloudModalOpen = useStudio((s) => s.setCloudModalOpen);
+  const mobileTouchMode = useStudio((s) => s.mobileTouchMode);
+  const setMobileTouchMode = useStudio((s) => s.setMobileTouchMode);
   const captureRef = useRef<HTMLDivElement>(null);
   const page = activePage(doc, activePageId);
 
@@ -155,9 +162,21 @@ export function Studio() {
     <div className="studio flex h-dvh w-full overflow-hidden bg-paper text-ink">
       {!narrow && <Sidebar />}
       <div className="flex min-w-0 flex-1 flex-col">
-        <Canvas narrow={narrow} />
-        {narrow && (
+        {narrow && mobileTouchMode ? (
+          <MobileTouchEditor onSwitchToCanvas={() => setMobileTouchMode(false)} />
+        ) : (
+          <Canvas narrow={narrow} />
+        )}
+        {narrow && !mobileTouchMode && (
           <div className="no-print flex h-14 shrink-0 border-t border-line bg-cream">
+            <button
+              type="button"
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold text-blue-600"
+              onClick={() => setMobileTouchMode(true)}
+            >
+              <Smartphone size={16} />
+              Tactile
+            </button>
             <button type="button" className="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium" onClick={() => setPanel("library")}>
               <Layers size={16} />
               Atelier
@@ -166,10 +185,21 @@ export function Studio() {
               <SlidersHorizontal size={16} />
               Réglages
             </button>
+            <button
+              type="button"
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium"
+              onClick={() => setCloudModalOpen(true)}
+            >
+              <Cloud size={16} />
+              Cloud
+            </button>
           </div>
         )}
       </div>
       {!narrow && <Inspector />}
+
+      <CloudSyncModal isOpen={cloudModalOpen} onClose={() => setCloudModalOpen(false)} />
+      <CvExtractorModal />
 
       {narrow && panel && (
         <div className="no-print fixed inset-0 z-40 flex bg-ink/50" onClick={() => setPanel(null)}>

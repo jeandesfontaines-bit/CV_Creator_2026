@@ -6,17 +6,16 @@ import {
   Bold,
   BringToFront,
   Copy,
+  Image as ImageIcon,
   Italic,
   Lock,
   SendToBack,
   Sparkles,
   Trash2,
   Unlock,
-  Wand2,
 } from "lucide-react";
+import { readImage } from "@/cv/image";
 import { activePage, useStudio, type ElementPatch } from "@/cv/store";
-import { JOB_PRESETS } from "@/cv/presets";
-import { COLOR_PALETTES } from "@/cv/palettes";
 import type { ContactIcon, CVElement, ElStyle } from "@/cv/types";
 import { FONTS, TYPE_LABEL } from "@/cv/types";
 import { cn } from "@/lib/utils";
@@ -54,93 +53,73 @@ export function Inspector() {
   };
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-l border-line bg-cream">
-      <div className="flex h-12 items-center border-b border-line px-4">
-        <h2 className="text-sm font-semibold">{one ? TYPE_LABEL[one.type] : selected.length > 1 ? `${selected.length} blocs` : "Le CV"}</h2>
+    <aside className="flex h-full w-72 shrink-0 flex-col border-l border-line bg-cream select-none z-20">
+      <div className="flex h-13 shrink-0 items-center justify-between border-b border-line px-4">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink">
+          {one ? TYPE_LABEL[one.type] : selected.length > 1 ? `${selected.length} éléments sélectionnés` : "Propriétés du document"}
+        </h2>
+        {one && (
+          <span className="text-[10px] text-mute font-mono">
+            {Math.round(one.w)}×{Math.round(one.h)}px
+          </span>
+        )}
       </div>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {!selected.length && (
           <>
-            {/* RACCOURCI BAGUETTE MAGIQUE DANS L'INSPECTEUR */}
-            <div className="rounded-ui border border-amber-400/40 bg-amber-400/10 p-2.5 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-                <Wand2 size={13} />
-                <span>Remplir par métier (1 clic)</span>
+            <div className="rounded-xl border border-line bg-sheet/80 p-3 space-y-1.5">
+              <div className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                <span>💡</span>
+                <span>Astuce d'édition</span>
               </div>
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    useStudio.getState().applyJobPreset(e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-                defaultValue=""
-                className="h-9 w-full rounded-ui border border-amber-300 bg-sheet px-2 text-xs font-medium text-ink outline-none"
-              >
-                <option value="" disabled>
-                  Choisir un profil pré-rédigé...
-                </option>
-                {JOB_PRESETS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label} ({p.category})
-                  </option>
-                ))}
-              </select>
+              <p className="text-[11px] leading-relaxed text-mute">
+                Cliquez sur n'importe quel bloc sur la page pour le modifier directement, ou ajustez vos informations globales ci-dessous.
+              </p>
             </div>
 
-            {/* HARMONIE COULEUR RAPIDE */}
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-mute">Harmonie couleurs en 1 clic</span>
-              <div className="flex items-center justify-between gap-1 rounded-ui border border-line bg-sheet p-1.5">
-                {COLOR_PALETTES.map((pal) => (
-                  <button
-                    key={pal.id}
-                    type="button"
-                    title={pal.name}
-                    onClick={() => useStudio.getState().applyPalette(pal.id)}
-                    className="flex size-7 items-center justify-center rounded-full transition hover:scale-110"
-                    style={{ backgroundColor: pal.primary }}
-                  >
-                    <div className="size-2 rounded-full" style={{ backgroundColor: pal.accent }} />
-                  </button>
-                ))}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between border-b border-line pb-1.5">
+                <span className="text-[10px] font-bold tracking-widest text-mute uppercase">Coordonnées du profil</span>
               </div>
+
+              <Field label="Nom complet">
+                <input className={input} value={profile.name} onChange={(e) => identity("name", e.target.value)} onBlur={release} placeholder="Ex: Alexandra Dubois" />
+              </Field>
+              <Field label="Intitulé du poste">
+                <input className={input} value={profile.role} onChange={(e) => identity("role", e.target.value)} onBlur={release} placeholder="Ex: Lead Développeur" />
+              </Field>
+              <Field label="Adresse e-mail">
+                <input className={input} value={profile.email} onChange={(e) => identity("email", e.target.value)} onBlur={release} placeholder="contact@domaine.com" />
+              </Field>
+              <Field label="Téléphone">
+                <input className={input} value={profile.phone} onChange={(e) => identity("phone", e.target.value)} onBlur={release} placeholder="+33 6 00 00 00 00" />
+              </Field>
+              <Field label="Ville / Mobilité">
+                <input className={input} value={profile.location} onChange={(e) => identity("location", e.target.value)} onBlur={release} placeholder="Paris, France" />
+              </Field>
+              <Field label="Lien professionnel (LinkedIn, Portfolio)">
+                <input className={input} value={profile.link} onChange={(e) => identity("link", e.target.value)} onBlur={release} placeholder="linkedin.com/in/nom" />
+              </Field>
+              <Field label="Résumé de profil / Accroche">
+                <textarea className={`${input} h-24 resize-none py-2`} value={profile.summary} onChange={(e) => identity("summary", e.target.value)} onBlur={release} placeholder="Présentation synthétique..." />
+              </Field>
+              <Field label="Couleur de fond du document A4">
+                <input
+                  type="color"
+                  value={toHex(page.background)}
+                  onChange={(e) => useStudio.getState().setPageBackground(e.target.value, true)}
+                  onBlur={release}
+                  className="h-10 w-full cursor-pointer rounded-ui border border-line bg-sheet"
+                />
+              </Field>
             </div>
 
-            <Field label="Nom">
-              <input className={input} value={profile.name} onChange={(e) => identity("name", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="Poste">
-              <input className={input} value={profile.role} onChange={(e) => identity("role", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="E-mail">
-              <input className={input} value={profile.email} onChange={(e) => identity("email", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="Téléphone">
-              <input className={input} value={profile.phone} onChange={(e) => identity("phone", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="Ville">
-              <input className={input} value={profile.location} onChange={(e) => identity("location", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="Lien">
-              <input className={input} value={profile.link} onChange={(e) => identity("link", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="Profil / Bio">
-              <textarea className={`${input} h-28 resize-none py-2`} value={profile.summary} onChange={(e) => identity("summary", e.target.value)} onBlur={release} />
-            </Field>
-            <Field label="Fond de page">
-              <input
-                type="color"
-                value={toHex(page.background)}
-                onChange={(e) => useStudio.getState().setPageBackground(e.target.value, true)}
-                onBlur={release}
-                className="h-10 w-full cursor-pointer rounded-ui border border-line bg-sheet"
-              />
-            </Field>
-            <div className="space-y-1 border-t border-line pt-3 text-xs leading-relaxed text-mute">
-              <p>Glisse un bloc. Les bords s’aimantent.</p>
-              <p>Double-clic pour réécrire sur la page.</p>
-              <p>Flèches : 1 px. Maj : 8 px. ⌘D duplique. ⌘Z annule.</p>
+            <div className="space-y-1.5 border-t border-line pt-3 text-[11px] leading-relaxed text-mute">
+              <div className="font-semibold text-ink text-xs mb-1">Raccourcis clavier :</div>
+              <p>• <strong>Double-clic</strong> : éditer le texte sur la feuille</p>
+              <p>• <strong>Flèches</strong> : déplacer de 1 px (Maj : 8 px)</p>
+              <p>• <strong>⌘D / Ctrl+D</strong> : dupliquer le bloc</p>
+              <p>• <strong>Suppr / Retour</strong> : effacer le bloc</p>
             </div>
           </>
         )}
@@ -380,7 +359,52 @@ function ContentFields({ el, pageId }: { el: CVElement; pageId: string }) {
     );
   }
   if (el.type === "photo") {
-    return <p className="text-xs text-mute">Importe une photo depuis le bloc, ou ici.</p>;
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          {c.src ? (
+            <img src={c.src} alt="Photo profil" className="size-16 rounded-xl object-cover border border-line shadow-xs" />
+          ) : (
+            <div className="flex size-16 items-center justify-center rounded-xl border border-dashed border-line bg-sheet text-mute">
+              <ImageIcon size={20} />
+            </div>
+          )}
+          <div className="flex-1 space-y-1">
+            <label className="flex h-9 w-full cursor-pointer items-center justify-center rounded-ui bg-ink text-xs font-semibold text-cream hover:bg-neutral-800 transition">
+              <span>{c.src ? "Remplacer l'image" : "Choisir une photo"}</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const src = await readImage(file);
+                    patch({ src }, false);
+                    useStudio.getState().notify("Photo optimisée & intégrée !");
+                  } catch {
+                    useStudio.getState().notify("Impossible de lire cette image");
+                  }
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <p className="text-[10px] text-mute">Compression & redimensionnement automatiques HD (&lt;80 KB)</p>
+          </div>
+        </div>
+        {c.src && (
+          <button
+            type="button"
+            onClick={() => patch({ src: "" }, false)}
+            className="flex h-8 w-full items-center justify-center gap-1 rounded-ui border border-line text-xs text-mute hover:border-red-300 hover:text-red-500 transition"
+          >
+            <Trash2 size={12} />
+            <span>Retirer la photo</span>
+          </button>
+        )}
+      </div>
+    );
   }
   return null;
 }

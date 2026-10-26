@@ -7,11 +7,16 @@ import {
   ChevronDown,
   Cloud,
   Copy,
+  Download,
+  FileText,
   Minus,
   Plus,
+  Printer,
+  Redo,
   SendToBack,
   Sparkles,
   Trash2,
+  Undo,
   X,
 } from "lucide-react";
 import { PageSheet } from "@/components/studio/PageSheet";
@@ -299,11 +304,19 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
   const saveStatus = useStudio((s) => s.saveStatus);
   const lastSavedAt = useStudio((s) => s.lastSavedAt);
   const saveNow = useStudio((s) => s.saveNow);
+  const syncCode = useStudio((s) => s.syncCode);
+  const setCloudModalOpen = useStudio((s) => s.setCloudModalOpen);
+  const directPdfExport = useStudio((s) => s.directPdfExport);
   const boostElementText = useStudio((s) => s.boostElementText);
   const addSectionPack = useStudio((s) => s.addSectionPack);
+  const past = useStudio((s) => s.past.length);
+  const future = useStudio((s) => s.future.length);
+  const undo = useStudio((s) => s.undo);
+  const redo = useStudio((s) => s.redo);
 
   const [healthOpen, setHealthOpen] = useState(false);
   const [boostMenuOpen, setBoostMenuOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -352,13 +365,15 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* HEADER SUPÉRIEUR ÉLÉGANT & INFORMATIONS CV */}
-      <header className="no-print relative z-30 flex h-13 shrink-0 items-center justify-between gap-3 border-b border-line bg-cream px-3.5">
+      {/* HEADER SUPÉRIEUR ÉLÉGANT & DÉCLUSTRING */}
+      <header className="no-print relative z-30 flex h-13 shrink-0 items-center justify-between gap-3 border-b border-line bg-cream px-4 select-none">
+        {/* Zone Gauche : Document & Score */}
         <div className="flex min-w-0 items-center gap-3">
-          {narrow && <span className="font-display text-sm font-bold tracking-wide">LIBRE</span>}
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-ink">{page.name}</span>
-            <span className="rounded-full bg-ink px-2 py-0.5 font-mono text-[10px] text-cream">A4 (794×1123)</span>
+          {narrow && <span className="font-display text-sm font-bold tracking-wide">CV PRO</span>}
+          <div className="flex items-center gap-1.5 text-xs text-ink">
+            <span className="font-bold">{page.name}</span>
+            <span className="text-mute font-normal">·</span>
+            <span className="text-mute font-mono text-[11px]">A4 (794×1123)</span>
           </div>
 
           <div className="hidden h-4 w-px bg-line sm:block" />
@@ -369,7 +384,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
               type="button"
               onClick={() => setHealthOpen(!healthOpen)}
               className={cn(
-                "group flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition shadow-xs",
+                "group flex items-center gap-2 rounded-lg border px-2.5 py-1 text-xs font-medium transition shadow-xs",
                 healthOpen
                   ? "border-ink bg-ink text-cream"
                   : "border-line bg-sheet text-ink hover:border-ink hover:bg-cream",
@@ -381,10 +396,10 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                   {health.score >= 85 ? "🎯" : health.score >= 60 ? "⚡" : "💡"}
                 </span>
                 <span className="text-[11px] font-semibold">
-                  CV prêt à {health.score}%
+                  Score : {health.score}%
                 </span>
               </div>
-              <div className="h-1.5 w-12 overflow-hidden rounded-full bg-line/60">
+              <div className="h-1.5 w-10 overflow-hidden rounded-full bg-line/80">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -394,12 +409,12 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                   }}
                 />
               </div>
-              <ChevronDown size={12} className={cn("transition-transform", healthOpen && "rotate-180")} />
+              <ChevronDown size={11} className={cn("transition-transform text-mute", healthOpen && "rotate-180 text-cream")} />
             </button>
 
             {/* CHECKLIST PLIANTE DE COMPLÉTION */}
             {healthOpen && (
-              <div className="absolute top-full left-0 mt-2 w-80 rounded-ui border border-line bg-sheet p-3.5 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full left-0 mt-2 w-80 rounded-xl border border-line bg-sheet p-3.5 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="mb-2.5 flex items-center justify-between border-b border-line pb-2">
                   <div>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-ink">
@@ -408,7 +423,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                         {health.score}/100
                       </span>
                     </div>
-                    <p className="text-[10px] text-mute">
+                    <p className="text-[10px] text-mute mt-0.5">
                       {health.score >= 85
                         ? "🎉 Excellent ! Votre CV est complet et très impactant."
                         : health.score >= 60
@@ -430,7 +445,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                     <div
                       key={item.id}
                       className={cn(
-                        "rounded-ui border p-2 text-xs transition",
+                        "rounded-lg border p-2 text-xs transition",
                         item.passed
                           ? "border-emerald-200 bg-emerald-50/40 text-emerald-950"
                           : "border-amber-200 bg-amber-50/50 text-amber-950",
@@ -463,7 +478,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between border-t border-line pt-2 text-[10px] text-mute">
-                  <span>Mis à jour en temps réel</span>
+                  <span>Temps réel</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -472,7 +487,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                     }}
                     className="font-semibold text-amber-600 hover:underline"
                   >
-                    ⚡ Remplir automatiquement à 100%
+                    ⚡ Compléter à 100%
                   </button>
                 </div>
               </div>
@@ -480,31 +495,67 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
           </div>
         </div>
 
-        {/* STATUT D'AUTO-SAVE ET CONTRÔLE DE ZOOM */}
-        <div className="flex items-center gap-2">
-          {/* Bouton Sauvegarder en continu */}
-          <button
-            type="button"
-            onClick={saveNow}
-            className="hidden items-center gap-1.5 rounded-full border border-line bg-sheet px-2.5 py-1 text-[11px] font-medium text-mute hover:border-ink hover:text-ink sm:flex transition shadow-xs"
-            title="Cliquez pour forcer l'enregistrement immédiat"
-          >
-            <Cloud size={13} className={saveStatus === "saving" ? "animate-pulse text-amber-500" : "text-emerald-600"} />
-            <span>{saveStatus === "saving" ? "Sauvegarde..." : mounted && lastSavedAt ? `Enregistré (${lastSavedAt})` : "Enregistré"}</span>
-          </button>
-
-          <div className="flex items-center gap-1">
+        {/* Zone Centre : Undo / Redo & Sauvegarde */}
+        <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-0.5 rounded-lg border border-line bg-sheet p-0.5">
             <button
               type="button"
-              className="h-8 rounded-ui px-2 text-xs font-semibold text-mute hover:bg-paper hover:text-ink"
-              onClick={() => setZoom(zoom / 1.1)}
+              onClick={() => undo()}
+              disabled={past === 0}
+              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-paper transition"
+              title="Annuler (⌘Z)"
+            >
+              <Undo size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => redo()}
+              disabled={future === 0}
+              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-paper transition"
+              title="Rétablir (⌘Y)"
+            >
+              <Redo size={13} />
+            </button>
+          </div>
+
+          <div
+            onClick={saveNow}
+            className="flex items-center gap-1.5 text-[11px] text-mute hover:text-ink cursor-pointer transition"
+            title="Enregistrement continu en local. Cliquez pour sauvegarder maintenant."
+          >
+            <span className={cn("size-2 rounded-full", saveStatus === "saving" ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
+            <span className="font-mono text-[10px]">
+              {saveStatus === "saving" ? "Sauvegarde..." : mounted && lastSavedAt ? `Enregistré (${lastSavedAt})` : "Enregistré"}
+            </span>
+          </div>
+        </div>
+
+        {/* Zone Droite : Sync, Zoom & Export Principal */}
+        <div className="flex items-center gap-2">
+          {/* Synchronisation Cloud Multi-appareils */}
+          <button
+            type="button"
+            onClick={() => setCloudModalOpen(true)}
+            className="hidden md:flex items-center gap-1.5 rounded-lg border border-line bg-sheet px-2.5 py-1.5 text-[11px] font-medium text-ink hover:border-blue-500 hover:text-blue-600 transition shadow-xs"
+            title="Synchroniser votre CV sur mobile ou un autre appareil sans compte"
+          >
+            <Cloud size={13} className={syncCode ? "text-blue-600" : "text-mute"} />
+            <span>{syncCode ? `Sync: ${syncCode}` : "Cloud Sync"}</span>
+          </button>
+
+          {/* Zoom */}
+          <div className="flex items-center gap-0.5 rounded-lg border border-line bg-sheet p-0.5">
+            <button
+              type="button"
+              className="flex size-7 items-center justify-center rounded text-xs font-semibold text-mute hover:bg-paper hover:text-ink transition"
+              onClick={() => setZoom(zoom / 1.15)}
               title="Zoom arrière"
             >
               −
             </button>
             <button
               type="button"
-              className="h-8 min-w-12 rounded-ui px-2 text-xs font-semibold tabular-nums hover:bg-paper"
+              className="h-7 min-w-11 px-1 text-xs font-semibold tabular-nums hover:bg-paper rounded transition"
               onClick={fit}
               title="Adapter à l'écran"
             >
@@ -512,12 +563,93 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
             </button>
             <button
               type="button"
-              className="h-8 rounded-ui px-2 text-xs font-semibold text-mute hover:bg-paper hover:text-ink"
-              onClick={() => setZoom(zoom * 1.1)}
+              className="flex size-7 items-center justify-center rounded text-xs font-semibold text-mute hover:bg-paper hover:text-ink transition"
+              onClick={() => setZoom(zoom * 1.15)}
               title="Zoom avant"
             >
               +
             </button>
+          </div>
+
+          {/* BOUTON EXPORT CENTRAL AVEC MENU DÉROULANT (SEUL POINT D'EXPORT) */}
+          <div className="relative">
+            <div className="flex items-center rounded-lg bg-blue-600 text-white shadow-xs">
+              <button
+                type="button"
+                onClick={() => directPdfExport()}
+                className="flex items-center gap-1.5 h-8 px-3 text-xs font-bold hover:bg-blue-700 rounded-l-lg transition"
+                title="Télécharger directement le fichier A4 en PDF prêt à l'envoi"
+              >
+                <Download size={13} />
+                <span>Télécharger PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setExportOpen(!exportOpen)}
+                className="flex items-center justify-center h-8 w-6 border-l border-blue-500/50 hover:bg-blue-700 rounded-r-lg transition"
+                title="Autres formats d'export"
+              >
+                <ChevronDown size={12} className={cn("transition-transform", exportOpen && "rotate-180")} />
+              </button>
+            </div>
+
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl border border-line bg-sheet p-1 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportOpen(false);
+                    directPdfExport();
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-cream transition"
+                >
+                  <Download size={14} className="text-blue-600 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-ink">Télécharger PDF (A4)</div>
+                    <div className="text-[10px] text-mute">Export direct 1-clic haute qualité</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportOpen(false);
+                    document.dispatchEvent(new Event("libre-png"));
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-cream transition"
+                >
+                  <FileText size={14} className="text-zinc-600 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-ink">Image HD (PNG)</div>
+                    <div className="text-[10px] text-mute">Idéal pour aperçu web ou mobile</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportOpen(false);
+                    window.print();
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-cream transition"
+                >
+                  <Printer size={14} className="text-zinc-600 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-ink">Imprimer (Système)</div>
+                    <div className="text-[10px] text-mute">Via l'imprimante ou boîte native</div>
+                  </div>
+                </button>
+                <div className="my-1 border-t border-line" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportOpen(false);
+                    document.dispatchEvent(new Event("libre-json"));
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-mute hover:text-ink hover:bg-cream transition text-xs"
+                >
+                  <span>Sauvegarder le projet (JSON)</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

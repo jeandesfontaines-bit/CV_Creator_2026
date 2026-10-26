@@ -1,0 +1,30 @@
+{
+  "name": "cv-extractor-2026",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CV-only extraction engine and document readers separated from JobPilot",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./browser": "./src/browser.ts"
+  },
+  "files": ["dist", "src", "README.md"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "tsx --test src/lib/cv/parse.test.ts"
+  },
+  "dependencies": {
+    "jszip": "^3.10.2",
+    "mammoth": "^1.13.0",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": { "node": ">=22" }
+}

@@ -5,6 +5,9 @@ import { buildTemplate } from "@/cv/templates";
 import { JOB_PRESETS, getRandomBoost } from "@/cv/presets";
 import { COLOR_PALETTES, applyPaletteToElements } from "@/cv/palettes";
 import { SECTION_PACKS } from "@/cv/packs";
+import { saveCvToCloud, loadCvFromCloud } from "@/lib/cloud-cv";
+import { downloadDirectPDF } from "@/cv/pdf";
+import { extractFromText } from "@/cv/extractor";
 import type {
   Bind,
   ContactIcon,
@@ -47,6 +50,15 @@ type State = {
   clipboard: CVElement[];
   saveStatus: SaveStatus;
   lastSavedAt: string | null;
+  syncCode: string | null;
+  cloudStatus: "idle" | "saving" | "synced" | "error";
+  cloudModalOpen: boolean;
+  mobileTouchMode: boolean;
+  setCloudModalOpen: (open: boolean) => void;
+  setMobileTouchMode: (active: boolean) => void;
+  syncToCloud: (title?: string) => Promise<string | null>;
+  loadFromCloud: (code: string) => Promise<boolean>;
+  directPdfExport: () => Promise<void>;
   hydrate: () => void;
   saveNow: () => void;
   setZoom: (z: number) => void;
@@ -83,6 +95,9 @@ type State = {
   deletePage: (id: string) => void;
   renamePage: (id: string, name: string) => void;
   setPageBackground: (color: string, live?: boolean) => void;
+  extractorModalOpen: boolean;
+  setExtractorModalOpen: (open: boolean) => void;
+  importExtractedProfile: (profile: Profile, template?: TemplateId, asNewPage?: boolean) => void;
   newDocument: () => void;
   loadDocument: (doc: Doc) => void;
   importText: (raw: string, template: TemplateId) => void;
@@ -220,9 +235,51 @@ export const useStudio = create<State>((set, get) => {
     clipboard: [],
     saveStatus: "saved",
     lastSavedAt: null,
+    syncCode: null,
+    cloudStatus: "idle",
+    cloudModalOpen: false,
+    extractorModalOpen: false,
+    mobileTouchMode: false,
+
+    setCloudModalOpen: (open) => set({ cloudModalOpen: open }),
+    setExtractorModalOpen: (open) => set({ extractorModalOpen: open }),
+    setMobileTouchMode: (active) => set({ mobileTouchMode: active }),
 
     hydrate: () => {
+      // 1. Inspect URL parameters for ?sync=CODE
+      let urlSyncCode: string | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const s = params.get("sync");
+          if (s && s.trim()) urlSyncCode = s.trim().toUpperCase();
+        } catch {
+          // ignore
+        }
+      }
+
+      // 2. Retrieve local storage CV and stored sync code
       const loaded = readStorage();
+      let storedSyncCode: string | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          storedSyncCode = localStorage.getItem("libre-cv-sync-code");
+        } catch {
+          // ignore
+        }
+      }
+
+      const activeCode = urlSyncCode || storedSyncCode;
+      if (activeCode) {
+        set({ syncCode: activeCode });
+      }
+
+      if (urlSyncCode) {
+        // If an explicit sync code is passed in URL, load it directly from the cloud
+        get().loadFromCloud(urlSyncCode);
+        return;
+      }
+
       if (!loaded) return;
       set({
         doc: loaded,
@@ -235,6 +292,90 @@ export const useStudio = create<State>((set, get) => {
         saveStatus: "saved",
         lastSavedAt: formatTime(),
       });
+    },
+
+    syncToCloud: async (customTitle) => {
+      const { doc, syncCode } = get();
+      set({ cloudStatus: "saving" });
+      get().notify("Synchronisation Cloud en cours...");
+      try {
+        const title = customTitle || doc.profile.name || "Mon CV";
+        const res = await saveCvToCloud({
+          data: {
+            doc,
+            syncCode: syncCode ?? undefined,
+            title,
+          },
+        });
+        if (res.success) {
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("libre-cv-sync-code", res.syncCode);
+            } catch {
+              // ignore
+            }
+          }
+          set({ syncCode: res.syncCode, cloudStatus: "synced" });
+          get().notify(`☁️ CV synchronisé ! Code : ${res.syncCode}`);
+          return res.syncCode;
+        } else {
+          set({ cloudStatus: "error" });
+          get().notify(`Erreur Cloud : ${res.error}`);
+          return null;
+        }
+      } catch (err: unknown) {
+        set({ cloudStatus: "error" });
+        const msg = err instanceof Error ? err.message : "Erreur Cloud";
+        get().notify(msg);
+        return null;
+      }
+    },
+
+    loadFromCloud: async (code) => {
+      const clean = code.trim().toUpperCase();
+      if (!clean) return false;
+      set({ cloudStatus: "saving" });
+      get().notify(`Récupération du CV "${clean}"...`);
+      try {
+        const res = await loadCvFromCloud({ data: clean });
+        if (res.success) {
+          get().loadDocument(res.doc);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("libre-cv-sync-code", res.syncCode);
+            } catch {
+              // ignore
+            }
+          }
+          set({ syncCode: res.syncCode, cloudStatus: "synced" });
+          get().notify(`✓ CV "${res.title}" chargé depuis le Cloud !`);
+          return true;
+        } else {
+          set({ cloudStatus: "error" });
+          get().notify(res.error);
+          return false;
+        }
+      } catch (err: unknown) {
+        set({ cloudStatus: "error" });
+        const msg = err instanceof Error ? err.message : "Impossible de charger le CV";
+        get().notify(msg);
+        return false;
+      }
+    },
+
+    directPdfExport: async () => {
+      const { doc, activePageId } = get();
+      get().notify("Génération directe du PDF en cours...");
+      try {
+        await downloadDirectPDF(doc, activePageId, (msg) => {
+          get().notify(msg);
+        });
+        get().notify("✓ PDF A4 téléchargé directement !");
+      } catch (err: unknown) {
+        console.error("Direct PDF export error:", err);
+        get().notify("Export PDF direct échoué — ouverture impression");
+        window.print();
+      }
     },
 
     saveNow: () => {
@@ -752,17 +893,57 @@ export const useStudio = create<State>((set, get) => {
       get().notify("Projet ouvert");
     },
 
+    importExtractedProfile: (profile, template = "modern", asNewPage = false) => {
+      const activeId = get().activePageId;
+      commit((doc) => {
+        const nextProfile = { ...doc.profile, ...profile };
+        if (asNewPage) {
+          const newPageId = `page-${uid()}`;
+          const newPage: Page = {
+            id: newPageId,
+            name: `Page ${doc.pages.length + 1} (${profile.name.split(" ")[0] || "CV"})`,
+            background: SHEET,
+            elements: buildTemplate(template, nextProfile, `${template}-${uid()}`),
+          };
+          return {
+            ...doc,
+            profile: nextProfile,
+            pages: [...doc.pages, newPage],
+          };
+        } else {
+          return mapPage({ ...doc, profile: nextProfile }, activeId, (p) => ({
+            ...p,
+            elements: buildTemplate(template, nextProfile, `${template}-${uid()}`),
+          }));
+        }
+      }, false);
+      if (asNewPage) {
+        const pages = get().doc.pages;
+        const lastPage = pages[pages.length - 1];
+        if (lastPage) set({ activePageId: lastPage.id });
+      }
+      set({ selectedIds: [], editingId: null });
+      get().notify(`CV extrait : ${profile.name} (${profile.experiences.length} exp, ${profile.educations.length} form)`);
+    },
+
     importText: (raw, template) => {
       const pageId = get().activePageId;
       commit((doc) => {
-        const profile = parseProfile(raw, doc.profile);
+        // Run full CV extraction using CV_extractor engine
+        let profile: Profile;
+        try {
+          const res = extractFromText(raw, doc.profile);
+          profile = res.profile;
+        } catch {
+          profile = parseProfile(raw, doc.profile);
+        }
         return mapPage({ ...doc, profile }, pageId, (p) => ({
           ...p,
           elements: buildTemplate(template, profile, `${template}-${uid()}`),
         }));
       }, false);
       set({ selectedIds: [], editingId: null });
-      get().notify("Texte réparti sur la page");
+      get().notify("CV textuel analysé et disposé");
     },
   };
 });
