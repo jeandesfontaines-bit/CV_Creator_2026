@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { useStudio } from "@/cv/store";
-import { TEMPLATES } from "@/cv/templates";
+import { buildTemplate, TEMPLATES } from "@/cv/templates";
 import { JOB_PRESETS } from "@/cv/presets";
-import type { TemplateId } from "@/cv/types";
+import { PAGE_H, PAGE_W } from "@/cv/types";
+import type { Page, TemplateId } from "@/cv/types";
+import { PageSheet } from "@/components/studio/PageSheet";
 
 export function OnboardingFlow() {
   const setOnboarding = useStudio((s) => s.setOnboarding);
@@ -23,6 +25,17 @@ export function OnboardingFlow() {
   const selectedPreset = JOB_PRESETS.find((preset) => preset.id === selectedPresetId) ?? JOB_PRESETS[0];
   const previewName = useCustomProfile ? `${firstName} ${lastName}`.trim() || "Votre nom" : selectedPreset.profile.name;
   const previewRole = useCustomProfile ? role || "Votre métier" : selectedPreset.profile.role;
+  const previewProfile = useMemo(() => ({
+    ...(useCustomProfile ? doc.profile : selectedPreset.profile),
+    name: previewName,
+    role: previewRole,
+  }), [doc.profile, previewName, previewRole, selectedPreset.profile, useCustomProfile]);
+  const previewPage = (templateId: TemplateId, prefix: string): Page => ({
+    id: prefix,
+    name: "Aperçu",
+    background: "#ffffff",
+    elements: buildTemplate(templateId, previewProfile, prefix),
+  });
 
   const handleLaunchGuided = () => {
     let nextProfile = doc.profile;
@@ -113,16 +126,7 @@ export function OnboardingFlow() {
           <aside className="cv-visual-stage" aria-label="Aperçu d’un CV personnalisable">
             <span className="cv-stage-label">EXEMPLE VISUEL · CONTENU FICTIF</span>
             <div className="cv-sample-sheet" aria-hidden="true">
-              <div className="cv-sheet-kicker">CURRICULUM VITAE</div>
-              <div className="cv-sheet-name">Camille<br />Martin</div>
-              <div className="cv-sheet-role">DIRECTION ARTISTIQUE</div>
-              <div className="cv-sheet-rule" />
-              <div className="cv-sheet-section">À PROPOS</div>
-              <div className="cv-sheet-line" /><div className="cv-sheet-line medium" /><div className="cv-sheet-line short" />
-              <div className="cv-sheet-section">EXPÉRIENCE</div>
-              <div className="cv-sheet-line medium" /><div className="cv-sheet-line" /><div className="cv-sheet-line short" />
-              <div className="cv-sheet-section">SAVOIR-FAIRE</div>
-              <div className="cv-sheet-line" /><div className="cv-sheet-line medium" />
+              <PageSheet page={previewPage(selectedTemplate, "welcome-preview")} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} />
             </div>
             <div className="cv-stage-sticker">LIBRE<br />DE BOUGER<br />LES LIGNES</div>
             <span className="cv-stage-index">APERÇU DE MISE EN PAGE · 01</span>
@@ -155,12 +159,9 @@ export function OnboardingFlow() {
                   aria-pressed={selectedTemplate === tpl.id}
                   className={`cv-template-card ${selectedTemplate === tpl.id ? "is-selected" : ""}`}
                 >
-                  <div className="cv-template-thumb" data-layout={tpl.id} aria-hidden="true">
-                    <div className="cv-template-page">
-                      <div className="cv-template-heading" />
-                      <div className="cv-template-subheading" />
-                      <div className="cv-template-rule" />
-                      <div className="cv-template-columns"><span><i /><i /><i /></span><span><i /><i /></span></div>
+                    <div className="cv-template-thumb" aria-hidden="true">
+                    <div className="cv-sheet-scale cv-sheet-scale-thumb">
+                      <PageSheet page={previewPage(tpl.id, `gallery-${tpl.id}`)} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} />
                     </div>
                     <span className="cv-template-index">0{index + 1}</span>
                   </div>
@@ -174,11 +175,10 @@ export function OnboardingFlow() {
             <section className="cv-preview-card">
               <div className="cv-preview-topline"><span>APERÇU EN DIRECT</span><span className="cv-live-dot" />
               </div>
-              <div className="cv-live-paper" data-layout={selectedTemplate}>
-                <div className="cv-live-paper-head"><div><small>CURRICULUM VITAE</small><h2>{previewName || "Votre nom"}</h2><p>{previewRole || "Votre métier"}</p></div><span className="cv-live-avatar">{previewName.slice(0, 1).toUpperCase()}</span></div>
-                <div className="cv-live-paper-section"><b>PROFIL</b><i /><i /><i className="short" /></div>
-                <div className="cv-live-paper-section"><b>EXPÉRIENCE</b><i /><i /><i /><i className="medium" /></div>
-                <div className="cv-live-paper-section"><b>COMPÉTENCES</b><div className="cv-live-tags"><i /><i /><i /></div></div>
+              <div className="cv-live-paper">
+                <div className="cv-sheet-scale cv-sheet-scale-live">
+                  <PageSheet page={previewPage(selectedTemplate, `live-${selectedTemplate}`)} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} />
+                </div>
               </div>
               <div className="cv-preview-footer"><span>{TEMPLATES.find((tpl) => tpl.id === selectedTemplate)?.name}</span><span>A4 · PERSONNALISABLE</span></div>
             </section>
