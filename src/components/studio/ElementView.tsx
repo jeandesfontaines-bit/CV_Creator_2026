@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type CSSProperties, type PointerEvent as React
 import { Link, Mail, MapPin, Phone } from "lucide-react";
 import type { ContactIcon, Content, CVElement, Handle } from "@/cv/types";
 import { FONT_STACK, withAlpha } from "@/cv/types";
+import { cn } from "@/lib/utils";
 
 const ICONS = { mail: Mail, phone: Phone, pin: MapPin, link: Link } as const;
 
@@ -93,7 +94,6 @@ export function ElementView({
   onDoubleClick,
   onChange,
   onResize,
-  onRotate,
   onUpload,
 }: Props) {
   const s = el.style;
@@ -247,7 +247,7 @@ export function ElementView({
           </div>
         )}
         {chrome && selected && (
-          <label className="no-export absolute inset-x-2 bottom-2 flex h-8 cursor-pointer items-center justify-center rounded-ui bg-ink text-xs font-semibold text-cream">
+          <label className="no-export absolute inset-x-2 bottom-2 flex h-7 cursor-pointer items-center justify-center rounded-md bg-slate-900/90 text-[11px] font-medium text-white">
             Importer
             <input
               type="file"
@@ -271,7 +271,10 @@ export function ElementView({
   return (
     <div
       data-element={el.id}
-      className={el.locked ? "absolute" : "absolute touch-none"}
+      className={cn(
+        el.locked ? "absolute" : "absolute touch-none",
+        chrome && !selected && !el.locked && "hover:ring-1 hover:ring-blue-500/35 rounded-2xs transition-shadow",
+      )}
       style={{
         left: el.x,
         top: el.y,
@@ -299,36 +302,28 @@ export function ElementView({
       >
         {body}
       </div>
+
+      {/* Cadre de sélection net et poignées fines */}
       {chrome && selected && !el.locked && (
         <>
-          <div className="pointer-events-none absolute inset-0 border border-ink" />
+          <div className="pointer-events-none absolute inset-0 ring-1.5 ring-signal rounded-2xs" />
           {HANDLES.map((handle) => (
             <div
               key={handle.id}
               role="button"
               aria-label={`Redimensionner ${handle.id}`}
-              className={`no-export absolute z-10 size-3 rounded-sm border border-ink bg-cream ${handle.className}`}
+              className={`no-export absolute z-10 size-2.5 rounded-full border-1.5 border-signal bg-white shadow-2xs ${handle.className}`}
               onPointerDown={(event) => {
                 event.stopPropagation();
                 onResize?.(handle.id, event);
               }}
             />
           ))}
-          <div className="no-export absolute -top-7 left-1/2 flex -translate-x-1/2 flex-col items-center">
-            <div className="h-4 w-px bg-ink" />
-            <div
-              role="button"
-              aria-label="Pivoter"
-              className="size-3 rounded-full border border-ink bg-cream"
-              onPointerDown={(event) => {
-                event.stopPropagation();
-                onRotate?.(event);
-              }}
-            />
-          </div>
         </>
       )}
-      {chrome && selected && el.locked && <div className="pointer-events-none absolute inset-0 border border-dashed border-mute" />}
+      {chrome && selected && el.locked && (
+        <div className="pointer-events-none absolute inset-0 border border-dashed border-amber-500" />
+      )}
     </div>
   );
 }

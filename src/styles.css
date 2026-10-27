@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", "DM Sans", ui-sans-serif, sans-serif;
-  --color-ink: #111827;
-  --color-ink-raise: #1d2738;
-  --color-ink-line: #344054;
-  --color-ink-mute: #a7b0c0;
-  --color-paper: #f3f5f8;
+  --font-sans: "DM Sans", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-ink: #0f172a;
+  --color-ink-raise: #1e293b;
+  --color-ink-line: #334155;
+  --color-ink-mute: #94a3b8;
+  --color-paper: #eef2f6;
   --color-cream: #ffffff;
   --color-sheet: #ffffff;
-  --color-line: #dce2ea;
-  --color-mute: #667085;
-  --color-signal: #2f80ed;
+  --color-line: #e2e8f0;
+  --color-mute: #64748b;
+  --color-signal: #2563eb;
   --color-signal-ink: #ffffff;
-  --radius-ui: 0.75rem;
+  --radius-ui: 0.5rem;
 }
 
 .cv-onboarding-shell {

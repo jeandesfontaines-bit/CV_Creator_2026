@@ -45,6 +45,7 @@ type State = {
   editingId: string | null;
   zoom: number;
   editorMode: EditorMode;
+  activeTemplate: TemplateId;
   showGrid: boolean;
   snap: boolean;
   guides: boolean;
@@ -60,6 +61,7 @@ type State = {
   mobileTouchMode: boolean;
   onboarding: boolean;
   setEditorMode: (mode: EditorMode) => void;
+  applyGlobalFont: (font: string) => void;
   setCloudModalOpen: (open: boolean) => void;
   setExtractorModalOpen: (open: boolean) => void;
   setMobileTouchMode: (active: boolean) => void;
@@ -103,8 +105,6 @@ type State = {
   deletePage: (id: string) => void;
   renamePage: (id: string, name: string) => void;
   setPageBackground: (color: string, live?: boolean) => void;
-  extractorModalOpen: boolean;
-  setExtractorModalOpen: (open: boolean) => void;
   importExtractedProfile: (profile: Profile, template?: TemplateId, asNewPage?: boolean) => void;
   newDocument: () => void;
   loadDocument: (doc: Doc) => void;
@@ -234,12 +234,13 @@ export const useStudio = create<State>((set, get) => {
     activePageId: initial.pages[0].id,
     selectedIds: [],
     editingId: null,
-    zoom: 0.72,
-    editorMode: "guided",
+    zoom: 0.85,
+    editorMode: "pro",
+    activeTemplate: "modern",
     showGrid: false,
     snap: true,
     guides: true,
-    margins: true,
+    margins: false,
     notice: null,
     clipboard: [],
     saveStatus: "saved",
@@ -249,7 +250,7 @@ export const useStudio = create<State>((set, get) => {
     cloudModalOpen: false,
     extractorModalOpen: false,
     mobileTouchMode: false,
-    onboarding: true,
+    onboarding: false,
 
     setEditorMode: (mode) => set({ editorMode: mode }),
     setCloudModalOpen: (open) => set({ cloudModalOpen: open }),
@@ -779,9 +780,8 @@ export const useStudio = create<State>((set, get) => {
           elements: buildTemplate(id, doc.profile, `${id}-${uid()}`),
         }));
       }, false);
-      set({ selectedIds: [], editingId: null });
-      const name = id;
-      get().notify(`Modèle ${name} posé sur la page`);
+      set({ selectedIds: [], editingId: null, activeTemplate: id });
+      get().notify(`Modèle ${id} appliqué`);
     },
 
     applyJobPreset: (presetId) => {

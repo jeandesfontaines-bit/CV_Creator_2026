@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
+  Award,
   Briefcase,
+  Check,
   Circle,
   Copy,
   Eye,
   EyeOff,
-  FileCheck,
-  FileText,
+  FolderGit2,
   Gauge,
+  Globe,
   GraduationCap,
   Grid3x3,
   Heading,
@@ -17,14 +19,12 @@ import {
   Link,
   Magnet,
   Minus,
-  Package,
   Plus,
   Square,
   Tags,
   Trash2,
   Type,
   Upload,
-  Wand2,
 } from "lucide-react";
 import { activePage, useStudio } from "@/cv/store";
 import { TEMPLATES } from "@/cv/templates";
@@ -32,55 +32,96 @@ import { JOB_PRESETS } from "@/cv/presets";
 import { COLOR_PALETTES } from "@/cv/palettes";
 import { SECTION_PACKS } from "@/cv/packs";
 import type { ElType, TemplateId } from "@/cv/types";
-import { snippet } from "@/cv/types";
+import { snippet, TYPE_LABEL } from "@/cv/types";
 import { cn } from "@/lib/utils";
 
 const ADD: { type: ElType; label: string; icon: typeof Type }[] = [
   { type: "heading", label: "Titre", icon: Heading },
-  { type: "text", label: "Texte", icon: Type },
-  { type: "experience", label: "Poste", icon: Briefcase },
-  { type: "education", label: "École", icon: GraduationCap },
-  { type: "skills", label: "Skills", icon: Tags },
-  { type: "meters", label: "Niveau", icon: Gauge },
+  { type: "text", label: "Paragraphe", icon: Type },
+  { type: "experience", label: "Expérience", icon: Briefcase },
+  { type: "education", label: "Formation", icon: GraduationCap },
+  { type: "skills", label: "Compétences", icon: Tags },
+  { type: "meters", label: "Niveaux", icon: Gauge },
   { type: "photo", label: "Photo", icon: Image },
   { type: "contact", label: "Contact", icon: Link },
-  { type: "rect", label: "Bloc", icon: Square },
-  { type: "ellipse", label: "Rond", icon: Circle },
-  { type: "rule", label: "Trait", icon: Minus },
+  { type: "rect", label: "Bloc fond", icon: Square },
+  { type: "ellipse", label: "Forme ronde", icon: Circle },
+  { type: "rule", label: "Ligne", icon: Minus },
 ];
 
-function Thumb({ id }: { id: TemplateId }) {
+const PACK_ICONS: Record<string, typeof Briefcase> = {
+  "pack-experience": Briefcase,
+  "pack-education": GraduationCap,
+  "pack-projects": FolderGit2,
+  "pack-certifications": Award,
+  "pack-languages": Globe,
+};
+
+function TemplatePreview({ id }: { id: TemplateId }) {
+  if (id === "modern") {
+    return (
+      <div className="flex h-full w-full flex-col bg-white rounded-xs shadow-2xs overflow-hidden border border-slate-200/80">
+        <div className="h-6 bg-slate-900 px-2 flex flex-col justify-center gap-0.5">
+          <div className="h-1.5 w-12 rounded-full bg-white" />
+          <div className="h-0.5 w-8 rounded-full bg-slate-400" />
+        </div>
+        <div className="flex-1 p-2 space-y-1.5">
+          <div className="h-1 w-full rounded-full bg-slate-200" />
+          <div className="h-1 w-4/5 rounded-full bg-slate-200" />
+          <div className="pt-1 space-y-1">
+            <div className="h-1 w-8 rounded-full bg-slate-700" />
+            <div className="h-1 w-full rounded-full bg-slate-100" />
+            <div className="h-1 w-5/6 rounded-full bg-slate-100" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (id === "executive") {
     return (
-      <div className="flex h-full">
-        <div className="h-full w-1/3 bg-ink" />
-        <div className="flex flex-1 flex-col gap-1 p-1.5">
-          <div className="h-1 w-2/3 rounded-full bg-ink" />
-          <div className="h-1 w-full rounded-full bg-line" />
-          <div className="h-1 w-4/5 rounded-full bg-line" />
+      <div className="flex h-full w-full bg-white rounded-xs shadow-2xs overflow-hidden border border-slate-200/80">
+        <div className="h-full w-1/3 bg-slate-900 p-1.5 flex flex-col items-center gap-1">
+          <div className="size-3.5 rounded-full bg-slate-700" />
+          <div className="h-1 w-full rounded-full bg-slate-400" />
+          <div className="h-0.5 w-3/4 rounded-full bg-slate-600" />
+        </div>
+        <div className="flex flex-1 flex-col gap-1.5 p-2">
+          <div className="h-1.5 w-2/3 rounded-full bg-slate-800" />
+          <div className="h-1 w-full rounded-full bg-slate-200" />
+          <div className="h-1 w-4/5 rounded-full bg-slate-200" />
+          <div className="h-1 w-full rounded-full bg-slate-100 mt-1" />
         </div>
       </div>
     );
   }
   if (id === "creative") {
     return (
-      <div className="relative h-full bg-sheet">
-        <div className="absolute top-0 right-0 size-8 rounded-full bg-signal" />
-        <div className="absolute right-1 bottom-1 left-1 h-2 rounded-sm bg-ink" />
-        <div className="absolute top-3 left-1.5 h-1.5 w-8 rounded-full bg-ink" />
+      <div className="relative h-full w-full bg-white rounded-xs shadow-2xs overflow-hidden border border-slate-200/80 p-2">
+        <div className="absolute -top-2 -right-2 size-8 rounded-full bg-blue-600/90" />
+        <div className="h-2 w-10 rounded-full bg-slate-900 mt-1" />
+        <div className="h-1 w-7 rounded-full bg-slate-400 mt-1" />
+        <div className="mt-2.5 space-y-1">
+          <div className="h-1 w-3/5 rounded-full bg-slate-200" />
+          <div className="h-1 w-1/2 rounded-full bg-slate-200" />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-2.5 bg-slate-900" />
       </div>
     );
   }
   if (id === "swiss") {
     return (
-      <div className="flex h-full bg-sheet">
-        <div className="h-full w-1 bg-signal" />
-        <div className="grid flex-1 grid-cols-2">
-          <div className="border-r border-line p-1">
-            <div className="h-1 w-full rounded-full bg-ink" />
+      <div className="flex h-full w-full bg-white rounded-xs shadow-2xs overflow-hidden border border-slate-200/80">
+        <div className="h-full w-1.5 bg-blue-600" />
+        <div className="grid flex-1 grid-cols-2 divide-x divide-slate-200">
+          <div className="p-1.5 space-y-1">
+            <div className="h-1.5 w-4/5 rounded-full bg-slate-900" />
+            <div className="h-1 w-full rounded-full bg-slate-200" />
+            <div className="h-1 w-3/4 rounded-full bg-slate-200" />
           </div>
-          <div className="p-1">
-            <div className="h-1 w-full rounded-full bg-line" />
+          <div className="p-1.5 space-y-1">
+            <div className="h-1 w-2/3 rounded-full bg-slate-700" />
+            <div className="h-1 w-full rounded-full bg-slate-200" />
+            <div className="h-1 w-5/6 rounded-full bg-slate-100" />
           </div>
         </div>
       </div>
@@ -88,30 +129,31 @@ function Thumb({ id }: { id: TemplateId }) {
   }
   if (id === "editorial") {
     return (
-      <div className="flex h-full flex-col justify-center gap-1 bg-sheet px-1.5">
-        <div className="h-2 w-5/6 rounded-full bg-ink" />
-        <div className="h-px w-full bg-ink" />
-        <div className="h-1 w-1/2 rounded-full bg-line" />
-      </div>
-    );
-  }
-  if (id === "minimal") {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-1 bg-sheet px-2">
-        <div className="h-1.5 w-2/3 rounded-full bg-ink" />
-        <div className="h-px w-6 bg-ink" />
-        <div className="h-1 w-full rounded-full bg-line" />
+      <div className="flex h-full w-full flex-col justify-between bg-white rounded-xs shadow-2xs overflow-hidden border border-slate-200/80 p-2">
+        <div>
+          <div className="h-2.5 w-4/5 rounded-xs bg-slate-900" />
+          <div className="h-px w-full bg-slate-300 my-1.5" />
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="h-2.5 rounded-xs bg-slate-100" />
+            <div className="space-y-0.5">
+              <div className="h-0.5 w-full bg-slate-300" />
+              <div className="h-0.5 w-3/4 bg-slate-300" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <div className="h-1 w-full rounded-full bg-slate-200" />
+          <div className="h-1 w-3/4 rounded-full bg-slate-200" />
+        </div>
       </div>
     );
   }
   return (
-    <div className="flex h-full flex-col bg-sheet">
-      <div className="h-2/5 bg-ink" />
-      <div className="flex flex-1 flex-col gap-1 p-1.5">
-        <div className="h-1 w-1/2 rounded-full bg-ink" />
-        <div className="h-1 w-full rounded-full bg-line" />
-        <div className="h-1 w-4/5 rounded-full bg-line" />
-      </div>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-white rounded-xs shadow-2xs overflow-hidden border border-slate-200/80 p-2">
+      <div className="h-1.5 w-1/2 rounded-full bg-slate-900" />
+      <div className="h-px w-6 bg-slate-400" />
+      <div className="h-1 w-4/5 rounded-full bg-slate-200" />
+      <div className="h-1 w-3/5 rounded-full bg-slate-100" />
     </div>
   );
 }
@@ -120,187 +162,152 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
   const doc = useStudio((s) => s.doc);
   const activePageId = useStudio((s) => s.activePageId);
   const selectedIds = useStudio((s) => s.selectedIds);
+  const activeTemplate = useStudio((s) => s.activeTemplate);
   const showGrid = useStudio((s) => s.showGrid);
   const snap = useStudio((s) => s.snap);
   const guides = useStudio((s) => s.guides);
   const margins = useStudio((s) => s.margins);
-  const saveStatus = useStudio((s) => s.saveStatus);
-  const lastSavedAt = useStudio((s) => s.lastSavedAt);
-  const editorMode = useStudio((s) => s.editorMode);
-  const setEditorMode = useStudio((s) => s.setEditorMode);
-  const isPro = editorMode === "pro";
 
   const page = activePage(doc, activePageId);
-  const jsonRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<"templates" | "blocks" | "layers">("templates");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Ensure activeTab is valid if switching modes
-  useEffect(() => {
-    if (!isPro && activeTab === "layers") {
-      setActiveTab("templates");
-    }
-  }, [isPro, activeTab]);
 
   const done = () => onDone?.();
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col bg-ink text-cream border-r border-ink-line select-none z-20">
-      {/* En-tête épuré */}
-      <div className="flex h-13 shrink-0 items-center justify-between border-b border-ink-line px-3.5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-white font-display text-xs font-black text-ink shadow-xs">
-            CV
-          </span>
-          <div>
-            <div className="font-display text-xs font-bold tracking-wider leading-none">CV ATELIER</div>
-            <div className="mt-1 text-[10px] text-ink-mute">
-              {isPro ? "Studio libre" : "Saisie guidée"}
-            </div>
-          </div>
-        </div>
-
-        {/* Indicateur de sauvegarde discret */}
-        <div
-          className="flex items-center gap-1.5 text-[11px] text-ink-mute"
-          title="Sauvegarde automatique active"
-        >
-          <span
-            className={cn(
-              "size-2 rounded-full transition-all duration-300",
-              saveStatus === "saving" ? "bg-amber-400 animate-ping" : "bg-emerald-400",
-            )}
-          />
-          <span className="text-[10px] text-zinc-400">
-            {saveStatus === "saving" ? "Sauvegarde..." : mounted && lastSavedAt ? "Auto-save" : "Auto-save"}
-          </span>
-        </div>
-      </div>
-
-      {/* Onglets selon le mode (2 en Mode Rapide, 3 en Studio Pro) */}
-      <div
-        className={cn(
-          "grid border-b border-ink-line bg-ink-raise/40 p-1 text-[11px] font-medium shrink-0 items-center gap-1",
-          isPro ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-2",
-        )}
-      >
-        <button
-          type="button"
-          onClick={() => setActiveTab("templates")}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md py-1.5 transition text-xs",
-            activeTab === "templates" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream",
-          )}
-        >
-          <LayoutTemplate size={13} />
-          <span>{isPro ? "1. Modèles" : "Modèles & Style"}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("blocks")}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md py-1.5 transition text-xs",
-            activeTab === "blocks" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream",
-          )}
-        >
-          <Package size={13} />
-          <span>{isPro ? "2. Ajouter" : "Ajouter une rubrique"}</span>
-        </button>
-        {isPro && (
+    <aside className="flex h-full w-64 xl:w-72 shrink-0 flex-col border-r border-slate-200 bg-white text-slate-900 select-none z-20">
+      {/* Navigation par onglets claire et structurée */}
+      <div className="border-b border-slate-200 p-2.5 shrink-0">
+        <div className="grid grid-cols-3 rounded-lg bg-slate-100 p-0.5 text-xs font-medium">
           <button
             type="button"
-            onClick={() => setActiveTab(activeTab === "layers" ? "templates" : "layers")}
+            onClick={() => setActiveTab("templates")}
             className={cn(
-              "flex size-8 items-center justify-center rounded-md transition text-xs",
-              activeTab === "layers" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream hover:bg-ink-line",
+              "flex items-center justify-center gap-1.5 rounded-md py-1.5 transition whitespace-nowrap",
+              activeTab === "templates"
+                ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                : "text-slate-600 hover:text-slate-900",
             )}
-            title="Calques & Options avancées"
           >
-            <Layers size={14} />
+            <LayoutTemplate size={13} />
+            <span>Modèles</span>
           </button>
-        )}
+          <button
+            type="button"
+            onClick={() => setActiveTab("blocks")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-md py-1.5 transition whitespace-nowrap",
+              activeTab === "blocks"
+                ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            <Plus size={13} />
+            <span>Ajouter</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("layers")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-md py-1.5 transition whitespace-nowrap",
+              activeTab === "layers"
+                ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            <Layers size={13} />
+            <span>Calques</span>
+          </button>
+        </div>
       </div>
 
-      {/* Contenu déroulant principal */}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3.5 py-3.5">
-        {/* ONGLET 1 : MODÈLES, IMPORT & MÉTIERS */}
+      {/* Contenu déroulant */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-3.5 space-y-5">
+        {/* ONGLET 1 : MODÈLES, HARMONIES & PROFILS MÉTIERS */}
         {activeTab === "templates" && (
-          <div className="space-y-4">
-            {/* CARTE HERO : IMPORTER UN CV EXISTANT */}
-            <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 p-3 space-y-2">
+          <>
+            {/* Grille de modèles lisible */}
+            <section className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
-                  <FileCheck size={14} className="text-emerald-400" />
-                  <span>Importer un CV</span>
-                </div>
-                <span className="rounded bg-emerald-500/25 px-1.5 py-0.5 text-[9px] font-bold text-emerald-200">
-                  IA & Extraction
-                </span>
+                <h2 className="text-xs font-semibold text-slate-900">Modèles de mise en page</h2>
+                <span className="text-[11px] text-slate-500">{TEMPLATES.length} styles</span>
               </div>
-              <p className="text-[11px] leading-snug text-zinc-300">
-                Téléversez votre PDF, Word (.docx) ou texte brut : l'extracteur remplit instantanément vos sections.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  useStudio.getState().setExtractorModalOpen(true);
-                  done();
-                }}
-                className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs"
-              >
-                <Upload size={13} />
-                <span>Sélectionner mon CV existant</span>
-              </button>
-            </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {TEMPLATES.map((tpl) => {
+                  const isCurrent = activeTemplate === tpl.id;
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => {
+                        useStudio.getState().applyTemplate(tpl.id);
+                        done();
+                      }}
+                      className={cn(
+                        "group flex flex-col overflow-hidden rounded-lg border text-left transition",
+                        isCurrent
+                          ? "border-signal bg-blue-50/30 ring-1 ring-signal"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50",
+                      )}
+                    >
+                      <div className="h-22 w-full bg-slate-100/80 p-2 transition group-hover:bg-slate-100">
+                        <TemplatePreview id={tpl.id} />
+                      </div>
+                      <div className="flex items-center justify-between gap-1 px-2.5 py-2 border-t border-slate-100">
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-slate-900 truncate">{tpl.name}</div>
+                          <div className="text-[11px] text-slate-500 truncate">{tpl.note}</div>
+                        </div>
+                        {isCurrent && (
+                          <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-signal text-white">
+                            <Check size={10} strokeWidth={3} />
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
 
-            {/* MODÈLES DE DESIGN */}
-            <div className="space-y-2">
+            {/* Harmonies de couleurs */}
+            <section className="space-y-2.5 border-t border-slate-100 pt-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                  Modèles de design ({TEMPLATES.length})
-                </h2>
-                <span className="text-[10px] text-zinc-400">Mise en page pro</span>
+                <h2 className="text-xs font-semibold text-slate-900">Harmonies de couleurs</h2>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {TEMPLATES.map((tpl) => (
+              <div className="grid grid-cols-3 gap-2">
+                {COLOR_PALETTES.map((palette) => (
                   <button
-                    key={tpl.id}
+                    key={palette.id}
                     type="button"
-                    onClick={() => {
-                      useStudio.getState().applyTemplate(tpl.id);
-                      done();
-                    }}
-                    className="group overflow-hidden rounded-xl border border-ink-line bg-ink-raise text-left transition hover:border-cream"
+                    onClick={() => useStudio.getState().applyPalette(palette.id)}
+                    className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-2 hover:border-slate-300 hover:bg-slate-50 transition"
+                    title={palette.desc}
                   >
-                    <div className="h-16 overflow-hidden bg-sheet/10 p-1 group-hover:scale-[1.02] transition">
-                      <Thumb id={tpl.id} />
+                    <div className="flex items-center -space-x-1">
+                      <span
+                        className="size-4 rounded-full border border-white shadow-2xs"
+                        style={{ backgroundColor: palette.primary }}
+                      />
+                      <span
+                        className="size-4 rounded-full border border-white shadow-2xs"
+                        style={{ backgroundColor: palette.accent }}
+                      />
                     </div>
-                    <div className="p-2 border-t border-ink-line/50">
-                      <div className="text-xs font-semibold text-cream leading-tight">{tpl.name}</div>
-                      <div className="text-[10px] text-ink-mute truncate">{tpl.note}</div>
-                    </div>
+                    <span className="text-[11px] font-medium text-slate-700 truncate w-full text-center">
+                      {palette.name.split("/")[0].trim()}
+                    </span>
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
 
-            {/* REMPLIR PAR MÉTIER (ZÉRO PAGE BLANCHE) */}
-            <div className="space-y-2 border-t border-ink-line pt-3">
+            {/* Exemples pré-remplis par métier */}
+            <section className="space-y-2.5 border-t border-slate-100 pt-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase flex items-center gap-1">
-                  <Wand2 size={12} className="text-amber-400" />
-                  <span>Profils par métier</span>
-                </h2>
-                <span className="text-[10px] text-amber-400 font-medium">1 clic = pré-rempli</span>
+                <h2 className="text-xs font-semibold text-slate-900">Exemples par métier</h2>
+                <span className="text-[11px] text-slate-500">Pré-rédigés</span>
               </div>
-              <p className="text-[11px] leading-snug text-ink-mute">
-                Besoin d'inspiration ? Chargez un profil complet avec chiffres d'impact et compétences types :
-              </p>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-1.5">
                 {JOB_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
@@ -309,150 +316,125 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                       useStudio.getState().applyJobPreset(preset.id);
                       done();
                     }}
-                    className="flex flex-col rounded-lg border border-ink-line bg-ink-raise p-2 text-left transition hover:border-amber-400/60 hover:bg-ink-line/40"
+                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50 transition"
                   >
-                    <div className="text-xs font-semibold text-cream leading-tight truncate">{preset.label}</div>
-                    <div className="text-[9px] text-ink-mute truncate mt-0.5">{preset.badge}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* HARMONIES COULEURS */}
-            <div className="space-y-2 border-t border-ink-line pt-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                  Harmonies Couleurs
-                </h2>
-                <span className="text-[10px] text-ink-mute">Harmonise tout le CV</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {COLOR_PALETTES.map((palette) => (
-                  <button
-                    key={palette.id}
-                    type="button"
-                    onClick={() => useStudio.getState().applyPalette(palette.id)}
-                    className="group flex flex-col items-center gap-1 rounded-lg border border-ink-line bg-ink-raise p-2 hover:border-cream transition"
-                    title={palette.desc}
-                  >
-                    <div
-                      className="size-6 rounded-full border border-ink-line group-hover:scale-110 group-hover:border-cream transition flex items-center justify-center"
-                      style={{ backgroundColor: palette.primary }}
-                    >
-                      <div className="size-2 rounded-full" style={{ backgroundColor: palette.accent }} />
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-slate-800 truncate">{preset.label}</div>
+                      <div className="text-[11px] text-slate-500 truncate">{preset.badge}</div>
                     </div>
-                    <span className="text-[9px] font-medium text-cream text-center leading-tight truncate w-full">
-                      {palette.name.split("/")[0].trim()}
-                    </span>
+                    <span className="text-[11px] font-medium text-signal shrink-0">Charger</span>
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
+            </section>
+
+            {/* Importation de CV sobre */}
+            <section className="border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  useStudio.getState().setExtractorModalOpen(true);
+                  done();
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-left hover:border-slate-300 hover:bg-slate-100/80 transition"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white border border-slate-200 text-slate-700">
+                  <Upload size={14} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold text-slate-900">Importer un CV existant</div>
+                  <div className="text-[11px] text-slate-500 truncate">PDF, Word (.docx) ou texte</div>
+                </div>
+              </button>
+            </section>
+          </>
         )}
 
-        {/* ONGLET 2 : AJOUTER UNE RUBRIQUE */}
+        {/* ONGLET 2 : AJOUTER DES SECTIONS & ÉLÉMENTS */}
         {activeTab === "blocks" && (
-          <div className="space-y-4">
-            {/* PACKS DE SECTIONS COMPLÈTES EN GRANDES CARTES (TOUJOURS VISIBLES EN PREMIER) */}
-            <div className="space-y-2">
+          <>
+            <section className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                  Rubriques prêtes à l'emploi (3 clics)
-                </h2>
-                <span className="text-[10px] text-amber-400 font-medium">Recommandé</span>
+                <h2 className="text-xs font-semibold text-slate-900">Sections complètes</h2>
+                <span className="text-[11px] text-slate-500">1 clic</span>
               </div>
               <div className="space-y-2">
-                {SECTION_PACKS.map((pack) => (
+                {SECTION_PACKS.map((pack) => {
+                  const Icon = PACK_ICONS[pack.id] ?? Briefcase;
+                  return (
+                    <button
+                      key={pack.id}
+                      type="button"
+                      onClick={() => {
+                        useStudio.getState().addSectionPack(pack.id);
+                        done();
+                      }}
+                      className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:border-slate-300 hover:bg-slate-50 transition"
+                    >
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700 group-hover:bg-signal group-hover:text-white transition">
+                        <Icon size={15} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-slate-900">{pack.name}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{pack.desc}</div>
+                      </div>
+                      <Plus size={14} className="text-slate-400 group-hover:text-slate-900 shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="space-y-2.5 border-t border-slate-100 pt-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-semibold text-slate-900">Éléments unitaires</h2>
+                <span className="text-[11px] text-slate-500">Blocs libres</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {ADD.map((item) => (
                   <button
-                    key={pack.id}
+                    key={item.type}
                     type="button"
                     onClick={() => {
-                      useStudio.getState().addSectionPack(pack.id);
+                      useStudio.getState().addElement(item.type);
                       done();
                     }}
-                    className="group flex w-full items-center gap-3 rounded-xl border border-ink-line bg-ink-raise p-3 text-left transition hover:border-cream hover:bg-ink-line/50 shadow-sm"
+                    className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 transition"
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ink-line text-lg">
-                      {pack.icon}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-cream leading-tight">{pack.name}</div>
-                      <div className="text-[11px] text-ink-mute mt-0.5 line-clamp-1">{pack.desc}</div>
-                    </div>
-                    <span className="flex size-6 items-center justify-center rounded-full bg-ink-line text-xs font-bold text-cream group-hover:bg-cream group-hover:text-ink transition">
-                      +
-                    </span>
+                    <item.icon size={14} className="text-slate-500 shrink-0" />
+                    <span className="truncate">{item.label}</span>
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* BLOCS INDIVIDUELS : Affichés directement en mode PRO, ou dans un menu dépliable en mode RAPIDE (ou bouton de déblocage) */}
-            {isPro ? (
-              <div className="space-y-2 border-t border-ink-line pt-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                    Blocs individuels experts (11 types)
-                  </h2>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5 pt-1">
-                  {ADD.map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      onClick={() => {
-                        useStudio.getState().addElement(item.type);
-                        done();
-                      }}
-                      className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-ink-line bg-ink text-ink-mute hover:text-cream hover:border-cream transition"
-                    >
-                      <item.icon size={13} strokeWidth={1.75} aria-hidden />
-                      <span className="text-[10px]">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="border-t border-ink-line pt-3">
-                <button
-                  type="button"
-                  onClick={() => setEditorMode("pro")}
-                  className="w-full rounded-xl border border-amber-400/40 bg-amber-400/10 p-2.5 text-center text-xs font-semibold text-amber-300 hover:bg-amber-400/20 transition"
-                >
-                  + Débloquer les blocs libres (Mode Pro) ↗
-                </button>
-              </div>
-            )}
-          </div>
+            </section>
+          </>
         )}
 
-        {/* ONGLET 3 : PAGES, CALQUES & AFFICHAGE (UNIQUEMENT EN STUDIO PRO) */}
-        {activeTab === "layers" && isPro && (
-          <div className="space-y-4">
-            {/* PAGES A4 DU DOCUMENT */}
-            <div className="space-y-2">
+        {/* ONGLET 3 : PAGES, CALQUES & REPÈRES */}
+        {activeTab === "layers" && (
+          <>
+            {/* Pages A4 */}
+            <section className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                  Pages A4 ({doc.pages.length})
-                </h2>
+                <h2 className="text-xs font-semibold text-slate-900">Pages du document ({doc.pages.length})</h2>
                 <button
                   type="button"
-                  aria-label="Nouvelle page"
-                  className="flex h-6 items-center gap-1 px-2 rounded-md bg-cream text-[10px] font-bold text-ink hover:bg-white transition"
                   onClick={() => useStudio.getState().addPage()}
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition"
                 >
                   <Plus size={11} />
-                  <span>Page</span>
+                  <span>Nouvelle page</span>
                 </button>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {doc.pages.map((item, index) => (
                   <div
                     key={item.id}
                     className={cn(
-                      "flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs transition",
-                      item.id === activePageId ? "border-cream bg-cream text-ink font-semibold" : "border-ink-line bg-ink-raise text-cream",
+                      "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition",
+                      item.id === activePageId
+                        ? "border-signal bg-blue-50/40 font-semibold text-slate-900"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                     )}
                   >
                     <button
@@ -465,86 +447,37 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                     <button
                       type="button"
                       title="Dupliquer la page"
-                      className="flex size-6 items-center justify-center text-ink-mute hover:text-cream"
+                      className="flex size-6 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                       onClick={() => {
                         useStudio.getState().setActive(item.id);
                         useStudio.getState().duplicatePage();
                       }}
                     >
-                      <Copy size={11} />
+                      <Copy size={12} />
                     </button>
                     {doc.pages.length > 1 && (
                       <button
                         type="button"
                         title="Supprimer la page"
-                        className="flex size-6 items-center justify-center text-red-400 hover:text-red-300"
+                        className="flex size-6 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600"
                         onClick={() => useStudio.getState().deletePage(item.id)}
                       >
-                        <Trash2 size={11} />
+                        <Trash2 size={12} />
                       </button>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            {/* CALQUES DE LA PAGE ACTIVE */}
-            <div className="space-y-2 border-t border-ink-line pt-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                  Calques ({page.elements.length})
-                </h2>
-                <span className="text-[10px] text-ink-mute">Ordre Z</span>
-              </div>
-              <div className="max-h-48 space-y-1 overflow-y-auto pr-0.5">
-                {[...page.elements]
-                  .sort((a, b) => b.z - a.z)
-                  .map((el) => (
-                    <div
-                      key={el.id}
-                      className={cn(
-                        "flex items-center gap-1 rounded-lg border px-2 py-1 text-xs transition",
-                        selectedIds.includes(el.id)
-                          ? "border-cream bg-cream text-ink font-medium"
-                          : "border-ink-line bg-ink-raise text-cream",
-                      )}
-                    >
-                      <button
-                        type="button"
-                        className="min-w-0 flex-1 truncate text-left text-xs"
-                        onClick={() => {
-                          useStudio.getState().setActive(page.id);
-                          useStudio.getState().select([el.id]);
-                        }}
-                      >
-                        {snippet(el)}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={el.hidden ? "Afficher" : "Masquer"}
-                        className="flex size-6 items-center justify-center text-ink-mute hover:text-cream"
-                        onClick={() => useStudio.getState().toggleHidden(page.id, el.id)}
-                      >
-                        {el.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
-                      </button>
-                    </div>
-                  ))}
-                {page.elements.length === 0 && (
-                  <p className="text-xs text-ink-mute py-2 text-center">Page vide.</p>
-                )}
-              </div>
-            </div>
-
-            {/* REPÈRES & AFFICHAGE */}
-            <div className="space-y-2 border-t border-ink-line pt-3">
-              <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                Aides au positionnement
-              </h2>
-              <div className="grid grid-cols-2 gap-1.5">
+            {/* Repères & Grille */}
+            <section className="space-y-2.5 border-t border-slate-100 pt-4">
+              <h2 className="text-xs font-semibold text-slate-900">Aides à l’alignement</h2>
+              <div className="grid grid-cols-2 gap-2">
                 {(
                   [
                     ["Grille", showGrid, "showGrid", Grid3x3],
-                    ["Aimant", snap, "snap", Magnet],
+                    ["Magnétisme", snap, "snap", Magnet],
                     ["Repères", guides, "guides", Magnet],
                     ["Marges A4", margins, "margins", Minus],
                   ] as const
@@ -554,73 +487,66 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                     type="button"
                     onClick={() => useStudio.getState().toggle(key)}
                     className={cn(
-                      "flex h-8 items-center justify-between rounded-lg border px-2.5 text-[11px] font-medium transition",
-                      on ? "border-cream bg-cream text-ink font-semibold" : "border-ink-line bg-ink-raise text-ink-mute hover:text-cream",
+                      "flex h-8 items-center justify-between rounded-lg border px-2.5 text-xs font-medium transition",
+                      on
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                     )}
                   >
                     <span>{label}</span>
-                    <span className="text-[10px] font-bold">{on ? "✓" : ""}</span>
+                    {on && <Check size={12} />}
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
+            </section>
+
+            {/* Liste des calques */}
+            <section className="space-y-2.5 border-t border-slate-100 pt-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-semibold text-slate-900">Calques ({page.elements.length})</h2>
+                <span className="text-[11px] text-slate-500">Ordre Z</span>
+              </div>
+              <div className="space-y-1">
+                {[...page.elements]
+                  .sort((a, b) => b.z - a.z)
+                  .map((el) => {
+                    const isSelected = selectedIds.includes(el.id);
+                    return (
+                      <div
+                        key={el.id}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition",
+                          isSelected
+                            ? "border-signal bg-blue-50/50 text-slate-900 font-medium"
+                            : "border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50",
+                        )}
+                      >
+                        <button
+                          type="button"
+                          className="min-w-0 flex-1 truncate text-left"
+                          onClick={() => {
+                            useStudio.getState().setActive(page.id);
+                            useStudio.getState().select([el.id]);
+                          }}
+                        >
+                          <span className="text-[11px] text-slate-400 mr-1.5">{TYPE_LABEL[el.type]}</span>
+                          <span>{snippet(el)}</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={el.hidden ? "Afficher" : "Masquer"}
+                          className="flex size-6 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          onClick={() => useStudio.getState().toggleHidden(page.id, el.id)}
+                        >
+                          {el.hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </section>
+          </>
         )}
-      </div>
-
-      {/* PIED DE BARRE LATÉRALE ÉPURÉ */}
-      <div className="shrink-0 border-t border-ink-line p-3 space-y-2 bg-ink">
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            type="button"
-            className="flex h-8 items-center justify-center gap-1 rounded-lg border border-ink-line bg-ink-raise text-[11px] font-medium text-cream hover:bg-ink-line/50 transition"
-            onClick={() => jsonRef.current?.click()}
-          >
-            <Upload size={12} />
-            <span>Ouvrir JSON</span>
-          </button>
-          <button
-            type="button"
-            className="flex h-8 items-center justify-center gap-1 rounded-lg border border-ink-line bg-ink-raise text-[11px] font-medium text-cream hover:bg-ink-line/50 transition"
-            onClick={() => document.dispatchEvent(new Event("libre-json"))}
-          >
-            <FileText size={12} />
-            <span>Sauvegarder</span>
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="h-7 w-full text-[11px] text-ink-mute hover:text-cream transition text-center"
-          onClick={() => {
-            if (confirm("Réinitialiser et créer un nouveau document vierge ?")) {
-              useStudio.getState().newDocument();
-            }
-          }}
-        >
-          Nouveau document vierge
-        </button>
-
-        <input
-          ref={jsonRef}
-          type="file"
-          accept="application/json"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              try {
-                useStudio.getState().loadDocument(JSON.parse(String(reader.result)));
-              } catch {
-                useStudio.getState().notify("JSON illisible");
-              }
-            };
-            reader.readAsText(file);
-            event.target.value = "";
-          }}
-        />
       </div>
     </aside>
   );
