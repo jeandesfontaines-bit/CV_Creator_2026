@@ -139,6 +139,32 @@ var AlignLeft = createLucideIcon("align-left", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var ArrowLeft = createLucideIcon("arrow-left", [["path", {
+	d: "m12 19-7-7 7-7",
+	key: "1l729n"
+}], ["path", {
+	d: "M19 12H5",
+	key: "x3x0zl"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var ArrowRight = createLucideIcon("arrow-right", [["path", {
+	d: "M5 12h14",
+	key: "1ays0h"
+}], ["path", {
+	d: "m12 5 7 7-7 7",
+	key: "xquz4c"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Bold = createLucideIcon("bold", [["path", {
 	d: "M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8",
 	key: "mg9rjx"
@@ -851,6 +877,30 @@ var Palette = createLucideIcon("palette", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var PanelsTopLeft = createLucideIcon("panels-top-left", [
+	["rect", {
+		width: "18",
+		height: "18",
+		x: "3",
+		y: "3",
+		rx: "2",
+		key: "afitv7"
+	}],
+	["path", {
+		d: "M3 9h18",
+		key: "1pudct"
+	}],
+	["path", {
+		d: "M9 21V9",
+		key: "1oto5p"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Phone = createLucideIcon("phone", [["path", {
 	d: "M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384",
 	key: "9njp5v"
@@ -1299,4 +1349,4 @@ var X = createLucideIcon("x", [["path", {
 	d: "m6 6 12 12",
 	key: "d8bk6v"
 }]]);
-export { BringToFront as $, LayoutTemplate as A, FileText as B, MapPin as C, LockOpen as D, Lock as E, Heading as F, Copy as G, Eye as H, Grid3x3 as I, CircleCheck as J, Cloud as K, GraduationCap as L, Languages as M, Italic as N, LoaderCircle as O, Image as P, Check as Q, Gauge as R, Minus as S, Magnet as T, EyeOff as U, FileCheck as V, Download as W, ChevronUp as X, CircleAlert as Y, ChevronDown as Z, Printer as _, Undo as a, Palette as b, Trash2 as c, Sparkles as d, Briefcase as et, Smartphone as f, Redo as g, RefreshCw as h, Upload as i, AlignCenter as it, Layers as j, Link as k, Tags as l, SendToBack as m, WandSparkles as n, AlignLeft as nt, Type as o, SlidersHorizontal as p, Circle as q, User as r, AlignRight as rt, TriangleAlert as s, X as t, Bold as tt, Square as u, Plus as v, Mail as w, Package as x, Phone as y, FileType as z };
+export { Check as $, Link as A, FileType as B, Minus as C, Lock as D, Magnet as E, Image as F, Download as G, FileCheck as H, Heading as I, Circle as J, Copy as K, Grid3x3 as L, Layers as M, Languages as N, LockOpen as O, Italic as P, ChevronDown as Q, GraduationCap as R, Package as S, Mail as T, Eye as U, FileText as V, EyeOff as W, CircleAlert as X, CircleCheck as Y, ChevronUp as Z, Printer as _, Undo as a, AlignLeft as at, PanelsTopLeft as b, Trash2 as c, Sparkles as d, BringToFront as et, Smartphone as f, Redo as g, RefreshCw as h, Upload as i, ArrowLeft as it, LayoutTemplate as j, LoaderCircle as k, Tags as l, SendToBack as m, WandSparkles as n, Bold as nt, Type as o, AlignRight as ot, SlidersHorizontal as p, Cloud as q, User as r, ArrowRight as rt, TriangleAlert as s, AlignCenter as st, X as t, Briefcase as tt, Square as u, Plus as v, MapPin as w, Palette as x, Phone as y, Gauge as z };

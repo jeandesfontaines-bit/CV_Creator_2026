@@ -56,10 +56,14 @@ type State = {
   syncCode: string | null;
   cloudStatus: "idle" | "saving" | "synced" | "error";
   cloudModalOpen: boolean;
+  extractorModalOpen: boolean;
   mobileTouchMode: boolean;
+  onboarding: boolean;
   setEditorMode: (mode: EditorMode) => void;
   setCloudModalOpen: (open: boolean) => void;
+  setExtractorModalOpen: (open: boolean) => void;
   setMobileTouchMode: (active: boolean) => void;
+  setOnboarding: (onboarding: boolean) => void;
   syncToCloud: (title?: string) => Promise<string | null>;
   loadFromCloud: (code: string) => Promise<boolean>;
   directPdfExport: () => Promise<void>;
@@ -245,11 +249,13 @@ export const useStudio = create<State>((set, get) => {
     cloudModalOpen: false,
     extractorModalOpen: false,
     mobileTouchMode: false,
+    onboarding: true,
 
     setEditorMode: (mode) => set({ editorMode: mode }),
     setCloudModalOpen: (open) => set({ cloudModalOpen: open }),
     setExtractorModalOpen: (open) => set({ extractorModalOpen: open }),
     setMobileTouchMode: (active) => set({ mobileTouchMode: active }),
+    setOnboarding: (onboarding) => set({ onboarding }),
 
     hydrate: () => {
       // 1. Inspect URL parameters for ?sync=CODE

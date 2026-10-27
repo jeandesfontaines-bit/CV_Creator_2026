@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Cloud, Layers, SlidersHorizontal, Smartphone } from "lucide-react";
+import { ArrowLeft, Cloud, Download, Layers, SlidersHorizontal, Smartphone } from "lucide-react";
 import { Canvas } from "@/components/studio/Canvas";
 import { Inspector } from "@/components/studio/Inspector";
 import { PageSheet } from "@/components/studio/PageSheet";
@@ -8,6 +8,7 @@ import { SimpleEditor } from "@/components/studio/SimpleEditor";
 import { CloudSyncModal } from "@/components/studio/CloudSyncModal";
 import { MobileTouchEditor } from "@/components/studio/MobileTouchEditor";
 import { CvExtractorModal } from "@/components/studio/CvExtractorModal";
+import { OnboardingFlow } from "@/components/studio/OnboardingFlow";
 import { activePage, useStudio } from "@/cv/store";
 import { PAGE_H, PAGE_W } from "@/cv/types";
 
@@ -35,6 +36,8 @@ export function Studio() {
   const setMobileTouchMode = useStudio((s) => s.setMobileTouchMode);
   const editorMode = useStudio((s) => s.editorMode);
   const setEditorMode = useStudio((s) => s.setEditorMode);
+  const onboarding = useStudio((s) => s.onboarding);
+  const setOnboarding = useStudio((s) => s.setOnboarding);
 
   const captureRef = useRef<HTMLDivElement>(null);
   const page = activePage(doc, activePageId);
@@ -162,6 +165,21 @@ export function Studio() {
     };
   }, []);
 
+  // Si onboarding est actif, afficher l'écran d'accueil complet
+  if (onboarding) {
+    return (
+      <>
+        <OnboardingFlow />
+        <CvExtractorModal />
+        {notice && (
+          <div className="no-print pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-xl">
+            {notice}
+          </div>
+        )}
+      </>
+    );
+  }
+
   // Si editorMode est "guided" (Mode Édition Simple), afficher le formulaire guidé en 2 colonnes sans Sidebar ni Inspector
   if (editorMode === "guided") {
     return (
@@ -178,23 +196,48 @@ export function Studio() {
     );
   }
 
-  // Sinon, Mode Design Libre (Studio complet) avec bouton de retour au formulaire simple
+  // Sinon, Mode Design Libre (Studio complet) avec bouton de retour à l'accueil
   return (
     <div className="studio flex h-dvh w-full overflow-hidden bg-paper text-ink flex-col">
-      {/* Barre supérieure Mode Studio Pro avec bouton de retour */}
-      <div className="no-print flex h-11 shrink-0 items-center justify-between border-b border-line bg-ink px-4 text-cream z-30">
+      {/* Barre supérieure Mode Studio Pro avec gros switch */}
+      <div className="no-print flex h-14 shrink-0 items-center justify-between border-b border-line bg-ink px-6 text-cream z-30">
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setEditorMode("guided")}
-            className="flex items-center gap-1.5 rounded-lg bg-cream/10 px-3 py-1 text-xs font-bold text-cream hover:bg-cream/20 transition"
+            onClick={() => setOnboarding(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-cream/10 px-3 py-1.5 text-xs font-bold text-cream hover:bg-cream/20 transition"
           >
             <ArrowLeft size={14} />
-            <span>⬅ Retour au Mode Formulaire Simple</span>
+            <span>← Accueil / Changer de CV</span>
           </button>
         </div>
-        <div className="text-xs font-mono text-ink-mute">
-          🎨 Mode Design Libre (Studio Expert)
+
+        {/* GROS SWITCH CENTRAL */}
+        <div className="flex items-center rounded-xl bg-black/40 p-1 shadow-inner border border-white/10">
+          <button
+            type="button"
+            onClick={() => setEditorMode("guided")}
+            className="flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-semibold text-cream/70 hover:text-white transition"
+          >
+            <span>📝 Mode Formulaire (Simple)</span>
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-lg bg-signal px-4 py-1.5 text-xs font-bold text-white shadow-sm"
+          >
+            <span>🎨 Mode Studio (Design Libre)</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => useStudio.getState().directPdfExport()}
+            className="flex items-center gap-1.5 rounded-lg bg-cream/10 px-3 py-1.5 text-xs font-bold text-cream hover:bg-cream/20 transition"
+          >
+            <Download size={14} />
+            <span>Télécharger PDF</span>
+          </button>
         </div>
       </div>
 
