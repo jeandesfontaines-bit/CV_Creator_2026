@@ -157,9 +157,9 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
             CV
           </span>
           <div>
-            <div className="font-display text-xs font-bold tracking-wider leading-none">CV STUDIO PRO</div>
+            <div className="font-display text-xs font-bold tracking-wider leading-none">CV ATELIER</div>
             <div className="mt-1 text-[10px] text-ink-mute">
-              {isPro ? "🎨 Mode Studio Pro" : "⚡ Mode Rapide"}
+              {isPro ? "Studio libre" : "Saisie guidée"}
             </div>
           </div>
         </div>

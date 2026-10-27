@@ -1,4 +1,4 @@
-Warning: truncated output (original token count: 10549)
+Warning: truncated output (original token count: 10550)
 Total output lines: 940
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
@@ -402,7 +402,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
       <header className="no-print relative z-30 flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200 bg-white px-3 py-2 select-none sm:px-4">
         {/* Zone Gauche : Score CV : 100% + Annuler / Rétablir */}
         <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
-          {narrow && <span className="font-display text-sm font-bold tracking-wide whitespace-nowrap shrink-0">CV PRO</span>}
+          {narrow && <span className="font-display text-sm font-bold tracking-wide whitespace-nowrap shrink-0">CV Atelier</span>}
 
           {/* INDICATEUR DU SCORE DE COMPLÉTION DU CV */}
           <div className="relative shrink-0">
@@ -501,7 +501,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                   ))}
                 </div>
 
-                <div className="mt-3 flex items-center justify…549 tokens truncated…"guided")}
+                <div className="mt-3 flex items-center jus…550 tokens truncated…"guided")}
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold transition-all whitespace-nowrap shrink-0",
                 editorMode === "guided"

@@ -1,20 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Syne", "Source Sans 3", ui-sans-serif, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", "DM Sans", ui-sans-serif, sans-serif;
   --color-ink: #141311;
   --color-ink-raise: #211f1c;
   --color-ink-line: #34312c;
   --color-ink-mute: #a8a194;
-  --color-paper: #e4dfd6;
-  --color-cream: #f6f3ec;
-  --color-sheet: #fffdf8;
-  --color-line: #d5cfc4;
-  --color-mute: #6f6a62;
-  --color-signal: #d6372a;
+  --color-paper: #f3f1eb;
+  --color-cream: #fffefa;
+  --color-sheet: #ffffff;
+  --color-line: #dfddd5;
+  --color-mute: #716f68;
+  --color-signal: #b54735;
   --color-signal-ink: #fff8f6;
-  --radius-ui: 0.625rem;
+  --radius-ui: 0.75rem;
+  --color-blue-50: #f8f0eb;
+  --color-blue-100: #f0dfd5;
+  --color-blue-200: #e3c3b3;
+  --color-blue-300: #d6a38e;
+  --color-blue-400: #c8836b;
+  --color-blue-500: #b9644e;
+  --color-blue-600: #b54735;
+  --color-blue-700: #963a2c;
+  --color-blue-800: #772f26;
+  --color-blue-900: #5e2922;
+  --color-blue-950: #47231f;
 }
 
 @layer base {

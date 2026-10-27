@@ -62,24 +62,24 @@ export function OnboardingFlow() {
   };
 
   return (
-    <div className="flex h-dvh w-full items-center justify-center bg-slate-950 text-slate-100 p-4 sm:p-6 select-none overflow-y-auto">
-      <div className="w-full max-w-5xl space-y-8 animate-in fade-in zoom-in-95 duration-300 py-8">
+    <div className="cv-onboarding flex h-dvh w-full items-center justify-center bg-paper text-ink px-5 py-6 sm:px-10 sm:py-8 select-none overflow-y-auto">
+      <div className="w-full max-w-5xl space-y-10 animate-in fade-in duration-300 py-4 sm:py-8">
         {/* En-tête de marque */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-5">
+        <div className="flex items-center justify-between border-b border-line pb-5">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-blue-600 font-display text-sm font-black text-white shadow-lg shadow-blue-600/30">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-ink font-display text-sm font-bold text-cream">
               CV
             </span>
             <div>
-              <h2 className="font-display text-lg font-bold tracking-tight text-white">CV Studio Pro</h2>
-              <p className="text-xs text-slate-400">Éditeur intelligent et conception A4 haute précision</p>
+              <h2 className="font-display text-base font-bold tracking-tight text-ink">CV Atelier</h2>
+              <p className="text-xs text-mute">Votre CV, construit à votre mesure</p>
             </div>
           </div>
           {step === 2 && (
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition"
+              className="flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3 py-1.5 text-xs font-semibold text-mute hover:bg-paper hover:text-ink transition"
             >
               <ArrowLeft size={14} />
               <span>Retour</span>
@@ -91,23 +91,23 @@ export function OnboardingFlow() {
         {step === 1 && (
           <div className="mx-auto max-w-3xl space-y-7">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3.5 py-1 text-xs font-bold text-slate-300 border border-slate-700">
+              <div className="inline-flex items-center gap-2 rounded-full bg-transparent px-0 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-signal border-0">
                 <Sparkles size={14} />
                 <span>Étape 1 · Votre point de départ</span>
               </div>
-              <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-[-0.04em] text-ink">
                 Refaire votre CV, à votre façon.
               </h1>
-              <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
+              <p className="text-sm sm:text-base text-mute leading-relaxed">
                 On avance étape par étape. Dites-nous simplement ce que vous avez déjà ; vous pourrez choisir le niveau d’aide et de liberté ensuite.
               </p>
             </div>
 
-            <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80">
-              <h2 className="border-b border-slate-800 px-5 py-4 text-sm font-semibold text-white">
+            <section className="overflow-hidden rounded-2xl border border-line bg-cream shadow-sm">
+              <h2 className="border-b border-line px-5 py-4 text-sm font-semibold text-ink">
                 Qu’avez-vous déjà pour refaire votre CV ?
               </h2>
-              <div className="divide-y divide-slate-800">
+              <div className="divide-y divide-line">
                 <button
                   type="button"
                   onClick={() => {
@@ -115,16 +115,16 @@ export function OnboardingFlow() {
                     setEditorMode("guided");
                     setExtractorModalOpen(true);
                   }}
-                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                  className="group flex w-full items-center gap-4 px-5 py-5 text-left transition hover:bg-paper/70 sm:px-6"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-200 group-hover:bg-signal group-hover:text-signal-ink transition">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-paper text-ink group-hover:bg-ink group-hover:text-cream transition">
                     <Upload size={19} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-white">Un CV à reprendre</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-slate-400">Importez un PDF ou un Word, ou collez le texte pour récupérer votre contenu et retravailler le design.</span>
+                    <span className="block text-sm font-semibold text-ink">Un CV à reprendre</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-mute">Importez un PDF ou un Word, ou collez le texte pour récupérer votre contenu et retravailler le design.</span>
                   </span>
-                  <ArrowRight size={16} className="shrink-0 text-slate-500 group-hover:text-white transition" />
+                  <ArrowRight size={16} className="shrink-0 text-mute group-hover:text-ink transition" />
                 </button>
 
                 <button
@@ -133,16 +133,16 @@ export function OnboardingFlow() {
                     setUseCustomProfile(true);
                     setStep(2);
                   }}
-                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                  className="group flex w-full items-center gap-4 px-5 py-5 text-left transition hover:bg-paper/70 sm:px-6"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-200 group-hover:bg-signal group-hover:text-signal-ink transition">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-paper text-ink group-hover:bg-ink group-hover:text-cream transition">
                     <FileText size={19} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-white">Mes informations, sans fichier</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-slate-400">Saisissez les éléments dont vous vous souvenez. Un exemple vous aide à voir quoi compléter.</span>
+                    <span className="block text-sm font-semibold text-ink">Mes informations, sans fichier</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-mute">Saisissez les éléments dont vous vous souvenez. Un exemple vous aide à voir quoi compléter.</span>
                   </span>
-                  <ArrowRight size={16} className="shrink-0 text-slate-500 group-hover:text-white transition" />
+                  <ArrowRight size={16} className="shrink-0 text-mute group-hover:text-ink transition" />
                 </button>
 
                 <button
@@ -151,22 +151,22 @@ export function OnboardingFlow() {
                     setUseCustomProfile(false);
                     setStep(2);
                   }}
-                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                  className="group flex w-full items-center gap-4 px-5 py-5 text-left transition hover:bg-paper/70 sm:px-6"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-200 group-hover:bg-signal group-hover:text-signal-ink transition">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-paper text-ink group-hover:bg-ink group-hover:text-cream transition">
                     <UserRound size={19} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-white">J’ai besoin d’un exemple pour démarrer</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-slate-400">Choisissez un métier pour voir un CV déjà rempli. Les informations sont fictives et à remplacer.</span>
+                    <span className="block text-sm font-semibold text-ink">J’ai besoin d’un exemple pour démarrer</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-mute">Choisissez un métier pour voir un CV déjà rempli. Les informations sont fictives et à remplacer.</span>
                   </span>
-                  <ArrowRight size={16} className="shrink-0 text-slate-500 group-hover:text-white transition" />
+                  <ArrowRight size={16} className="shrink-0 text-mute group-hover:text-ink transition" />
                 </button>
               </div>
             </section>
 
-            <p className="flex items-start gap-2 rounded-xl border border-slate-800 px-4 py-3 text-xs leading-relaxed text-slate-400">
-              <Sparkles size={15} className="mt-0.5 shrink-0 text-slate-300" />
+            <p className="flex items-start gap-2 rounded-xl border border-line px-4 py-3 text-xs leading-relaxed text-mute">
+              <Sparkles size={15} className="mt-0.5 shrink-0 text-mute" />
               <span>Quel que soit votre point de départ, vous retrouverez le même CV dans l’éditeur. Vous pourrez le remplir guidé, puis ajuster librement le design sans perdre vos modifications.</span>
             </p>
           </div>
@@ -176,16 +176,16 @@ export function OnboardingFlow() {
         {step === 2 && (
           <div className="space-y-8 animate-in fade-in duration-200">
             <div className="space-y-2">
-              <h2 className="font-display text-2xl font-extrabold text-white">
+              <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
                 Choisissez une base à personnaliser
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-mute">
                 Vous pourrez modifier le contenu et le design ensuite. Les exemples servent de point de départ, pas de CV final.
               </p>
             </div>
 
-            <div className="flex items-start gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-xs leading-relaxed text-slate-300">
-              <Sparkles size={15} className="mt-0.5 shrink-0 text-slate-400" />
+            <div className="flex items-start gap-2 rounded-xl border border-line bg-cream px-4 py-3 text-xs leading-relaxed text-mute">
+              <Sparkles size={15} className="mt-0.5 shrink-0 text-mute" />
               <span>
                 {useCustomProfile
                   ? "Votre CV sera préparé avec des repères à compléter : poste, expériences, formation et compétences. Vous ne commencerez pas devant une page vide."
@@ -195,7 +195,7 @@ export function OnboardingFlow() {
 
             {/* 1. Sélection du modèle graphique */}
             <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-mute">
                 1. Modèle de départ
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
@@ -206,16 +206,16 @@ export function OnboardingFlow() {
                     onClick={() => setSelectedTemplate(tpl.id)}
                     className={`flex flex-col justify-between rounded-xl border p-3.5 text-left transition ${
                       selectedTemplate === tpl.id
-                        ? "border-blue-500 bg-blue-500/10 text-white shadow-md ring-1 ring-blue-500"
-                        : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80"
+                        ? "border-signal bg-signal/10 text-ink shadow-md ring-1 ring-signal"
+                        : "border-line bg-cream text-mute hover:border-line hover:bg-paper/80"
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-display text-xs font-bold">{tpl.name}</span>
-                        {selectedTemplate === tpl.id && <Check size={14} className="text-blue-400" />}
+                        <span className="font-display text-sm font-semibold">{tpl.name}</span>
+                        {selectedTemplate === tpl.id && <Check size={14} className="text-signal" />}
                       </div>
-                      <p className="text-[10px] text-slate-400 leading-tight">{tpl.note}</p>
+                      <p className="text-[10px] text-mute leading-tight">{tpl.note}</p>
                     </div>
                   </button>
                 ))}
@@ -225,50 +225,50 @@ export function OnboardingFlow() {
             {/* 2. Profil métier ou personnalisé */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-mute">
                   2. Contenu de départ
                 </label>
                 <button
                   type="button"
                   onClick={() => setUseCustomProfile(!useCustomProfile)}
-                  className="text-xs font-semibold text-blue-400 hover:underline"
+                  className="text-xs font-semibold text-signal hover:underline"
                 >
                   {useCustomProfile ? "← Choisir un modèle métier" : "+ Saisir mes propres infos"}
                 </button>
               </div>
 
               {useCustomProfile ? (
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-5 space-y-4">
+                <div className="rounded-xl border border-line bg-cream p-5 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
-                      <span className="text-xs font-semibold text-slate-300">Prénom</span>
+                      <span className="text-xs font-semibold text-mute">Prénom</span>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="Votre prénom"
-                        className="mt-1 h-10 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-blue-500"
+                        className="mt-1 h-10 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-signal"
                       />
                     </label>
                     <label className="block">
-                      <span className="text-xs font-semibold text-slate-300">Nom</span>
+                      <span className="text-xs font-semibold text-mute">Nom</span>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Votre nom"
-                        className="mt-1 h-10 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-blue-500"
+                        className="mt-1 h-10 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-signal"
                       />
                     </label>
                   </div>
                   <label className="block">
-                    <span className="text-xs font-semibold text-slate-300">Intitulé du poste recherché</span>
+                    <span className="text-xs font-semibold text-mute">Intitulé du poste recherché</span>
                     <input
                       type="text"
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
                       placeholder="Ex. : infirmière, comptable, designer…"
-                      className="mt-1 h-10 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-blue-500"
+                      className="mt-1 h-10 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-signal"
                     />
                   </label>
                 </div>
@@ -281,19 +281,19 @@ export function OnboardingFlow() {
                       onClick={() => setSelectedPresetId(preset.id)}
                       className={`flex flex-col justify-between rounded-xl border p-4 text-left transition ${
                         selectedPresetId === preset.id
-                          ? "border-emerald-500 bg-emerald-500/10 text-white shadow-md ring-1 ring-emerald-500"
-                          : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80"
+                          ? "border-signal bg-signal/10 text-ink shadow-sm ring-1 ring-signal"
+                          : "border-line bg-cream text-mute hover:border-line hover:bg-paper/80"
                       }`}
                     >
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-mono text-slate-300">
+                          <span className="rounded bg-paper px-1.5 py-0.5 text-[9px] font-mono text-mute">
                             {preset.category}
                           </span>
-                          {selectedPresetId === preset.id && <Check size={14} className="text-emerald-400" />}
+                          {selectedPresetId === preset.id && <Check size={14} className="text-signal" />}
                         </div>
                         <div className="font-display text-sm font-bold pt-1">{preset.label}</div>
-                        <div className="text-[10px] text-slate-400">{preset.badge}</div>
+                        <div className="text-[10px] text-mute">{preset.badge}</div>
                       </div>
                     </button>
                   ))}
@@ -302,18 +302,18 @@ export function OnboardingFlow() {
             </div>
 
             {/* Bouton Lancer */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="rounded-xl border border-slate-700 bg-slate-900 px-5 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition"
+                className="rounded-xl border border-line bg-cream px-5 py-2.5 text-xs font-semibold text-mute hover:bg-paper transition"
               >
                 Retour
               </button>
               <button
                 type="button"
                 onClick={handleLaunchGuided}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition"
+                className="flex min-h-11 items-center gap-2 rounded-xl bg-signal px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-signal/90 transition"
               >
                 <span>Continuer avec mon CV</span>
               </button>
