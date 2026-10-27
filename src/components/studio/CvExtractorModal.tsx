@@ -141,7 +141,7 @@ export function CvExtractorModal() {
         {/* Header de la modale */}
         <div className="flex items-center justify-between border-b border-line bg-paper px-5 py-4">
           <div className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-signal font-bold text-white shadow-xs">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-signal font-bold text-signal-ink shadow-xs">
               <Sparkles size={18} />
             </span>
             <div>
@@ -186,7 +186,7 @@ export function CvExtractorModal() {
             className={cn(
               "flex flex-1 items-center justify-center gap-2 border-b-2 py-3 transition",
               activeTab === "file"
-                ? "border-signal bg-sheet text-signal"
+                ? "border-blue-600 bg-sheet text-blue-700"
                 : "border-transparent text-mute hover:text-ink",
             )}
           >
@@ -199,7 +199,7 @@ export function CvExtractorModal() {
             className={cn(
               "flex flex-1 items-center justify-center gap-2 border-b-2 py-3 transition",
               activeTab === "text"
-                ? "border-signal bg-sheet text-signal"
+                ? "border-blue-600 bg-sheet text-blue-700"
                 : "border-transparent text-mute hover:text-ink",
             )}
           >
@@ -229,8 +229,8 @@ export function CvExtractorModal() {
                 className={cn(
                   "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all",
                   dragOver
-                    ? "border-signal bg-signal/5 scale-[0.99]"
-                    : "border-line bg-sheet hover:border-signal/50 hover:bg-cream/40",
+                    ? "border-blue-600 bg-signal/5 scale-[0.99]"
+                    : "border-line bg-sheet hover:border-blue-600/50 hover:bg-cream/40",
                 )}
               >
                 <input
@@ -245,11 +245,11 @@ export function CvExtractorModal() {
                   }}
                 />
 
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-signal/10 text-signal mb-2">
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-signal/10 text-blue-700 mb-2">
                   <Upload size={24} />
                 </span>
                 <p className="text-sm font-bold text-ink">
-                  Glissez-déposez votre CV ici, ou <span className="text-signal underline">cliquez pour parcourir</span>
+                  Glissez-déposez votre CV ici, ou <span className="text-blue-700 underline">cliquez pour parcourir</span>
                 </p>
                 <p className="mt-1 text-xs text-mute">
                   Sélectionnez un document PDF, DOCX, ODT ou TXT (jusqu'à 12 Mo).
@@ -259,7 +259,7 @@ export function CvExtractorModal() {
               {selectedFile && (
                 <div className="flex items-center justify-between rounded-xl border border-line bg-paper px-3.5 py-2 text-xs">
                   <div className="flex items-center gap-2 min-w-0">
-                    <FileType size={16} className="text-signal shrink-0" />
+                    <FileType size={16} className="text-blue-700 shrink-0" />
                     <span className="font-semibold text-ink truncate">{selectedFile.name}</span>
                     <span className="text-[10px] text-mute font-mono">
                       ({(selectedFile.size / 1024).toFixed(1)} Ko)
@@ -272,7 +272,7 @@ export function CvExtractorModal() {
                       handleProcessFile(selectedFile);
                     }}
                     disabled={isProcessing}
-                    className="flex items-center gap-1 font-semibold text-signal hover:underline disabled:opacity-50"
+                    className="flex items-center gap-1 font-semibold text-blue-700 hover:underline disabled:opacity-50"
                   >
                     Ré-analyser
                   </button>
@@ -291,7 +291,7 @@ export function CvExtractorModal() {
                 <button
                   type="button"
                   onClick={() => handleProcessText(SAMPLE_RAW_TEXT)}
-                  className="text-xs font-semibold text-signal hover:underline"
+                  className="text-xs font-semibold text-blue-700 hover:underline"
                 >
                   Charger un exemple type →
                 </button>
@@ -301,14 +301,14 @@ export function CvExtractorModal() {
                 onChange={(e) => handleProcessText(e.target.value)}
                 rows={7}
                 placeholder="Collez ici le texte brut de votre CV ou résumé LinkedIn..."
-                className="w-full resize-none rounded-xl border border-line bg-sheet p-3 font-mono text-xs leading-relaxed text-ink outline-none focus:border-signal"
+                className="w-full resize-none rounded-xl border border-line bg-sheet p-3 font-mono text-xs leading-relaxed text-ink outline-none focus:border-blue-600"
               />
             </div>
           )}
 
           {/* Indicateur de chargement */}
           {isProcessing && (
-            <div className="flex items-center justify-center gap-3 rounded-xl border border-signal/20 bg-signal/5 p-4 text-xs font-semibold text-signal">
+            <div className="flex items-center justify-center gap-3 rounded-xl border border-blue-600/20 bg-signal/5 p-4 text-xs font-semibold text-blue-700">
               <Loader2 size={16} className="animate-spin" />
               <span>Extraction intelligente des entités en cours...</span>
             </div>
@@ -352,7 +352,7 @@ export function CvExtractorModal() {
                     <h4 className="font-display text-base font-bold text-ink">
                       {result.profile.name}
                     </h4>
-                    <p className="text-xs font-semibold text-signal">
+                    <p className="text-xs font-semibold text-blue-700">
                       {result.profile.role}
                     </p>
                   </div>
@@ -372,28 +372,28 @@ export function CvExtractorModal() {
                 {/* Badges de comptage */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-line/60">
                   <div className="flex items-center gap-2 rounded-lg bg-paper p-2 text-xs">
-                    <Briefcase size={14} className="text-signal" />
+                    <Briefcase size={14} className="text-blue-700" />
                     <div>
                       <div className="font-bold text-ink">{result.stats.experiencesCount}</div>
                       <div className="text-[10px] text-mute">Expériences</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 rounded-lg bg-paper p-2 text-xs">
-                    <GraduationCap size={14} className="text-signal" />
+                    <GraduationCap size={14} className="text-blue-700" />
                     <div>
                       <div className="font-bold text-ink">{result.stats.educationsCount}</div>
                       <div className="text-[10px] text-mute">Formations</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 rounded-lg bg-paper p-2 text-xs">
-                    <Tags size={14} className="text-signal" />
+                    <Tags size={14} className="text-blue-700" />
                     <div>
                       <div className="font-bold text-ink">{result.stats.skillsCount}</div>
                       <div className="text-[10px] text-mute">Compétences</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 rounded-lg bg-paper p-2 text-xs">
-                    <Languages size={14} className="text-signal" />
+                    <Languages size={14} className="text-blue-700" />
                     <div>
                       <div className="font-bold text-ink">{result.stats.languagesCount}</div>
                       <div className="text-[10px] text-mute">Langues</div>
@@ -497,7 +497,7 @@ export function CvExtractorModal() {
                       className={cn(
                         "rounded-xl border p-2 text-center transition",
                         selectedTemplate === tpl.id
-                          ? "border-signal bg-signal/10 font-bold text-signal shadow-xs"
+                          ? "border-blue-600 bg-signal/10 font-bold text-blue-700 shadow-xs"
                           : "border-line bg-sheet text-mute hover:border-ink hover:text-ink",
                       )}
                     >
@@ -536,7 +536,7 @@ export function CvExtractorModal() {
               type="button"
               disabled={!result || isProcessing}
               onClick={() => applyExtracted(false)}
-              className="flex items-center gap-1.5 rounded-xl bg-signal px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-signal/90 disabled:opacity-40 transition"
+              className="flex items-center gap-1.5 rounded-xl bg-signal px-5 py-2.5 text-xs font-bold text-signal-ink shadow-sm hover:bg-signal/90 disabled:opacity-40 transition"
             >
               <FileCheck size={14} />
               <span>Appliquer sur le CV (1 clic)</span>
