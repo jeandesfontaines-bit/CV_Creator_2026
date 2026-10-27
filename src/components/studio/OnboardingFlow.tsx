@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, Check, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { useStudio } from "@/cv/store";
 import { TEMPLATES } from "@/cv/templates";
 import { JOB_PRESETS } from "@/cv/presets";
@@ -20,6 +20,9 @@ export function OnboardingFlow() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState("");
+  const selectedPreset = JOB_PRESETS.find((preset) => preset.id === selectedPresetId) ?? JOB_PRESETS[0];
+  const previewName = useCustomProfile ? `${firstName} ${lastName}`.trim() || "Votre nom" : selectedPreset.profile.name;
+  const previewRole = useCustomProfile ? role || "Votre métier" : selectedPreset.profile.role;
 
   const handleLaunchGuided = () => {
     let nextProfile = doc.profile;
@@ -69,7 +72,7 @@ export function OnboardingFlow() {
           <span>LIBRE <span className="font-normal opacity-60">/ CV STUDIO</span></span>
         </div>
         <div className="flex items-center gap-5">
-          <span className="cv-brand-note">L’atelier du CV · 2026</span>
+          <span className="cv-brand-note hidden sm:block">L’atelier du CV · 2026</span>
           {step === 2 && (
             <button type="button" onClick={() => setStep(1)} className="flex min-h-10 items-center gap-2 rounded-full border border-white/20 px-4 text-xs font-semibold text-white transition hover:border-signal hover:text-signal">
               <ArrowLeft size={14} /> Retour
@@ -128,159 +131,86 @@ export function OnboardingFlow() {
       )}
 
       {step === 2 && (
-        <main className="cv-step-screen">
-        {/* ÉTAPE 2 : CHOISISSEZ VOTRE STYLE ET VOTRE PROFIL */}
-          <div className="space-y-8 animate-in fade-in duration-200">
-            <div className="space-y-2">
-              <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
-                Choisissez une base à personnaliser
-              </h2>
-              <p className="text-xs sm:text-sm text-mute">
-                Vous pourrez modifier le contenu et le design ensuite. Les exemples servent de point de départ, pas de CV final.
-              </p>
-            </div>
+        <main className="cv-builder-grid">
+          <aside className="cv-step-nav" aria-label="Étapes de création du CV">
+            <div className="cv-steps-caption">VOTRE PARCOURS</div>
+            <div className="cv-step-item is-done"><span>01</span><div><b>Point de départ</b><small>Ce que vous avez déjà</small></div><Check size={15} /></div>
+            <div className="cv-step-item is-current"><span>02</span><div><b>Style & contenu</b><small>À votre façon</small></div></div>
+            <div className="cv-steps-note"><span className="cv-steps-note-mark">↗</span><p>Un seul CV.<br />Toute la liberté de le faire vôtre.</p></div>
+          </aside>
 
-            <div className="flex items-start gap-2 rounded-xl border border-line bg-cream px-4 py-3 text-xs leading-relaxed text-mute">
-              <Sparkles size={15} className="mt-0.5 shrink-0 text-mute" />
-              <span>
-                {useCustomProfile
-                  ? "Votre CV sera préparé avec des repères à compléter : poste, expériences, formation et compétences. Vous ne commencerez pas devant une page vide."
-                  : "Les coordonnées, expériences et diplômes du métier choisi sont fictifs. Remplacez-les par les vôtres avant d’envoyer le CV."}
-              </span>
+          <section className="cv-template-workspace">
+            <div className="cv-gallery-heading">
+              <span className="cv-eyebrow">02 / VOTRE MISE EN PAGE</span>
+              <h1>Choisissez un<br /><em>terrain de jeu.</em></h1>
+              <p>Chaque modèle est un point de départ. Vous pourrez déplacer, redimensionner et transformer les éléments ensuite.</p>
             </div>
-
-            {/* 1. Sélection du modèle graphique */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-mute">
-                1. Modèle de départ
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {TEMPLATES.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    onClick={() => setSelectedTemplate(tpl.id)}
-                    className={`cv-template-card flex flex-col justify-between rounded-xl border p-3.5 text-left transition ${
-                      selectedTemplate === tpl.id
-                        ? "border-blue-600 bg-signal/10 text-ink shadow-md ring-1 ring-blue-600"
-                        : "border-line bg-cream text-mute hover:border-line hover:bg-paper/80"
-                    }`}
-                  >
-                    <div className="cv-template-thumb" data-layout={tpl.id} aria-hidden="true">
-                      <div className="cv-template-page">
-                        <div className="cv-template-heading" />
-                        <div className="cv-template-subheading" />
-                        <div className="cv-template-rule" />
-                        <div className="cv-template-columns"><span><i /><i /><i /></span><span><i /><i /></span></div>
-                      </div>
-                    </div>
-                    <div className="flex items-start justify-between gap-2 pt-3">
-                      <div><span className="block font-display text-sm font-semibold text-ink">{tpl.name}</span><span className="mt-1 block text-[10px] leading-tight text-mute">{tpl.note}</span></div>
-                      {selectedTemplate === tpl.id && <Check size={16} className="mt-0.5 shrink-0 text-blue-700" />}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Profil métier ou personnalisé */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-mute">
-                  2. Contenu de départ
-                </label>
+            <div className="cv-gallery-toolbar"><span>LES MODÈLES</span><span>{TEMPLATES.length} BASES · TOUTES MODIFIABLES</span></div>
+            <div className="cv-template-gallery">
+              {TEMPLATES.map((tpl, index) => (
                 <button
+                  key={tpl.id}
                   type="button"
-                  onClick={() => setUseCustomProfile(!useCustomProfile)}
-                  className="text-xs font-semibold text-signal hover:underline"
+                  onClick={() => setSelectedTemplate(tpl.id)}
+                  aria-pressed={selectedTemplate === tpl.id}
+                  className={`cv-template-card ${selectedTemplate === tpl.id ? "is-selected" : ""}`}
                 >
-                  {useCustomProfile ? "← Choisir un modèle métier" : "+ Saisir mes propres infos"}
-                </button>
-              </div>
-
-              {useCustomProfile ? (
-                <div className="rounded-xl border border-line bg-cream p-5 space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block">
-                      <span className="text-xs font-semibold text-mute">Prénom</span>
-                      <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Votre prénom"
-                        className="mt-1 h-10 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-blue-600"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-semibold text-mute">Nom</span>
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Votre nom"
-                        className="mt-1 h-10 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-blue-600"
-                      />
-                    </label>
+                  <div className="cv-template-thumb" data-layout={tpl.id} aria-hidden="true">
+                    <div className="cv-template-page">
+                      <div className="cv-template-heading" />
+                      <div className="cv-template-subheading" />
+                      <div className="cv-template-rule" />
+                      <div className="cv-template-columns"><span><i /><i /><i /></span><span><i /><i /></span></div>
+                    </div>
+                    <span className="cv-template-index">0{index + 1}</span>
                   </div>
-                  <label className="block">
-                    <span className="text-xs font-semibold text-mute">Intitulé du poste recherché</span>
-                    <input
-                      type="text"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      placeholder="Ex. : infirmière, comptable, designer…"
-                      className="mt-1 h-10 w-full rounded-lg border border-line bg-paper px-3 text-sm text-ink outline-none focus:border-blue-600"
-                    />
-                  </label>
+                  <div className="cv-template-caption"><span><b>{tpl.name}</b><small>{tpl.note}</small></span>{selectedTemplate === tpl.id && <Check size={17} />}</div>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <aside className="cv-side-column">
+            <section className="cv-preview-card">
+              <div className="cv-preview-topline"><span>APERÇU EN DIRECT</span><span className="cv-live-dot" />
+              </div>
+              <div className="cv-live-paper" data-layout={selectedTemplate}>
+                <div className="cv-live-paper-head"><div><small>CURRICULUM VITAE</small><h2>{previewName || "Votre nom"}</h2><p>{previewRole || "Votre métier"}</p></div><span className="cv-live-avatar">{previewName.slice(0, 1).toUpperCase()}</span></div>
+                <div className="cv-live-paper-section"><b>PROFIL</b><i /><i /><i className="short" /></div>
+                <div className="cv-live-paper-section"><b>EXPÉRIENCE</b><i /><i /><i /><i className="medium" /></div>
+                <div className="cv-live-paper-section"><b>COMPÉTENCES</b><div className="cv-live-tags"><i /><i /><i /></div></div>
+              </div>
+              <div className="cv-preview-footer"><span>{TEMPLATES.find((tpl) => tpl.id === selectedTemplate)?.name}</span><span>A4 · PERSONNALISABLE</span></div>
+            </section>
+
+            <section className="cv-content-card">
+              <div className="cv-content-heading"><span>VOTRE CONTENU</span><span>CHOISISSEZ VOTRE DÉPART</span></div>
+              <div className="cv-content-switch" role="group" aria-label="Contenu de départ">
+                <button type="button" onClick={() => setUseCustomProfile(true)} className={useCustomProfile ? "is-active" : ""}>Mes infos</button>
+                <button type="button" onClick={() => setUseCustomProfile(false)} className={!useCustomProfile ? "is-active" : ""}>Un exemple</button>
+              </div>
+              {useCustomProfile ? (
+                <div className="cv-content-fields">
+                  <label>PRÉNOM<input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Ex. : Alex" /></label>
+                  <label>NOM<input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Ex. : Martin" /></label>
+                  <label className="cv-field-wide">POSTE VISÉ<input value={role} onChange={(event) => setRole(event.target.value)} placeholder="Ex. : architecte, infirmier…" /></label>
+                  <p>Vous pourrez compléter vos expériences et votre formation dans l’éditeur.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                  {JOB_PRESETS.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => setSelectedPresetId(preset.id)}
-                      className={`flex flex-col justify-between rounded-xl border p-4 text-left transition ${
-                        selectedPresetId === preset.id
-                          ? "border-blue-600 bg-signal/10 text-ink shadow-sm ring-1 ring-blue-600"
-                          : "border-line bg-cream text-mute hover:border-line hover:bg-paper/80"
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="rounded bg-paper px-1.5 py-0.5 text-[9px] font-mono text-mute">
-                            {preset.category}
-                          </span>
-                          {selectedPresetId === preset.id && <Check size={14} className="text-blue-700" />}
-                        </div>
-                        <div className="font-display text-sm font-bold pt-1">{preset.label}</div>
-                        <div className="text-[10px] text-mute">{preset.badge}</div>
-                      </div>
-                    </button>
-                  ))}
+                <div className="cv-content-fields">
+                  <label className="cv-field-wide">EXEMPLE DE PARCOURS
+                    <select value={selectedPresetId} onChange={(event) => setSelectedPresetId(event.target.value)}>
+                      {JOB_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+                    </select>
+                  </label>
+                  <p>Contenu fictif, à remplacer. Vous pourrez modifier chaque ligne du modèle.</p>
                 </div>
               )}
-            </div>
-
-            {/* Bouton Lancer */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="rounded-xl border border-line bg-cream px-5 py-2.5 text-xs font-semibold text-mute hover:bg-paper transition"
-              >
-                Retour
-              </button>
-              <button
-                type="button"
-                onClick={handleLaunchGuided}
-                className="flex min-h-11 items-center gap-2 rounded-xl bg-signal px-6 py-3 text-sm font-semibold text-signal-ink shadow-sm hover:bg-signal/90 transition"
-              >
-                <span>Continuer avec mon CV</span>
-              </button>
-            </div>
-          </div>
-      </main>
+              <button type="button" onClick={handleLaunchGuided} className="cv-continue-button">Continuer dans l’éditeur <ArrowRight size={17} /></button>
+              <p className="cv-free-note"><Sparkles size={13} /> Guidage maintenant, studio libre dès que vous le voulez.</p>
+            </section>
+          </aside>
+        </main>
       )}
     </div>
   );
