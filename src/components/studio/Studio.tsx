@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Cloud, Download, Layers, SlidersHorizontal, Smartphone } from "lucide-react";
+import { ArrowLeft, Cloud, Layers, SlidersHorizontal, Smartphone } from "lucide-react";
 import { Canvas } from "@/components/studio/Canvas";
 import { Inspector } from "@/components/studio/Inspector";
 import { PageSheet } from "@/components/studio/PageSheet";
@@ -35,7 +35,6 @@ export function Studio() {
   const mobileTouchMode = useStudio((s) => s.mobileTouchMode);
   const setMobileTouchMode = useStudio((s) => s.setMobileTouchMode);
   const editorMode = useStudio((s) => s.editorMode);
-  const setEditorMode = useStudio((s) => s.setEditorMode);
   const onboarding = useStudio((s) => s.onboarding);
   const setOnboarding = useStudio((s) => s.setOnboarding);
 
@@ -196,49 +195,18 @@ export function Studio() {
     );
   }
 
-  // Sinon, Mode Design Libre (Studio complet) avec bouton de retour à l'accueil
+  // Le Studio libre utilise le même document que la saisie guidée.
   return (
     <div className="studio flex h-dvh w-full overflow-hidden bg-paper text-ink flex-col">
-      {/* Barre supérieure Mode Studio Pro avec gros switch */}
-      <div className="no-print flex h-14 shrink-0 items-center justify-between border-b border-line bg-ink px-6 text-cream z-30">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setOnboarding(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-cream/10 px-3 py-1.5 text-xs font-bold text-cream hover:bg-cream/20 transition"
-          >
-            <ArrowLeft size={14} />
-            <span>← Accueil / Changer de CV</span>
-          </button>
-        </div>
-
-        {/* GROS SWITCH CENTRAL */}
-        <div className="flex items-center rounded-xl bg-black/40 p-1 shadow-inner border border-white/10">
-          <button
-            type="button"
-            onClick={() => setEditorMode("guided")}
-            className="flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-semibold text-cream/70 hover:text-white transition"
-          >
-            <span>📝 Mode Formulaire (Simple)</span>
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-lg bg-signal px-4 py-1.5 text-xs font-bold text-white shadow-sm"
-          >
-            <span>🎨 Mode Studio (Design Libre)</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => useStudio.getState().directPdfExport()}
-            className="flex items-center gap-1.5 rounded-lg bg-cream/10 px-3 py-1.5 text-xs font-bold text-cream hover:bg-cream/20 transition"
-          >
-            <Download size={14} />
-            <span>Télécharger PDF</span>
-          </button>
-        </div>
+      <div className="no-print flex h-10 shrink-0 items-center border-b border-ink-line bg-ink px-4 text-cream z-30">
+        <button
+          type="button"
+          onClick={() => setOnboarding(true)}
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-cream/75 hover:bg-cream/10 hover:text-cream transition"
+        >
+          <ArrowLeft size={14} />
+          <span>Point de départ</span>
+        </button>
       </div>
 
       <div className="flex flex-1 min-h-0 overflow-hidden">

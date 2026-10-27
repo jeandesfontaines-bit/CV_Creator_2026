@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 10549)
+Total output lines: 940
+
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   AlertCircle,
@@ -396,7 +399,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
       {/* HEADER SUPÉRIEUR ÉLÉGANT & SÉLECTEUR DE MODE CENTRAL */}
-      <header className="no-print relative z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 select-none flex-nowrap whitespace-nowrap">
+      <header className="no-print relative z-30 flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200 bg-white px-3 py-2 select-none sm:px-4">
         {/* Zone Gauche : Score CV : 100% + Annuler / Rétablir */}
         <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
           {narrow && <span className="font-display text-sm font-bold tracking-wide whitespace-nowrap shrink-0">CV PRO</span>}
@@ -415,9 +418,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
               title="Cliquez pour voir la checklist de complétion de votre CV"
             >
               <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                <span className="text-xs">
-                  {health.score >= 85 ? "🎯" : health.score >= 60 ? "⚡" : "💡"}
-                </span>
+                <Sparkles size={14} className="text-slate-500" />
                 <span className="text-xs font-bold whitespace-nowrap">
                   Score : {health.score}%
                 </span>
@@ -500,68 +501,16 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                   ))}
                 </div>
 
-                <div className="mt-3 flex items-center justify-between border-t border-line pt-2 text-[10px] text-mute">
-                  <span>Temps réel</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      useStudio.getState().applyJobPreset("developer");
-                      setHealthOpen(false);
-                    }}
-                    className="font-semibold text-amber-600 hover:underline"
-                  >
-                    ⚡ Compléter à 100%
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Boutons Annuler / Rétablir */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 shrink-0 whitespace-nowrap">
-            <button
-              type="button"
-              onClick={() => undo()}
-              disabled={past === 0}
-              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-slate-100 transition shrink-0"
-              title="Annuler (⌘Z)"
-            >
-              <Undo size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => redo()}
-              disabled={future === 0}
-              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-slate-100 transition shrink-0"
-              title="Rétablir (⌘Y)"
-            >
-              <Redo size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Zone Centre : Sélecteur de Mode segmenté très visible (pill toggle) + Zoom + Infos Pro */}
-        <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
-          {/* SÉLECTEUR DE MODE SEGMENTÉ (PILL TOGGLE) */}
-          <div
-            role="tablist"
-            aria-label="Mode d'édition"
-            className="flex items-center rounded-full border border-slate-200 bg-slate-100 p-1 shadow-inner shrink-0 whitespace-nowrap"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={editorMode === "guided"}
-              onClick={() => setEditorMode("guided")}
+                <div className="mt-3 flex items-center justify…549 tokens truncated…"guided")}
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold transition-all whitespace-nowrap shrink-0",
                 editorMode === "guided"
                   ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/5"
                   : "text-slate-600 hover:text-slate-900",
               )}
-              title="Mode Rapide : interface épurée sans règles ni détails techniques"
+              title="Saisie guidée — vos modifications restent dans ce CV"
             >
-              <span>⚡ Mode Rapide</span>
+              <span>Saisie guidée</span>
             </button>
             <button
               type="button"
@@ -574,9 +523,9 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                   ? "bg-slate-900 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900",
               )}
-              title="Studio Pro : règles millimétrées, guides d'alignement précis et dimensions en pixels"
+              title="Mise en page libre — tous les éléments de ce CV restent modifiables"
             >
-              <span>🎨 Studio Pro</span>
+              <span>Studio libre</span>
             </button>
           </div>
 

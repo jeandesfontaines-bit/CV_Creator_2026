@@ -55,6 +55,29 @@
     0 12px 40px rgb(20 19 17 / 0.08);
 }
 
+@media (max-width: 767px) {
+  .simple-preview-frame {
+    width: min(calc(100vw - 48px), 330px) !important;
+    height: 466px !important;
+  }
+
+  .simple-preview-sheet {
+    transform: scale(0.415) !important;
+    transform-origin: top left !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .simple-preview-frame {
+    width: calc(100vw - 48px) !important;
+    height: 371px !important;
+  }
+
+  .simple-preview-sheet {
+    transform: scale(0.33) !important;
+  }
+}
+
 @media print {
   @page {
     size: A4 portrait;

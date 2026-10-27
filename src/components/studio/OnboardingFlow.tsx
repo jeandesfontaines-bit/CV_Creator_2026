@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, Sparkles, Layout, ArrowRight, User, Check, ArrowLeft } from "lucide-react";
+import { Upload, FileText, UserRound, Check, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { useStudio } from "@/cv/store";
 import { TEMPLATES } from "@/cv/templates";
 import { JOB_PRESETS } from "@/cv/presets";
@@ -17,17 +17,33 @@ export function OnboardingFlow() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
   const [selectedPresetId, setSelectedPresetId] = useState<string>("designer");
   const [useCustomProfile, setUseCustomProfile] = useState(false);
-  const [firstName, setFirstName] = useState("Alexandra");
-  const [lastName, setLastName] = useState("Dubois");
-  const [role, setRole] = useState("Product Designer Senior");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [role, setRole] = useState("");
 
   const handleLaunchGuided = () => {
     let nextProfile = doc.profile;
     if (useCustomProfile) {
       nextProfile = {
         ...doc.profile,
-        name: `${firstName} ${lastName}`.trim() || "Mon Nom",
-        role: role || "Poste recherché",
+        name: `${firstName} ${lastName}`.trim() || "Votre nom",
+        role: role || "Votre métier",
+        email: "Votre adresse e-mail",
+        phone: "Votre téléphone",
+        location: "Votre ville",
+        link: "Votre lien professionnel",
+        summary: "Présentez votre parcours, vos points forts et le poste recherché.",
+        experiences: [
+          {
+            role: "Votre poste",
+            company: "Entreprise · Ville",
+            date: "Dates",
+            desc: "Décrivez vos missions et vos résultats.",
+          },
+        ],
+        educations: [{ degree: "Votre diplôme", school: "Établissement", date: "Années" }],
+        skills: ["Compétence 1", "Compétence 2", "Compétence 3"],
+        languages: [{ label: "Votre langue", value: 70 }],
       };
     } else {
       const preset = JOB_PRESETS.find((p) => p.id === selectedPresetId);
@@ -66,126 +82,93 @@ export function OnboardingFlow() {
               className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition"
             >
               <ArrowLeft size={14} />
-              <span>← Retour aux modes</span>
+              <span>Retour</span>
             </button>
           )}
         </div>
 
-        {/* ÉTAPE 1 : CHOIX DU PARCOURS */}
+        {/* ÉTAPE 1 : POINT DE DÉPART DANS UN PARCOURS COMMUN */}
         {step === 1 && (
-          <div className="space-y-8 text-center sm:text-left">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/15 px-3.5 py-1 text-xs font-bold text-blue-400 border border-blue-500/30">
+          <div className="mx-auto max-w-3xl space-y-7">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3.5 py-1 text-xs font-bold text-slate-300 border border-slate-700">
                 <Sparkles size={14} />
-                <span>Parcours d'entrée intelligent</span>
+                <span>Étape 1 · Votre point de départ</span>
               </div>
               <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-                Comment souhaitez-vous créer votre CV ?
+                Refaire votre CV, à votre façon.
               </h1>
               <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-                Sélectionnez une option pour commencer. Vous pourrez à tout moment changer de mode ou affiner vos choix.
+                On avance étape par étape. Dites-nous simplement ce que vous avez déjà ; vous pourrez choisir le niveau d’aide et de liberté ensuite.
               </p>
             </div>
 
-            {/* 3 Grandes Cartes */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Carte 1 : Importer mon CV (IA) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setOnboarding(false);
-                  setEditorMode("guided");
-                  setExtractorModalOpen(true);
-                }}
-                className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/90 p-6 text-left shadow-xl hover:border-blue-500 hover:bg-slate-900 transition-all hover:scale-[1.01]"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="flex size-12 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition">
-                      <Upload size={24} />
-                    </span>
-                    <span className="rounded-full bg-blue-500/15 px-2.5 py-1 text-[10px] font-bold text-blue-400 border border-blue-500/30">
-                      Le plus rapide
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <h3 className="font-display text-lg font-bold text-white group-hover:text-blue-400 transition">
-                      📥 Importer mon CV actuel (IA)
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Glissez votre PDF ou Word : notre extracteur IA renseigne automatiquement toutes vos expériences et compétences.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-blue-400 group-hover:translate-x-1 transition">
-                  <span>Importer un fichier</span>
-                  <ArrowRight size={14} />
-                </div>
-              </button>
+            <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80">
+              <h2 className="border-b border-slate-800 px-5 py-4 text-sm font-semibold text-white">
+                Qu’avez-vous déjà pour refaire votre CV ?
+              </h2>
+              <div className="divide-y divide-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOnboarding(false);
+                    setEditorMode("guided");
+                    setExtractorModalOpen(true);
+                  }}
+                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-200 group-hover:bg-signal group-hover:text-signal-ink transition">
+                    <Upload size={19} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-white">Un CV à reprendre</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-slate-400">Importez un PDF ou un Word, ou collez le texte pour récupérer votre contenu et retravailler le design.</span>
+                  </span>
+                  <ArrowRight size={16} className="shrink-0 text-slate-500 group-hover:text-white transition" />
+                </button>
 
-              {/* Carte 2 : Créer un CV pas à pas (Mode Guidé) */}
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="group relative flex flex-col justify-between rounded-2xl border border-slate-700 bg-slate-900 p-6 text-left shadow-xl hover:border-emerald-500 hover:bg-slate-900 transition-all hover:scale-[1.01]"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="flex size-12 items-center justify-center rounded-xl bg-emerald-600/20 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition">
-                      <User size={24} />
-                    </span>
-                    <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
-                      Recommandé
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <h3 className="font-display text-lg font-bold text-white group-hover:text-emerald-400 transition">
-                      ✨ Créer un CV pas à pas (Mode Guidé)
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Choisissez votre style et votre métier de départ, puis éditez vos informations dans un formulaire en direct.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-emerald-400 group-hover:translate-x-1 transition">
-                  <span>Choisir le style et le profil</span>
-                  <ArrowRight size={14} />
-                </div>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseCustomProfile(true);
+                    setStep(2);
+                  }}
+                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-200 group-hover:bg-signal group-hover:text-signal-ink transition">
+                    <FileText size={19} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-white">Mes informations, sans fichier</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-slate-400">Saisissez les éléments dont vous vous souvenez. Un exemple vous aide à voir quoi compléter.</span>
+                  </span>
+                  <ArrowRight size={16} className="shrink-0 text-slate-500 group-hover:text-white transition" />
+                </button>
 
-              {/* Carte 3 : Mode Studio Pro (Liberté totale) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setOnboarding(false);
-                  setEditorMode("pro");
-                }}
-                className="group relative flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/90 p-6 text-left shadow-xl hover:border-purple-500 hover:bg-slate-900 transition-all hover:scale-[1.01]"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="flex size-12 items-center justify-center rounded-xl bg-purple-600/20 text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition">
-                      <Layout size={24} />
-                    </span>
-                    <span className="rounded-full bg-purple-500/15 px-2.5 py-1 text-[10px] font-bold text-purple-400 border border-purple-500/30">
-                      Pour les experts
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <h3 className="font-display text-lg font-bold text-white group-hover:text-purple-400 transition">
-                      🎨 Mode Studio Pro (Liberté totale)
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Ouvrez directement l'éditeur Canvas A4 complet pour tout personnaliser au pixel près, ajouter des formes et calques.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-purple-400 group-hover:translate-x-1 transition">
-                  <span>Ouvrir l'éditeur Pro</span>
-                  <ArrowRight size={14} />
-                </div>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseCustomProfile(false);
+                    setStep(2);
+                  }}
+                  className="group flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-200 group-hover:bg-signal group-hover:text-signal-ink transition">
+                    <UserRound size={19} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-white">J’ai besoin d’un exemple pour démarrer</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-slate-400">Choisissez un métier pour voir un CV déjà rempli. Les informations sont fictives et à remplacer.</span>
+                  </span>
+                  <ArrowRight size={16} className="shrink-0 text-slate-500 group-hover:text-white transition" />
+                </button>
+              </div>
+            </section>
+
+            <p className="flex items-start gap-2 rounded-xl border border-slate-800 px-4 py-3 text-xs leading-relaxed text-slate-400">
+              <Sparkles size={15} className="mt-0.5 shrink-0 text-slate-300" />
+              <span>Quel que soit votre point de départ, vous retrouverez le même CV dans l’éditeur. Vous pourrez le remplir guidé, puis ajuster librement le design sans perdre vos modifications.</span>
+            </p>
           </div>
         )}
 
@@ -194,17 +177,26 @@ export function OnboardingFlow() {
           <div className="space-y-8 animate-in fade-in duration-200">
             <div className="space-y-2">
               <h2 className="font-display text-2xl font-extrabold text-white">
-                Choisissez votre style et votre profil de départ
+                Choisissez une base à personnaliser
               </h2>
               <p className="text-xs sm:text-sm text-slate-400">
-                Sélectionnez le modèle graphique et le métier de référence (ou entrez vos informations personnalisées).
+                Vous pourrez modifier le contenu et le design ensuite. Les exemples servent de point de départ, pas de CV final.
               </p>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-xs leading-relaxed text-slate-300">
+              <Sparkles size={15} className="mt-0.5 shrink-0 text-slate-400" />
+              <span>
+                {useCustomProfile
+                  ? "Votre CV sera préparé avec des repères à compléter : poste, expériences, formation et compétences. Vous ne commencerez pas devant une page vide."
+                  : "Les coordonnées, expériences et diplômes du métier choisi sont fictifs. Remplacez-les par les vôtres avant d’envoyer le CV."}
+              </span>
             </div>
 
             {/* 1. Sélection du modèle graphique */}
             <div className="space-y-3">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                1. Modèle graphique (Template A4)
+                1. Modèle de départ
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                 {TEMPLATES.map((tpl) => (
@@ -234,7 +226,7 @@ export function OnboardingFlow() {
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  2. Profil de départ
+                  2. Contenu de départ
                 </label>
                 <button
                   type="button"
@@ -254,6 +246,7 @@ export function OnboardingFlow() {
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Votre prénom"
                         className="mt-1 h-10 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-blue-500"
                       />
                     </label>
@@ -263,6 +256,7 @@ export function OnboardingFlow() {
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Votre nom"
                         className="mt-1 h-10 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-blue-500"
                       />
                     </label>
@@ -273,6 +267,7 @@ export function OnboardingFlow() {
                       type="text"
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
+                      placeholder="Ex. : infirmière, comptable, designer…"
                       className="mt-1 h-10 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-white outline-none focus:border-blue-500"
                     />
                   </label>
@@ -320,7 +315,7 @@ export function OnboardingFlow() {
                 onClick={handleLaunchGuided}
                 className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition"
               >
-                <span>🚀 Lancer l'éditeur (Mode Guidé)</span>
+                <span>Continuer avec mon CV</span>
               </button>
             </div>
           </div>
