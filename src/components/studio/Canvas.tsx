@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEven
 import {
   AlertCircle,
   Bold,
-  BringToFront,
   CheckCircle2,
   ChevronDown,
   Cloud,
@@ -13,7 +12,6 @@ import {
   Plus,
   Printer,
   Redo,
-  SendToBack,
   Sparkles,
   Trash2,
   Undo,
@@ -301,9 +299,6 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
     }
   };
 
-  const saveStatus = useStudio((s) => s.saveStatus);
-  const lastSavedAt = useStudio((s) => s.lastSavedAt);
-  const saveNow = useStudio((s) => s.saveNow);
   const syncCode = useStudio((s) => s.syncCode);
   const setCloudModalOpen = useStudio((s) => s.setCloudModalOpen);
   const directPdfExport = useStudio((s) => s.directPdfExport);
@@ -314,13 +309,18 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
   const undo = useStudio((s) => s.undo);
   const redo = useStudio((s) => s.redo);
 
+  const editorMode = useStudio((s) => s.editorMode);
+  const setEditorMode = useStudio((s) => s.setEditorMode);
+  const isPro = editorMode === "pro";
+
   const [healthOpen, setHealthOpen] = useState(false);
   const [boostMenuOpen, setBoostMenuOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    if (typeof window !== "undefined") {
+      (window as any).useStudio = useStudio;
+    }
   }, []);
 
   const health = useMemo(() => computeCVHealth(doc, activePageId), [doc, activePageId]);
@@ -330,6 +330,25 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
     if (!selectedIds.length) return null;
     return page.elements.find((el) => el.id === selectedIds[0]) || null;
   }, [doc, activePageId, selectedIds]);
+
+  const pageIndex = useMemo(() => {
+    const idx = doc.pages.findIndex((p) => p.id === activePageId);
+    return idx >= 0 ? idx : 0;
+  }, [doc.pages, activePageId]);
+
+  const floatingBarTop = useMemo(() => {
+    if (!primarySelected) return 12;
+    const pageOffset = pageIndex * (PAGE_H + 40);
+    const elementTopZoomed = (pageOffset + primarySelected.y) * zoom;
+    const elementBottomZoomed = (pageOffset + primarySelected.y + primarySelected.h) * zoom;
+    // Si le bloc est trop haut (ex: Alexandra Dubois à y: 38), le placer en dessous
+    // afin qu'elle ne chevauche plus le titre ; sinon le placer au-dessus avec décalage suffisant
+    const isTooHigh = elementTopZoomed < 64 || primarySelected.y < 90;
+    if (isTooHigh) {
+      return elementBottomZoomed + 16;
+    }
+    return Math.max(12, elementTopZoomed - 52);
+  }, [primarySelected, pageIndex, zoom]);
 
   const fit = () => {
     const el = scrollerRef.current;
@@ -361,45 +380,49 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
   };
 
   const innerHeight = doc.pages.length * PAGE_H + Math.max(0, doc.pages.length - 1) * 40;
-  const page = activePage(doc, activePageId);
+
+  const horizontalTicks = useMemo(() => {
+    const ticks: number[] = [];
+    for (let x = 0; x <= PAGE_W; x += 50) ticks.push(x);
+    return ticks;
+  }, []);
+
+  const verticalTicks = useMemo(() => {
+    const ticks: number[] = [];
+    for (let y = 0; y <= PAGE_H; y += 50) ticks.push(y);
+    return ticks;
+  }, []);
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* HEADER SUPÉRIEUR ÉLÉGANT & DÉCLUSTRING */}
-      <header className="no-print relative z-30 flex h-13 shrink-0 items-center justify-between gap-3 border-b border-line bg-cream px-4 select-none">
-        {/* Zone Gauche : Document & Score */}
-        <div className="flex min-w-0 items-center gap-3">
-          {narrow && <span className="font-display text-sm font-bold tracking-wide">CV PRO</span>}
-          <div className="flex items-center gap-1.5 text-xs text-ink">
-            <span className="font-bold">{page.name}</span>
-            <span className="text-mute font-normal">·</span>
-            <span className="text-mute font-mono text-[11px]">A4 (794×1123)</span>
-          </div>
-
-          <div className="hidden h-4 w-px bg-line sm:block" />
+      {/* HEADER SUPÉRIEUR ÉLÉGANT & SÉLECTEUR DE MODE CENTRAL */}
+      <header className="no-print relative z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 select-none flex-nowrap whitespace-nowrap">
+        {/* Zone Gauche : Score CV : 100% + Annuler / Rétablir */}
+        <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+          {narrow && <span className="font-display text-sm font-bold tracking-wide whitespace-nowrap shrink-0">CV PRO</span>}
 
           {/* INDICATEUR DU SCORE DE COMPLÉTION DU CV */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => setHealthOpen(!healthOpen)}
               className={cn(
-                "group flex items-center gap-2 rounded-lg border px-2.5 py-1 text-xs font-medium transition shadow-xs",
+                "group flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition shadow-xs whitespace-nowrap shrink-0",
                 healthOpen
                   ? "border-ink bg-ink text-cream"
-                  : "border-line bg-sheet text-ink hover:border-ink hover:bg-cream",
+                  : "border-slate-200 bg-white text-ink hover:border-ink hover:bg-slate-50",
               )}
               title="Cliquez pour voir la checklist de complétion de votre CV"
             >
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
                 <span className="text-xs">
                   {health.score >= 85 ? "🎯" : health.score >= 60 ? "⚡" : "💡"}
                 </span>
-                <span className="text-[11px] font-semibold">
+                <span className="text-xs font-bold whitespace-nowrap">
                   Score : {health.score}%
                 </span>
               </div>
-              <div className="h-1.5 w-10 overflow-hidden rounded-full bg-line/80">
+              <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-200 shrink-0">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -409,12 +432,12 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                   }}
                 />
               </div>
-              <ChevronDown size={11} className={cn("transition-transform text-mute", healthOpen && "rotate-180 text-cream")} />
+              <ChevronDown size={12} className={cn("transition-transform text-mute shrink-0", healthOpen && "rotate-180 text-cream")} />
             </button>
 
             {/* CHECKLIST PLIANTE DE COMPLÉTION */}
             {healthOpen && (
-              <div className="absolute top-full left-0 mt-2 w-80 rounded-xl border border-line bg-sheet p-3.5 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full left-0 mt-2 w-80 rounded-xl border border-line bg-white p-3.5 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="mb-2.5 flex items-center justify-between border-b border-line pb-2">
                   <div>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-ink">
@@ -493,61 +516,75 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Zone Centre : Undo / Redo & Sauvegarde */}
-        <div className="hidden sm:flex items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded-lg border border-line bg-sheet p-0.5">
+          {/* Boutons Annuler / Rétablir */}
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 shrink-0 whitespace-nowrap">
             <button
               type="button"
               onClick={() => undo()}
               disabled={past === 0}
-              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-paper transition"
+              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-slate-100 transition shrink-0"
               title="Annuler (⌘Z)"
             >
-              <Undo size={13} />
+              <Undo size={14} />
             </button>
             <button
               type="button"
               onClick={() => redo()}
               disabled={future === 0}
-              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-paper transition"
+              className="flex size-7 items-center justify-center rounded text-ink disabled:opacity-25 hover:bg-slate-100 transition shrink-0"
               title="Rétablir (⌘Y)"
             >
-              <Redo size={13} />
+              <Redo size={14} />
             </button>
-          </div>
-
-          <div
-            onClick={saveNow}
-            className="flex items-center gap-1.5 text-[11px] text-mute hover:text-ink cursor-pointer transition"
-            title="Enregistrement continu en local. Cliquez pour sauvegarder maintenant."
-          >
-            <span className={cn("size-2 rounded-full", saveStatus === "saving" ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
-            <span className="font-mono text-[10px]">
-              {saveStatus === "saving" ? "Sauvegarde..." : mounted && lastSavedAt ? `Enregistré (${lastSavedAt})` : "Enregistré"}
-            </span>
           </div>
         </div>
 
-        {/* Zone Droite : Sync, Zoom & Export Principal */}
-        <div className="flex items-center gap-2">
-          {/* Synchronisation Cloud Multi-appareils */}
-          <button
-            type="button"
-            onClick={() => setCloudModalOpen(true)}
-            className="hidden md:flex items-center gap-1.5 rounded-lg border border-line bg-sheet px-2.5 py-1.5 text-[11px] font-medium text-ink hover:border-blue-500 hover:text-blue-600 transition shadow-xs"
-            title="Synchroniser votre CV sur mobile ou un autre appareil sans compte"
+        {/* Zone Centre : Sélecteur de Mode segmenté très visible (pill toggle) + Zoom + Infos Pro */}
+        <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+          {/* SÉLECTEUR DE MODE SEGMENTÉ (PILL TOGGLE) */}
+          <div
+            role="tablist"
+            aria-label="Mode d'édition"
+            className="flex items-center rounded-full border border-slate-200 bg-slate-100 p-1 shadow-inner shrink-0 whitespace-nowrap"
           >
-            <Cloud size={13} className={syncCode ? "text-blue-600" : "text-mute"} />
-            <span>{syncCode ? `Sync: ${syncCode}` : "Cloud Sync"}</span>
-          </button>
-
-          {/* Zoom */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-line bg-sheet p-0.5">
             <button
               type="button"
-              className="flex size-7 items-center justify-center rounded text-xs font-semibold text-mute hover:bg-paper hover:text-ink transition"
+              role="tab"
+              aria-selected={editorMode === "guided"}
+              onClick={() => setEditorMode("guided")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold transition-all whitespace-nowrap shrink-0",
+                editorMode === "guided"
+                  ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/5"
+                  : "text-slate-600 hover:text-slate-900",
+              )}
+              title="Mode Rapide : interface épurée sans règles ni détails techniques"
+            >
+              <span>⚡ Mode Rapide</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={editorMode === "pro"}
+              onClick={() => setEditorMode("pro")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold transition-all whitespace-nowrap shrink-0",
+                editorMode === "pro"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900",
+              )}
+              title="Studio Pro : règles millimétrées, guides d'alignement précis et dimensions en pixels"
+            >
+              <span>🎨 Studio Pro</span>
+            </button>
+          </div>
+
+          {/* Contrôle du Zoom (- 75% +) */}
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 shrink-0 whitespace-nowrap shadow-xs">
+            <button
+              type="button"
+              className="flex size-7 items-center justify-center rounded text-xs font-semibold text-mute hover:bg-slate-100 hover:text-ink transition shrink-0"
               onClick={() => setZoom(zoom / 1.15)}
               title="Zoom arrière"
             >
@@ -555,7 +592,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
             </button>
             <button
               type="button"
-              className="h-7 min-w-11 px-1 text-xs font-semibold tabular-nums hover:bg-paper rounded transition"
+              className="h-7 min-w-12 px-1 text-xs font-bold tabular-nums hover:bg-slate-100 rounded transition whitespace-nowrap shrink-0 text-center text-ink"
               onClick={fit}
               title="Adapter à l'écran"
             >
@@ -563,7 +600,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
             </button>
             <button
               type="button"
-              className="flex size-7 items-center justify-center rounded text-xs font-semibold text-mute hover:bg-paper hover:text-ink transition"
+              className="flex size-7 items-center justify-center rounded text-xs font-semibold text-mute hover:bg-slate-100 hover:text-ink transition shrink-0"
               onClick={() => setZoom(zoom * 1.15)}
               title="Zoom avant"
             >
@@ -571,37 +608,63 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
             </button>
           </div>
 
-          {/* BOUTON EXPORT CENTRAL AVEC MENU DÉROULANT (SEUL POINT D'EXPORT) */}
-          <div className="relative">
-            <div className="flex items-center rounded-lg bg-blue-600 text-white shadow-xs">
+          {/* Dimensions en pixels uniquement visibles en Mode Studio Pro */}
+          {isPro && (
+            <div className="hidden xl:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-700 shrink-0 whitespace-nowrap">
+              <span>A4 · {PAGE_W}×{PAGE_H} px</span>
+              {primarySelected && (
+                <span className="border-l border-slate-300 pl-1.5 text-blue-600">
+                  X:{Math.round(primarySelected.x)} Y:{Math.round(primarySelected.y)} · {Math.round(primarySelected.w)}×{Math.round(primarySelected.h)} px
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Zone Droite : Cloud Sync (uniquement en Studio Pro) + Bouton principal Télécharger mon CV (PDF) */}
+        <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
+          {isPro && (
+            <button
+              type="button"
+              onClick={() => setCloudModalOpen(true)}
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition shadow-xs shrink-0 whitespace-nowrap"
+              title="Synchronisation Cloud & Code de partage"
+            >
+              <Cloud size={14} className="text-blue-600 shrink-0" />
+              <span>{syncCode ? `Cloud (${syncCode})` : "Cloud Sync"}</span>
+            </button>
+          )}
+
+          <div className="relative shrink-0 whitespace-nowrap">
+            <div className="flex items-center rounded-lg bg-blue-600 text-white shadow-sm shrink-0 whitespace-nowrap hover:bg-blue-700 transition">
               <button
                 type="button"
                 onClick={() => directPdfExport()}
-                className="flex items-center gap-1.5 h-8 px-3 text-xs font-bold hover:bg-blue-700 rounded-l-lg transition"
+                className="flex items-center gap-2 h-9 px-4 text-xs font-bold transition whitespace-nowrap shrink-0"
                 title="Télécharger directement le fichier A4 en PDF prêt à l'envoi"
               >
-                <Download size={13} />
-                <span>Télécharger PDF</span>
+                <Download size={14} className="shrink-0" />
+                <span className="whitespace-nowrap font-bold">Télécharger mon CV (PDF)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setExportOpen(!exportOpen)}
-                className="flex items-center justify-center h-8 w-6 border-l border-blue-500/50 hover:bg-blue-700 rounded-r-lg transition"
+                className="flex items-center justify-center h-9 w-7 border-l border-blue-500/40 hover:bg-blue-800 rounded-r-lg transition shrink-0"
                 title="Autres formats d'export"
               >
-                <ChevronDown size={12} className={cn("transition-transform", exportOpen && "rotate-180")} />
+                <ChevronDown size={12} className={cn("transition-transform shrink-0", exportOpen && "rotate-180")} />
               </button>
             </div>
 
             {exportOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl border border-line bg-sheet p-1 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-1">
+              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl border border-line bg-white p-1 text-ink shadow-2xl z-50 animate-in fade-in slide-in-from-top-1">
                 <button
                   type="button"
                   onClick={() => {
                     setExportOpen(false);
                     directPdfExport();
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-cream transition"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition"
                 >
                   <Download size={14} className="text-blue-600 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -615,7 +678,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                     setExportOpen(false);
                     document.dispatchEvent(new Event("libre-png"));
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-cream transition"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition"
                 >
                   <FileText size={14} className="text-zinc-600 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -629,7 +692,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                     setExportOpen(false);
                     window.print();
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-cream transition"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition"
                 >
                   <Printer size={14} className="text-zinc-600 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -644,7 +707,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
                     setExportOpen(false);
                     document.dispatchEvent(new Event("libre-json"));
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-mute hover:text-ink hover:bg-cream transition text-xs"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-mute hover:text-ink hover:bg-slate-50 transition text-xs"
                 >
                   <span>Sauvegarder le projet (JSON)</span>
                 </button>
@@ -654,177 +717,200 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
         </div>
       </header>
 
-      {/* BARRE D'OUTILS CONTEXTUELLE FLOTTANTE (CANVA / FIGMA PRO) */}
-      {primarySelected && !primarySelected.locked && (
-        <div className="no-print absolute top-15 left-1/2 z-40 -translate-x-1/2 flex items-center gap-1.5 rounded-xl border border-ink-line bg-ink p-1.5 text-xs text-cream shadow-2xl animate-in fade-in slide-in-from-top-3">
-          {/* BOUTON ÉTINCELLE : FORMULER COMME UN PRO */}
-          {["text", "heading", "experience"].includes(primarySelected.type) && (
-            <div className="relative flex items-center">
-              <button
-                type="button"
-                onClick={() => boostElementText(primarySelected.id)}
-                className="flex h-8 items-center gap-1.5 rounded-lg bg-amber-400 px-2.5 text-xs font-bold text-black hover:bg-amber-300 transition shadow-xs"
-                title="Transforme ce texte en une formulation professionnelle orientée résultats"
-              >
-                <Sparkles size={13} className="shrink-0" />
-                <span>Formuler comme un pro</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setBoostMenuOpen(!boostMenuOpen)}
-                className="flex h-8 items-center px-1 rounded-r-lg bg-amber-400 text-black hover:bg-amber-300 border-l border-amber-500/40"
-                title="Choisir un style de formulation"
-              >
-                <ChevronDown size={11} />
-              </button>
-
-              {/* Menu des tonalités pro */}
-              {boostMenuOpen && (
-                <div className="absolute top-full left-0 mt-1.5 w-64 rounded-ui border border-ink-line bg-ink p-2 text-xs text-cream shadow-2xl z-50 space-y-1.5">
-                  <div className="text-[10px] font-bold tracking-wider text-amber-300 uppercase px-1">
-                    Variantes d'impact
-                  </div>
-                  {BOOST_PRESETS.map((preset) => (
-                    <button
-                      key={preset.tone}
-                      type="button"
-                      onClick={() => {
-                        const random = preset.options[Math.floor(Math.random() * preset.options.length)];
-                        boostElementText(primarySelected.id, random);
-                        setBoostMenuOpen(false);
-                      }}
-                      className="w-full text-left rounded-md px-2 py-1.5 hover:bg-ink-line text-[11px] transition"
-                    >
-                      <div className="font-semibold text-cream">{preset.category}</div>
-                      <div className="text-[10px] text-ink-mute truncate">{preset.options[0]}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* CONTRÔLES TYPOGRAPHIQUES RAPIDES */}
-          {["text", "heading"].includes(primarySelected.type) && (
-            <div className="flex items-center gap-1 border-l border-ink-line pl-1.5">
-              <button
-                type="button"
-                aria-label="Diminuer la taille"
-                onClick={() =>
-                  useStudio.getState().patchSelectedStyle({
-                    fontSize: Math.max(8, (primarySelected.style.fontSize || 12) - 1),
-                  })
-                }
-                className="flex size-7 items-center justify-center rounded-md bg-ink-raise hover:bg-ink-line text-ink-mute hover:text-cream"
-              >
-                <Minus size={11} />
-              </button>
-              <span className="font-mono text-xs w-6 text-center text-cream">
-                {primarySelected.style.fontSize || 12}
-              </span>
-              <button
-                type="button"
-                aria-label="Augmenter la taille"
-                onClick={() =>
-                  useStudio.getState().patchSelectedStyle({
-                    fontSize: Math.min(120, (primarySelected.style.fontSize || 12) + 1),
-                  })
-                }
-                className="flex size-7 items-center justify-center rounded-md bg-ink-raise hover:bg-ink-line text-ink-mute hover:text-cream"
-              >
-                <Plus size={11} />
-              </button>
-
-              <button
-                type="button"
-                aria-label="Gras"
-                onClick={() =>
-                  useStudio.getState().patchSelectedStyle({
-                    fontWeight: primarySelected.style.fontWeight >= 650 ? 400 : 700,
-                  })
-                }
-                className={cn(
-                  "flex size-7 items-center justify-center rounded-md transition",
-                  primarySelected.style.fontWeight >= 650 ? "bg-cream text-ink font-bold" : "bg-ink-raise text-ink-mute hover:text-cream",
-                )}
-              >
-                <Bold size={12} />
-              </button>
-            </div>
-          )}
-
-          {/* COULEUR DE FOND DU BLOC */}
-          <div className="flex items-center gap-1 border-l border-ink-line pl-1.5">
-            <label className="flex items-center gap-1 cursor-pointer" title="Couleur de fond">
-              <span className="text-[10px] text-ink-mute">Fond:</span>
-              <input
-                type="color"
-                value={primarySelected.style.backgroundColor !== "transparent" ? primarySelected.style.backgroundColor : "#ffffff"}
-                onChange={(e) => useStudio.getState().patchSelectedStyle({ backgroundColor: e.target.value })}
-                className="size-6 cursor-pointer rounded-md border border-ink-line bg-transparent p-0"
-              />
-            </label>
-          </div>
-
-          {/* ACTIONS D'ARRANGEMENT */}
-          <div className="flex items-center gap-0.5 border-l border-ink-line pl-1.5">
-            <button
-              type="button"
-              onClick={() => useStudio.getState().order("front")}
-              className="flex size-7 items-center justify-center rounded-md bg-ink-raise text-ink-mute hover:text-cream"
-              title="Mettre au premier plan"
-            >
-              <BringToFront size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={() => useStudio.getState().order("back")}
-              className="flex size-7 items-center justify-center rounded-md bg-ink-raise text-ink-mute hover:text-cream"
-              title="Mettre à l'arrière-plan"
-            >
-              <SendToBack size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={() => useStudio.getState().duplicateSelected()}
-              className="flex size-7 items-center justify-center rounded-md bg-ink-raise text-ink-mute hover:text-cream"
-              title="Dupliquer (⌘D)"
-            >
-              <Copy size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={() => useStudio.getState().deleteSelected()}
-              className="flex size-7 items-center justify-center rounded-md bg-red-950/60 text-red-300 hover:bg-red-900"
-              title="Supprimer"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ZONE DU CANVAS */}
+      {/* ZONE DU CANVAS AVEC FOND GRIS ARDOISE DOUX (#E2E8F0 / bg-slate-200/80) */}
       <div
         ref={scrollerRef}
-        className="no-print relative min-h-0 flex-1 overflow-auto bg-paper"
-        style={{ cursor: spaceOn ? "grab" : "default" }}
+        className="no-print relative min-h-0 flex-1 overflow-auto bg-slate-200/80"
+        style={{ backgroundColor: "#E2E8F0", cursor: spaceOn ? "grab" : "default" }}
         onPointerDown={onScrollerPointerDown}
       >
-        <div className="box-border min-h-full px-8 py-10">
+        {/* RÈGLES MILLIMÉTRÉES (UNIQUEMENT EN STUDIO PRO) */}
+        {isPro && (
+          <div className="sticky top-0 left-0 z-20 pointer-events-none select-none">
+            {/* Règle Horizontale supérieure */}
+            <div className="flex h-6 w-full items-end border-b border-slate-300 bg-slate-100/95 backdrop-blur-xs px-8 text-[9px] font-mono text-slate-500">
+              <div className="relative mx-auto h-full" style={{ width: PAGE_W * zoom }}>
+                {horizontalTicks.map((tick) => (
+                  <div
+                    key={tick}
+                    className="absolute bottom-0 flex flex-col items-start"
+                    style={{ left: tick * zoom }}
+                  >
+                    <span className="pl-1 leading-none pb-0.5">{tick}</span>
+                    <div className="h-1.5 w-px bg-slate-400" />
+                  </div>
+                ))}
+              </div>
+              <div className="ml-auto flex items-center gap-2 pr-2 pb-1 text-[10px] font-semibold text-slate-600">
+                <span>{ PAGE_W } × { PAGE_H } px</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className={cn("box-border min-h-full px-8", isPro ? "py-6" : "py-10")}>
           <div className="relative mx-auto" style={{ width: PAGE_W * zoom, height: innerHeight * zoom }}>
+            {/* Règle Verticale gauche (Uniquement en Studio Pro) */}
+            {isPro && (
+              <div
+                className="no-print pointer-events-none absolute top-0 -left-7 z-20 select-none overflow-hidden rounded-l border border-r-0 border-slate-300 bg-slate-100/95 font-mono text-[9px] text-slate-500"
+                style={{ width: 24, height: PAGE_H * zoom }}
+              >
+                {verticalTicks.map((tick) => (
+                  <div
+                    key={tick}
+                    className="absolute right-0 flex items-center justify-end pr-0.5"
+                    style={{ top: tick * zoom }}
+                  >
+                    <span className="pr-0.5 leading-none">{tick}</span>
+                    <div className="h-px w-1.5 bg-slate-400" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* BARRE D'OUTILS CONTEXTUELLE FLOTTANTE ALLÉGÉE (4 ACTIONS RAPIDES) */}
+            {primarySelected && !primarySelected.locked && (
+              <div
+                className="no-print absolute left-1/2 z-40 -translate-x-1/2 flex items-center gap-1.5 rounded-xl border border-ink-line bg-ink p-1.5 text-xs text-cream shadow-2xl animate-in fade-in slide-in-from-top-3 whitespace-nowrap flex-nowrap w-max"
+                style={{ top: floatingBarTop }}
+              >
+                {/* 1. BOUTON ÉTINCELLE : FORMULER COMME UN PRO */}
+                {["text", "heading", "experience"].includes(primarySelected.type) && (
+                  <div className="relative flex items-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => boostElementText(primarySelected.id)}
+                      className="flex h-8 items-center gap-1.5 rounded-l-lg bg-amber-400 px-2.5 text-xs font-bold text-black hover:bg-amber-300 transition shadow-xs whitespace-nowrap shrink-0"
+                      title="Transforme ce texte en une formulation professionnelle orientée résultats"
+                    >
+                      <Sparkles size={13} className="shrink-0" />
+                      <span className="whitespace-nowrap shrink-0">✨ Formuler comme un pro</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBoostMenuOpen(!boostMenuOpen)}
+                      className="flex h-8 items-center px-1 rounded-r-lg bg-amber-400 text-black hover:bg-amber-300 border-l border-amber-500/40 shrink-0"
+                      title="Choisir un style de formulation"
+                    >
+                      <ChevronDown size={11} className="shrink-0" />
+                    </button>
+
+                    {/* Menu des tonalités pro */}
+                    {boostMenuOpen && (
+                      <div className="absolute top-full left-0 mt-1.5 w-64 rounded-ui border border-ink-line bg-ink p-2 text-xs text-cream shadow-2xl z-50 space-y-1.5">
+                        <div className="text-[10px] font-bold tracking-wider text-amber-300 uppercase px-1">
+                          Variantes d'impact
+                        </div>
+                        {BOOST_PRESETS.map((preset) => (
+                          <button
+                            key={preset.tone}
+                            type="button"
+                            onClick={() => {
+                              const random = preset.options[Math.floor(Math.random() * preset.options.length)];
+                              boostElementText(primarySelected.id, random);
+                              setBoostMenuOpen(false);
+                            }}
+                            className="w-full text-left rounded-md px-2 py-1.5 hover:bg-ink-line text-[11px] transition"
+                          >
+                            <div className="font-semibold text-cream">{preset.category}</div>
+                            <div className="text-[10px] text-ink-mute truncate">{preset.options[0]}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. TAILLE (- / +) & GRAS (B) */}
+                {["text", "heading"].includes(primarySelected.type) && (
+                  <div className="flex items-center gap-1 border-l border-ink-line pl-1.5 shrink-0 whitespace-nowrap">
+                    <button
+                      type="button"
+                      aria-label="Diminuer la taille"
+                      onClick={() =>
+                        useStudio.getState().patchSelectedStyle({
+                          fontSize: Math.max(8, (primarySelected.style.fontSize || 12) - 1),
+                        })
+                      }
+                      className="flex size-7 items-center justify-center rounded-md bg-ink-raise hover:bg-ink-line text-ink-mute hover:text-cream shrink-0"
+                    >
+                      <Minus size={11} />
+                    </button>
+                    <span className="font-mono text-xs w-6 text-center text-cream shrink-0">
+                      {primarySelected.style.fontSize || 12}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Augmenter la taille"
+                      onClick={() =>
+                        useStudio.getState().patchSelectedStyle({
+                          fontSize: Math.min(120, (primarySelected.style.fontSize || 12) + 1),
+                        })
+                      }
+                      className="flex size-7 items-center justify-center rounded-md bg-ink-raise hover:bg-ink-line text-ink-mute hover:text-cream shrink-0"
+                    >
+                      <Plus size={11} />
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label="Gras"
+                      onClick={() =>
+                        useStudio.getState().patchSelectedStyle({
+                          fontWeight: primarySelected.style.fontWeight >= 650 ? 400 : 700,
+                        })
+                      }
+                      className={cn(
+                        "flex size-7 items-center justify-center rounded-md transition shrink-0",
+                        primarySelected.style.fontWeight >= 650 ? "bg-cream text-ink font-bold" : "bg-ink-raise text-ink-mute hover:text-cream",
+                      )}
+                    >
+                      <Bold size={12} />
+                    </button>
+                  </div>
+                )}
+
+                {/* 3. DUPLIQUER & 4. SUPPRIMER */}
+                <div className="flex items-center gap-1 border-l border-ink-line pl-1.5 shrink-0 whitespace-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => useStudio.getState().duplicateSelected()}
+                    className="flex size-7 items-center justify-center rounded-md bg-ink-raise text-ink-mute hover:text-cream shrink-0"
+                    title="Dupliquer (⌘D)"
+                  >
+                    <Copy size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => useStudio.getState().deleteSelected()}
+                    className="flex size-7 items-center justify-center rounded-md bg-red-950/60 text-red-300 hover:bg-red-900 shrink-0"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+
+                {/* Coordonnées & Dimensions de l'élément en Studio Pro */}
+                {isPro && (
+                  <div className="flex items-center gap-1 border-l border-ink-line pl-2 pr-1 font-mono text-[10px] text-amber-300 shrink-0 whitespace-nowrap">
+                    <span>{Math.round(primarySelected.w)}×{Math.round(primarySelected.h)}</span>
+                  </div>
+                )}
+              </div>
+            )}
             <div style={{ width: PAGE_W, transform: `scale(${zoom})`, transformOrigin: "top left" }}>
               <div className="flex flex-col gap-10">
                 {doc.pages.map((page) => (
-                  <div key={page.id} className={page.id === activePageId ? "rounded-sm ring-1 ring-ink" : "rounded-sm ring-1 ring-line"}>
+                  <div key={page.id} className="rounded-sm bg-white shadow-2xl">
                     <PageSheet
                       page={page}
                       interactive
                       selectedIds={page.id === activePageId ? selectedIds : []}
                       editingId={page.id === activePageId ? editingId : null}
-                      showGrid={showGrid}
-                      showMargins={margins}
-                      guides={page.id === activePageId ? guideLines : { x: [], y: [] }}
+                      showGrid={isPro ? showGrid : false}
+                      showMargins={isPro ? margins : false}
+                      guides={isPro && page.id === activePageId ? guideLines : { x: [], y: [] }}
                       marquee={page.id === activePageId ? marquee : null}
                       onSheetPointerDown={onSheetPointerDown(page.id)}
                       onElementPointerDown={onElementPointerDown(page.id)}
@@ -848,7 +934,7 @@ export function Canvas({ narrow = false }: { narrow?: boolean }) {
           </div>
         </div>
         <span className="sr-only">
-          Zoom {Math.round(zoom * 100)} pour cent. Magnétisme {snap ? "actif" : "inactif"}. Repères {guidesOn ? "actifs" : "inactifs"}.
+          Zoom {Math.round(zoom * 100)} pour cent. Mode {isPro ? "Studio Pro" : "Rapide"}. Magnétisme {snap ? "actif" : "inactif"}. Repères {guidesOn ? "actifs" : "inactifs"}.
         </span>
       </div>
     </div>

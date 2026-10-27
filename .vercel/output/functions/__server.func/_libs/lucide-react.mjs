@@ -385,54 +385,6 @@ var FileCheck = createLucideIcon("file-check", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
-var FileJson = createLucideIcon("file-json", [
-	["path", {
-		d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",
-		key: "1rqfz7"
-	}],
-	["path", {
-		d: "M14 2v4a2 2 0 0 0 2 2h4",
-		key: "tnqrlb"
-	}],
-	["path", {
-		d: "M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1",
-		key: "1oajmo"
-	}],
-	["path", {
-		d: "M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1",
-		key: "mpwhp6"
-	}]
-]);
-/**
-* @license lucide-react v0.510.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
-var FilePlus = createLucideIcon("file-plus", [
-	["path", {
-		d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",
-		key: "1rqfz7"
-	}],
-	["path", {
-		d: "M14 2v4a2 2 0 0 0 2 2h4",
-		key: "tnqrlb"
-	}],
-	["path", {
-		d: "M9 15h6",
-		key: "cctwl0"
-	}],
-	["path", {
-		d: "M12 18v-6",
-		key: "17g6i2"
-	}]
-]);
-/**
-* @license lucide-react v0.510.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
 var FileText = createLucideIcon("file-text", [
 	["path", {
 		d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",
@@ -682,6 +634,38 @@ var Layers = createLucideIcon("layers", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var LayoutTemplate = createLucideIcon("layout-template", [
+	["rect", {
+		width: "18",
+		height: "7",
+		x: "3",
+		y: "3",
+		rx: "1",
+		key: "f1a2em"
+	}],
+	["rect", {
+		width: "9",
+		height: "7",
+		x: "3",
+		y: "14",
+		rx: "1",
+		key: "jqznyg"
+	}],
+	["rect", {
+		width: "5",
+		height: "7",
+		x: "16",
+		y: "14",
+		rx: "1",
+		key: "q5h2i8"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Link = createLucideIcon("link", [["path", {
 	d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71",
 	key: "1cjeqo"
@@ -908,6 +892,19 @@ var Printer = createLucideIcon("printer", [
 		key: "1ue0tg"
 	}]
 ]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Redo = createLucideIcon("redo", [["path", {
+	d: "M21 7v6h-6",
+	key: "3ptur4"
+}], ["path", {
+	d: "M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7",
+	key: "1kgawr"
+}]]);
 /**
 * @license lucide-react v0.510.0 - ISC
 *
@@ -1204,6 +1201,19 @@ var Type = createLucideIcon("type", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Undo = createLucideIcon("undo", [["path", {
+	d: "M3 7v6h6",
+	key: "1v2h90"
+}], ["path", {
+	d: "M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13",
+	key: "1r6uu6"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Upload = createLucideIcon("upload", [
 	["path", {
 		d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
@@ -1289,4 +1299,4 @@ var X = createLucideIcon("x", [["path", {
 	d: "m6 6 12 12",
 	key: "d8bk6v"
 }]]);
-export { Briefcase as $, Italic as A, FileCheck as B, Magnet as C, Link as D, LoaderCircle as E, Gauge as F, Cloud as G, EyeOff as H, FileType as I, CircleAlert as J, Circle as K, FileText as L, Heading as M, Grid3x3 as N, Layers as O, GraduationCap as P, BringToFront as Q, FilePlus as R, Mail as S, LockOpen as T, Download as U, Eye as V, Copy as W, ChevronDown as X, ChevronUp as Y, Check as Z, Phone as _, Type as a, Minus as b, Tags as c, Smartphone as d, Bold as et, SlidersHorizontal as f, Plus as g, Printer as h, Upload as i, Image as j, Languages as k, Square as l, RefreshCw as m, WandSparkles as n, AlignRight as nt, TriangleAlert as o, SendToBack as p, CircleCheck as q, User as r, AlignCenter as rt, Trash2 as s, X as t, AlignLeft as tt, Sparkles as u, Palette as v, Lock as w, MapPin as x, Package as y, FileJson as z };
+export { BringToFront as $, LayoutTemplate as A, FileText as B, MapPin as C, LockOpen as D, Lock as E, Heading as F, Copy as G, Eye as H, Grid3x3 as I, CircleCheck as J, Cloud as K, GraduationCap as L, Languages as M, Italic as N, LoaderCircle as O, Image as P, Check as Q, Gauge as R, Minus as S, Magnet as T, EyeOff as U, FileCheck as V, Download as W, ChevronUp as X, CircleAlert as Y, ChevronDown as Z, Printer as _, Undo as a, Palette as b, Trash2 as c, Sparkles as d, Briefcase as et, Smartphone as f, Redo as g, RefreshCw as h, Upload as i, AlignCenter as it, Layers as j, Link as k, Tags as l, SendToBack as m, WandSparkles as n, AlignLeft as nt, Type as o, SlidersHorizontal as p, Circle as q, User as r, AlignRight as rt, TriangleAlert as s, X as t, Bold as tt, Square as u, Plus as v, Mail as w, Package as x, Phone as y, FileType as z };

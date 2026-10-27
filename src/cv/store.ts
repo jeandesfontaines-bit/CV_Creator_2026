@@ -18,6 +18,7 @@ import type {
   ElType,
   IdentityField,
   Page,
+  Profile,
   TemplateId,
 } from "@/cv/types";
 import { baseStyle, INK, PAGE_H, SHEET, SIGNAL } from "@/cv/types";
@@ -32,6 +33,7 @@ export type ElementPatch = Partial<Pick<CVElement, "x" | "y" | "w" | "h" | "rota
 type Flags = "showGrid" | "snap" | "guides" | "margins";
 
 export type SaveStatus = "saved" | "saving" | "unsaved";
+export type EditorMode = "guided" | "pro";
 
 type State = {
   doc: Doc;
@@ -42,6 +44,7 @@ type State = {
   selectedIds: string[];
   editingId: string | null;
   zoom: number;
+  editorMode: EditorMode;
   showGrid: boolean;
   snap: boolean;
   guides: boolean;
@@ -54,6 +57,7 @@ type State = {
   cloudStatus: "idle" | "saving" | "synced" | "error";
   cloudModalOpen: boolean;
   mobileTouchMode: boolean;
+  setEditorMode: (mode: EditorMode) => void;
   setCloudModalOpen: (open: boolean) => void;
   setMobileTouchMode: (active: boolean) => void;
   syncToCloud: (title?: string) => Promise<string | null>;
@@ -227,6 +231,7 @@ export const useStudio = create<State>((set, get) => {
     selectedIds: [],
     editingId: null,
     zoom: 0.72,
+    editorMode: "guided",
     showGrid: false,
     snap: true,
     guides: true,
@@ -241,6 +246,7 @@ export const useStudio = create<State>((set, get) => {
     extractorModalOpen: false,
     mobileTouchMode: false,
 
+    setEditorMode: (mode) => set({ editorMode: mode }),
     setCloudModalOpen: (open) => set({ cloudModalOpen: open }),
     setExtractorModalOpen: (open) => set({ extractorModalOpen: open }),
     setMobileTouchMode: (active) => set({ mobileTouchMode: active }),
@@ -799,6 +805,21 @@ export const useStudio = create<State>((set, get) => {
         }));
       }, false);
       get().notify(`Harmonie "${palette.name}" appliquée`);
+    },
+
+    applyGlobalFont: (font) => {
+      const pageId = get().activePageId;
+      commit((doc) => {
+        return mapPage(doc, pageId, (p) => ({
+          ...p,
+          elements: p.elements.map((el) =>
+            ["photo", "rect", "ellipse", "rule"].includes(el.type)
+              ? el
+              : mergeElement(el, { style: { fontFamily: font } }),
+          ),
+        }));
+      }, false);
+      get().notify(`Police globale "${font}" appliquée`);
     },
 
     addSectionPack: (packId) => {

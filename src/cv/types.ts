@@ -7,7 +7,7 @@ export const INK = "#141311";
 export const CREAM = "#f6f3ec";
 export const MUTE = "#5e5952";
 export const SIGNAL = "#d6372a";
-export const SHEET = "#fffdf8";
+export const SHEET = "#ffffff";
 export const HAIR = "#e4e0d8";
 
 export type TemplateId = "modern" | "minimal" | "executive" | "creative" | "swiss" | "editorial";

@@ -38,11 +38,14 @@ export function PageSheet({
   onRotate,
   onUpload,
 }: Props) {
+  // Feuille A4 forcée en blanc pur (#FFFFFF) avec une ombre nette (shadow-2xl)
+  const sheetBg = "#ffffff";
+
   return (
     <div
-      className="sheet-shadow relative overflow-hidden"
+      className="bg-white shadow-2xl ring-1 ring-slate-900/10 relative overflow-hidden"
       data-sheet={interactive ? page.id : undefined}
-      style={{ width: PAGE_W, height: PAGE_H, background: page.background }}
+      style={{ width: PAGE_W, height: PAGE_H, backgroundColor: sheetBg }}
       onPointerDown={interactive ? onSheetPointerDown : undefined}
     >
       {showGrid && interactive && (

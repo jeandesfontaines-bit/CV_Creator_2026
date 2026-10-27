@@ -126,6 +126,10 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
   const margins = useStudio((s) => s.margins);
   const saveStatus = useStudio((s) => s.saveStatus);
   const lastSavedAt = useStudio((s) => s.lastSavedAt);
+  const editorMode = useStudio((s) => s.editorMode);
+  const setEditorMode = useStudio((s) => s.setEditorMode);
+  const isPro = editorMode === "pro";
+
   const page = activePage(doc, activePageId);
   const jsonRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<"templates" | "blocks" | "layers">("templates");
@@ -134,6 +138,13 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Ensure activeTab is valid if switching modes
+  useEffect(() => {
+    if (!isPro && activeTab === "layers") {
+      setActiveTab("templates");
+    }
+  }, [isPro, activeTab]);
 
   const done = () => onDone?.();
 
@@ -147,7 +158,9 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
           </span>
           <div>
             <div className="font-display text-xs font-bold tracking-wider leading-none">CV STUDIO PRO</div>
-            <div className="mt-1 text-[10px] text-ink-mute">Édition & Design A4</div>
+            <div className="mt-1 text-[10px] text-ink-mute">
+              {isPro ? "🎨 Mode Studio Pro" : "⚡ Mode Rapide"}
+            </div>
           </div>
         </div>
 
@@ -168,8 +181,13 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
         </div>
       </div>
 
-      {/* 3 Onglets clairs et ordonnés */}
-      <div className="grid grid-cols-3 border-b border-ink-line bg-ink-raise/40 p-1 text-[11px] font-medium shrink-0">
+      {/* Onglets selon le mode (2 en Mode Rapide, 3 en Studio Pro) */}
+      <div
+        className={cn(
+          "grid border-b border-ink-line bg-ink-raise/40 p-1 text-[11px] font-medium shrink-0 items-center gap-1",
+          isPro ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-2",
+        )}
+      >
         <button
           type="button"
           onClick={() => setActiveTab("templates")}
@@ -179,7 +197,7 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
           )}
         >
           <LayoutTemplate size={13} />
-          Modèles
+          <span>{isPro ? "1. Modèles" : "Modèles & Style"}</span>
         </button>
         <button
           type="button"
@@ -190,19 +208,21 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
           )}
         >
           <Package size={13} />
-          Ajouter
+          <span>{isPro ? "2. Ajouter" : "Ajouter une rubrique"}</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("layers")}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md py-1.5 transition text-xs",
-            activeTab === "layers" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream",
-          )}
-        >
-          <Layers size={13} />
-          Calques
-        </button>
+        {isPro && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(activeTab === "layers" ? "templates" : "layers")}
+            className={cn(
+              "flex size-8 items-center justify-center rounded-md transition text-xs",
+              activeTab === "layers" ? "bg-cream text-ink font-semibold shadow-xs" : "text-ink-mute hover:text-cream hover:bg-ink-line",
+            )}
+            title="Calques & Options avancées"
+          >
+            <Layers size={14} />
+          </button>
+        )}
       </div>
 
       {/* Contenu déroulant principal */}
@@ -331,18 +351,18 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
           </div>
         )}
 
-        {/* ONGLET 2 : AJOUTER DES BLOCS & PACKS */}
+        {/* ONGLET 2 : AJOUTER UNE RUBRIQUE */}
         {activeTab === "blocks" && (
           <div className="space-y-4">
-            {/* PACKS DE SECTIONS COMPLÈTES */}
+            {/* PACKS DE SECTIONS COMPLÈTES EN GRANDES CARTES (TOUJOURS VISIBLES EN PREMIER) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                  Packs complets prêts à poser
+                  Rubriques prêtes à l'emploi (3 clics)
                 </h2>
-                <span className="text-[10px] text-amber-400 font-medium">Pré-groupés</span>
+                <span className="text-[10px] text-amber-400 font-medium">Recommandé</span>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {SECTION_PACKS.map((pack) => (
                   <button
                     key={pack.id}
@@ -351,48 +371,64 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                       useStudio.getState().addSectionPack(pack.id);
                       done();
                     }}
-                    className="group flex w-full items-center gap-2.5 rounded-xl border border-ink-line bg-ink-raise p-2.5 text-left transition hover:border-cream hover:bg-ink-line/40"
+                    className="group flex w-full items-center gap-3 rounded-xl border border-ink-line bg-ink-raise p-3 text-left transition hover:border-cream hover:bg-ink-line/50 shadow-sm"
                   >
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-ink-line text-sm">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ink-line text-lg">
                       {pack.icon}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-cream leading-tight">{pack.name}</div>
-                      <div className="text-[10px] text-ink-mute truncate">{pack.desc}</div>
+                      <div className="text-xs font-bold text-cream leading-tight">{pack.name}</div>
+                      <div className="text-[11px] text-ink-mute mt-0.5 line-clamp-1">{pack.desc}</div>
                     </div>
-                    <span className="text-xs font-bold text-ink-mute group-hover:text-cream">+</span>
+                    <span className="flex size-6 items-center justify-center rounded-full bg-ink-line text-xs font-bold text-cream group-hover:bg-cream group-hover:text-ink transition">
+                      +
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* BLOCS UNITAIRES */}
-            <div className="space-y-2 border-t border-ink-line pt-3">
-              <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
-                Blocs individuels
-              </h2>
-              <div className="grid grid-cols-4 gap-1.5">
-                {ADD.map((item) => (
-                  <button
-                    key={item.type}
-                    type="button"
-                    onClick={() => {
-                      useStudio.getState().addElement(item.type);
-                      done();
-                    }}
-                    className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-lg border border-ink-line bg-ink-raise text-ink-mute hover:text-cream hover:border-cream transition"
-                  >
-                    <item.icon size={13} strokeWidth={1.75} aria-hidden />
-                    <span className="text-[10px]">{item.label}</span>
-                  </button>
-                ))}
+            {/* BLOCS INDIVIDUELS : Affichés directement en mode PRO, ou dans un menu dépliable en mode RAPIDE (ou bouton de déblocage) */}
+            {isPro ? (
+              <div className="space-y-2 border-t border-ink-line pt-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-[10px] font-bold tracking-widest text-ink-mute uppercase">
+                    Blocs individuels experts (11 types)
+                  </h2>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                  {ADD.map((item) => (
+                    <button
+                      key={item.type}
+                      type="button"
+                      onClick={() => {
+                        useStudio.getState().addElement(item.type);
+                        done();
+                      }}
+                      className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-ink-line bg-ink text-ink-mute hover:text-cream hover:border-cream transition"
+                    >
+                      <item.icon size={13} strokeWidth={1.75} aria-hidden />
+                      <span className="text-[10px]">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="border-t border-ink-line pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditorMode("pro")}
+                  className="w-full rounded-xl border border-amber-400/40 bg-amber-400/10 p-2.5 text-center text-xs font-semibold text-amber-300 hover:bg-amber-400/20 transition"
+                >
+                  + Débloquer les blocs libres (Mode Pro) ↗
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ONGLET 3 : PAGES, CALQUES & AFFICHAGE */}
-        {activeTab === "layers" && (
+        {/* ONGLET 3 : PAGES, CALQUES & AFFICHAGE (UNIQUEMENT EN STUDIO PRO) */}
+        {activeTab === "layers" && isPro && (
           <div className="space-y-4">
             {/* PAGES A4 DU DOCUMENT */}
             <div className="space-y-2">
@@ -532,7 +568,7 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
         )}
       </div>
 
-      {/* PIED DE BARRE LATÉRALE ÉPURÉ (ZÉRO BOUTONS EN DOUBLE) */}
+      {/* PIED DE BARRE LATÉRALE ÉPURÉ */}
       <div className="shrink-0 border-t border-ink-line p-3 space-y-2 bg-ink">
         <div className="grid grid-cols-2 gap-1.5">
           <button
