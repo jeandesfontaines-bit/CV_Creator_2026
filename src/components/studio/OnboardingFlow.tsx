@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Check, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
-import { useStudio } from "@/cv/store";
-import { buildTemplate, TEMPLATES } from "@/cv/templates";
-import { JOB_PRESETS } from "@/cv/presets";
-import { PAGE_H, PAGE_W } from "@/cv/types";
-import type { Page, TemplateId } from "@/cv/types";
+import { ArrowDownToLine, ArrowRight, Check, FileUp, Sparkles } from "lucide-react";
 import { PageSheet } from "@/components/studio/PageSheet";
+import { useStudio } from "@/cv/store";
+import { JOB_PRESETS } from "@/cv/presets";
+import { buildTemplate, TEMPLATES } from "@/cv/templates";
+import type { Page, TemplateId } from "@/cv/types";
+
+type StartMode = "import" | "guided" | "example";
 
 export function OnboardingFlow() {
   const setOnboarding = useStudio((s) => s.setOnboarding);
@@ -15,63 +16,53 @@ export function OnboardingFlow() {
   const applyTemplate = useStudio((s) => s.applyTemplate);
   const doc = useStudio((s) => s.doc);
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const [startMode, setStartMode] = useState<StartMode>("guided");
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
-  const [selectedPresetId, setSelectedPresetId] = useState<string>("designer");
-  const [useCustomProfile, setUseCustomProfile] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState("designer");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState("");
   const selectedPreset = JOB_PRESETS.find((preset) => preset.id === selectedPresetId) ?? JOB_PRESETS[0];
-  const previewName = useCustomProfile ? `${firstName} ${lastName}`.trim() || "Votre nom" : selectedPreset.profile.name;
-  const previewRole = useCustomProfile ? role || "Votre métier" : selectedPreset.profile.role;
   const previewProfile = useMemo(() => ({
-    ...(useCustomProfile ? doc.profile : selectedPreset.profile),
-    name: previewName,
-    role: previewRole,
-  }), [doc.profile, previewName, previewRole, selectedPreset.profile, useCustomProfile]);
-  const previewPage = (templateId: TemplateId, prefix: string): Page => ({
+    ...(startMode === "example" ? selectedPreset.profile : doc.profile),
+    name: startMode === "example" ? selectedPreset.profile.name : `${firstName} ${lastName}`.trim() || "Votre nom",
+    role: startMode === "example" ? selectedPreset.profile.role : role || "Votre métier",
+  }), [doc.profile, firstName, lastName, role, selectedPreset.profile, startMode]);
+
+  const pageFor = (templateId: TemplateId, prefix: string): Page => ({
     id: prefix,
     name: "Aperçu",
     background: "#ffffff",
     elements: buildTemplate(templateId, previewProfile, prefix),
   });
 
-  const handleLaunchGuided = () => {
-    let nextProfile = doc.profile;
-    if (useCustomProfile) {
-      nextProfile = {
-        ...doc.profile,
-        name: `${firstName} ${lastName}`.trim() || "Votre nom",
-        role: role || "Votre métier",
-        email: "Votre adresse e-mail",
-        phone: "Votre téléphone",
-        location: "Votre ville",
-        link: "Votre lien professionnel",
-        summary: "Présentez votre parcours, vos points forts et le poste recherché.",
-        experiences: [
-          {
-            role: "Votre poste",
-            company: "Entreprise · Ville",
-            date: "Dates",
-            desc: "Décrivez vos missions et vos résultats.",
-          },
-        ],
-        educations: [{ degree: "Votre diplôme", school: "Établissement", date: "Années" }],
-        skills: ["Compétence 1", "Compétence 2", "Compétence 3"],
-        languages: [{ label: "Votre langue", value: 70 }],
-      };
-    } else {
-      const preset = JOB_PRESETS.find((p) => p.id === selectedPresetId);
-      if (preset) {
-        nextProfile = structuredClone(preset.profile);
-      }
+  const launchEditor = () => {
+    if (startMode === "import") {
+      applyTemplate(selectedTemplate);
+      setEditorMode("guided");
+      setOnboarding(false);
+      setExtractorModalOpen(true);
+      return;
     }
 
-    loadDocument({
-      ...doc,
-      profile: nextProfile,
-    });
+    const profile = startMode === "example"
+      ? structuredClone(selectedPreset.profile)
+      : {
+          ...doc.profile,
+          name: `${firstName} ${lastName}`.trim() || "Votre nom",
+          role: role || "Votre métier",
+          email: "Votre adresse e-mail",
+          phone: "Votre téléphone",
+          location: "Votre ville",
+          link: "Votre lien professionnel",
+          summary: "Présentez votre parcours, vos points forts et le poste recherché.",
+          experiences: [{ role: "Votre poste", company: "Entreprise · Ville", date: "Dates", desc: "Décrivez vos missions et vos résultats." }],
+          educations: [{ degree: "Votre diplôme", school: "Établissement", date: "Années" }],
+          skills: ["Compétence 1", "Compétence 2", "Compétence 3"],
+          languages: [{ label: "Votre langue", value: 70 }],
+        };
+
+    loadDocument({ ...doc, profile });
     applyTemplate(selectedTemplate);
     setOnboarding(false);
     setEditorMode("guided");
@@ -80,138 +71,72 @@ export function OnboardingFlow() {
   return (
     <div className="cv-onboarding-shell min-h-dvh w-full overflow-y-auto">
       <header className="cv-brandbar">
-        <div className="cv-wordmark">
-          <span className="cv-wordmark-mark">L.</span>
-          <span>LIBRE <span className="font-normal opacity-60">/ CV STUDIO</span></span>
-        </div>
-        <div className="flex items-center gap-5">
-          <span className="cv-brand-note hidden sm:block">L’atelier du CV · 2026</span>
-          {step === 2 && (
-            <button type="button" onClick={() => setStep(1)} className="flex min-h-10 items-center gap-2 rounded-full border border-white/20 px-4 text-xs font-semibold text-white transition hover:border-signal hover:text-signal">
-              <ArrowLeft size={14} /> Retour
-            </button>
-          )}
-        </div>
+        <div className="cv-wordmark"><span className="cv-wordmark-mark">L.</span><span>LIBRE <span className="cv-brand-suffix">CV STUDIO</span></span></div>
+        <div className="cv-brand-progress"><span className="cv-progress-dot" /> Votre CV · brouillon</div>
+        <button type="button" onClick={launchEditor} className="cv-header-action">Ouvrir le studio <ArrowRight size={15} /></button>
       </header>
 
-      {step === 1 && (
-        <main className="cv-welcome-grid">
-          <section className="cv-welcome-copy">
-            <div className="cv-eyebrow">On commence par votre parcours</div>
-            <h1 className="cv-welcome-title">Un CV.<br />Vos <em>règles.</em></h1>
-            <p className="cv-welcome-lede">
-              Vous refaites votre CV. On part de ce que vous avez déjà, puis vous décidez jusqu’où vous voulez pousser chaque détail.
-            </p>
+      <main className="cv-workbench">
+        <section className="cv-workspace-main">
+          <div className="cv-workspace-heading">
+            <div className="cv-eyebrow">ATELIER DE CRÉATION <span>01 — 01</span></div>
+            <h1>Votre CV, <em>à votre façon.</em></h1>
+            <p>Partez de ce que vous avez. Le contenu et la mise en page restent modifiables ensemble.</p>
+          </div>
 
-            <div className="cv-start-list" aria-label="Choisissez votre point de départ">
-              <button type="button" onClick={() => { setOnboarding(false); setEditorMode("guided"); setExtractorModalOpen(true); }} className="cv-start-choice group">
-                <span className="cv-start-number">01</span>
-                <span><span className="cv-start-title">J’ai déjà un CV</span><span className="cv-start-detail">Importez-le ou collez son contenu, puis refaites sa mise en page.</span></span>
-                <ArrowRight className="cv-start-arrow" size={18} />
+          <section className="cv-start-panel" aria-labelledby="start-heading">
+            <div className="cv-section-title"><span>01</span><div><h2 id="start-heading">Qu’avez-vous déjà ?</h2><p>Vous pourrez changer de méthode dans l’éditeur.</p></div></div>
+            <div className="cv-start-options" role="group" aria-label="Point de départ">
+              <button type="button" aria-pressed={startMode === "import"} onClick={() => setStartMode("import")} className={`cv-start-option ${startMode === "import" ? "is-selected" : ""}`}>
+                <FileUp size={18} /><span><b>Un CV à refaire</b><small>Importer ou coller son contenu</small></span>{startMode === "import" && <Check size={16} />}
               </button>
-              <button type="button" onClick={() => { setUseCustomProfile(true); setStep(2); }} className="cv-start-choice group">
-                <span className="cv-start-number">02</span>
-                <span><span className="cv-start-title">J’ai des infos à rassembler</span><span className="cv-start-detail">On vous guide pour remettre votre parcours en forme.</span></span>
-                <ArrowRight className="cv-start-arrow" size={18} />
+              <button type="button" aria-pressed={startMode === "guided"} onClick={() => setStartMode("guided")} className={`cv-start-option ${startMode === "guided" ? "is-selected" : ""}`}>
+                <ArrowDownToLine size={18} /><span><b>Quelques infos</b><small>Être guidé pour le construire</small></span>{startMode === "guided" && <Check size={16} />}
               </button>
-              <button type="button" onClick={() => { setUseCustomProfile(false); setStep(2); }} className="cv-start-choice group">
-                <span className="cv-start-number">03</span>
-                <span><span className="cv-start-title">Je veux une base pour me lancer</span><span className="cv-start-detail">Partez d’un exemple concret, à remplacer par votre histoire.</span></span>
-                <ArrowRight className="cv-start-arrow" size={18} />
+              <button type="button" aria-pressed={startMode === "example"} onClick={() => setStartMode("example")} className={`cv-start-option ${startMode === "example" ? "is-selected" : ""}`}>
+                <Sparkles size={18} /><span><b>Besoin d’un exemple</b><small>Partir d’un parcours fictif</small></span>{startMode === "example" && <Check size={16} />}
               </button>
             </div>
-            <p className="cv-one-journey"><span aria-hidden="true">↳</span> Le même CV vous suit partout : avancez guidé, puis passez aux réglages libres quand vous le souhaitez.</p>
+            {startMode === "guided" && (
+              <div className="cv-start-fields">
+                <label>PRÉNOM<input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Ex. Alex" /></label>
+                <label>NOM<input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Ex. Martin" /></label>
+                <label className="cv-field-wide">MÉTIER OU POSTE VISÉ<input value={role} onChange={(event) => setRole(event.target.value)} placeholder="Ex. architecte, infirmier…" /></label>
+              </div>
+            )}
+            {startMode === "example" && (
+              <label className="cv-preset-field">CHOISIR UN EXEMPLE
+                <select value={selectedPresetId} onChange={(event) => setSelectedPresetId(event.target.value)}>
+                  {JOB_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+                </select>
+              </label>
+            )}
+            {startMode === "import" && <p className="cv-import-hint">Votre fichier sera importé dans cet atelier. Vous pourrez corriger le texte et refaire toute la mise en page ensuite.</p>}
           </section>
 
-          <aside className="cv-visual-stage" aria-label="Aperçu d’un CV personnalisable">
-            <span className="cv-stage-label">EXEMPLE VISUEL · CONTENU FICTIF</span>
-            <div className="cv-sample-sheet" aria-hidden="true">
-              <PageSheet page={previewPage(selectedTemplate, "welcome-preview")} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} />
-            </div>
-            <div className="cv-stage-sticker">LIBRE<br />DE BOUGER<br />LES LIGNES</div>
-            <span className="cv-stage-index">APERÇU DE MISE EN PAGE · 01</span>
-          </aside>
-        </main>
-      )}
-
-      {step === 2 && (
-        <main className="cv-builder-grid">
-          <aside className="cv-step-nav" aria-label="Étapes de création du CV">
-            <div className="cv-steps-caption">VOTRE PARCOURS</div>
-            <div className="cv-step-item is-done"><span>01</span><div><b>Point de départ</b><small>Ce que vous avez déjà</small></div><Check size={15} /></div>
-            <div className="cv-step-item is-current"><span>02</span><div><b>Style & contenu</b><small>À votre façon</small></div></div>
-            <div className="cv-steps-note"><span className="cv-steps-note-mark">↗</span><p>Un seul CV.<br />Toute la liberté de le faire vôtre.</p></div>
-          </aside>
-
-          <section className="cv-template-workspace">
-            <div className="cv-gallery-heading">
-              <span className="cv-eyebrow">02 / VOTRE MISE EN PAGE</span>
-              <h1>Choisissez un<br /><em>terrain de jeu.</em></h1>
-              <p>Chaque modèle est un point de départ. Vous pourrez déplacer, redimensionner et transformer les éléments ensuite.</p>
-            </div>
-            <div className="cv-gallery-toolbar"><span>LES MODÈLES</span><span>{TEMPLATES.length} BASES · TOUTES MODIFIABLES</span></div>
+          <section className="cv-model-section" aria-labelledby="models-heading">
+            <div className="cv-section-title"><span>02</span><div><h2 id="models-heading">Choisissez une base visuelle</h2><p>Ce sont des modèles de départ, pas des cadres figés.</p></div><span className="cv-model-count">{TEMPLATES.length} MODÈLES</span></div>
             <div className="cv-template-gallery">
-              {TEMPLATES.map((tpl, index) => (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => setSelectedTemplate(tpl.id)}
-                  aria-pressed={selectedTemplate === tpl.id}
-                  className={`cv-template-card ${selectedTemplate === tpl.id ? "is-selected" : ""}`}
-                >
-                    <div className="cv-template-thumb" aria-hidden="true">
-                    <div className="cv-sheet-scale cv-sheet-scale-thumb">
-                      <PageSheet page={previewPage(tpl.id, `gallery-${tpl.id}`)} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} />
-                    </div>
-                    <span className="cv-template-index">0{index + 1}</span>
-                  </div>
-                  <div className="cv-template-caption"><span><b>{tpl.name}</b><small>{tpl.note}</small></span>{selectedTemplate === tpl.id && <Check size={17} />}</div>
+              {TEMPLATES.map((template) => (
+                <button key={template.id} type="button" onClick={() => setSelectedTemplate(template.id)} aria-pressed={selectedTemplate === template.id} className={`cv-template-card ${selectedTemplate === template.id ? "is-selected" : ""}`}>
+                  <span className="cv-template-thumb" aria-hidden="true"><span className="cv-sheet-scale-thumb"><PageSheet page={pageFor(template.id, `gallery-${template.id}`)} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} /></span></span>
+                  <span className="cv-template-caption"><b>{template.name}</b><small>{template.note}</small>{selectedTemplate === template.id && <Check size={15} />}</span>
                 </button>
               ))}
             </div>
           </section>
+        </section>
 
-          <aside className="cv-side-column">
-            <section className="cv-preview-card">
-              <div className="cv-preview-topline"><span>APERÇU EN DIRECT</span><span className="cv-live-dot" />
-              </div>
-              <div className="cv-live-paper">
-                <div className="cv-sheet-scale cv-sheet-scale-live">
-                  <PageSheet page={previewPage(selectedTemplate, `live-${selectedTemplate}`)} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} />
-                </div>
-              </div>
-              <div className="cv-preview-footer"><span>{TEMPLATES.find((tpl) => tpl.id === selectedTemplate)?.name}</span><span>A4 · PERSONNALISABLE</span></div>
-            </section>
-
-            <section className="cv-content-card">
-              <div className="cv-content-heading"><span>VOTRE CONTENU</span><span>CHOISISSEZ VOTRE DÉPART</span></div>
-              <div className="cv-content-switch" role="group" aria-label="Contenu de départ">
-                <button type="button" onClick={() => setUseCustomProfile(true)} className={useCustomProfile ? "is-active" : ""}>Mes infos</button>
-                <button type="button" onClick={() => setUseCustomProfile(false)} className={!useCustomProfile ? "is-active" : ""}>Un exemple</button>
-              </div>
-              {useCustomProfile ? (
-                <div className="cv-content-fields">
-                  <label>PRÉNOM<input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Ex. : Alex" /></label>
-                  <label>NOM<input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Ex. : Martin" /></label>
-                  <label className="cv-field-wide">POSTE VISÉ<input value={role} onChange={(event) => setRole(event.target.value)} placeholder="Ex. : architecte, infirmier…" /></label>
-                  <p>Vous pourrez compléter vos expériences et votre formation dans l’éditeur.</p>
-                </div>
-              ) : (
-                <div className="cv-content-fields">
-                  <label className="cv-field-wide">EXEMPLE DE PARCOURS
-                    <select value={selectedPresetId} onChange={(event) => setSelectedPresetId(event.target.value)}>
-                      {JOB_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
-                    </select>
-                  </label>
-                  <p>Contenu fictif, à remplacer. Vous pourrez modifier chaque ligne du modèle.</p>
-                </div>
-              )}
-              <button type="button" onClick={handleLaunchGuided} className="cv-continue-button">Continuer dans l’éditeur <ArrowRight size={17} /></button>
-              <p className="cv-free-note"><Sparkles size={13} /> Guidage maintenant, studio libre dès que vous le voulez.</p>
-            </section>
-          </aside>
-        </main>
-      )}
+        <aside className="cv-preview-column">
+          <div className="cv-preview-sticky">
+            <div className="cv-preview-heading"><span><i /> APERÇU EN DIRECT</span><small>A4 · {TEMPLATES.find((template) => template.id === selectedTemplate)?.name}</small></div>
+            <div className="cv-preview-stage"><span className="cv-sheet-scale-live"><PageSheet page={pageFor(selectedTemplate, `live-${selectedTemplate}`)} interactive={false} selectedIds={[]} editingId={null} showGrid={false} showMargins={false} guides={{ x: [], y: [] }} marquee={null} /></span></div>
+            <div className="cv-preview-caption"><b>{previewProfile.name}</b><span>{previewProfile.role}</span></div>
+            <button type="button" onClick={launchEditor} className="cv-continue-button">{startMode === "import" ? "Importer mon CV" : "Continuer dans l’éditeur"}<ArrowRight size={17} /></button>
+            <p className="cv-free-note">Le mode guidé et les réglages libres restent accessibles dans le même CV.</p>
+          </div>
+        </aside>
+      </main>
     </div>
   );
 }
