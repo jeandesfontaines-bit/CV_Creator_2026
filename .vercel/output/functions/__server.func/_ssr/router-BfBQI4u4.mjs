@@ -1,9 +1,9 @@
 import { o as __toESM, r as __exportAll } from "../_runtime.mjs";
 import { W as require_react, _ as createRootRoute, d as HeadContent, g as createFileRoute, h as lazyRouteComponent, m as Outlet, p as createRouter, u as Scripts, v as useRouter, y as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
-import { s as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { c as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { a as union, i as string, n as number, r as object, t as literal } from "../_libs/zod.mjs";
-// node_modules/.nitro/vite/services/ssr/assets/router-BxFjhOEc.js
-var router_BxFjhOEc_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
+// node_modules/.nitro/vite/services/ssr/assets/router-BfBQI4u4.js
+var router_BfBQI4u4_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var FALLBACK_MESSAGE = "An unexpected error occurred. Try reloading the page.";
@@ -331,7 +331,7 @@ function PreviewHostBridge() {
 	}, [router]);
 	return null;
 }
-var styles_default = "/assets/styles-sAyKk_Lm.css";
+var styles_default = "/assets/styles-C9AXmM91.css";
 var APP_NAME = "Libre";
 var Route$1 = createRootRoute({
 	head: () => ({
@@ -385,7 +385,7 @@ var Route$1 = createRootRoute({
 		] })]
 	})
 });
-var $$splitComponentImporter = () => import("./routes-DNVQRNrd.mjs");
+var $$splitComponentImporter = () => import("./routes-C5_T_lt0.mjs");
 var rootRouteChildren = { IndexRoute: createFileRoute("/")({ component: lazyRouteComponent($$splitComponentImporter, "component") }).update({
 	id: "/",
 	path: "/",
@@ -399,4 +399,4 @@ function getRouter() {
 		defaultErrorComponent: AppErrorComponent
 	});
 }
-export { getRouter, router_BxFjhOEc_exports as t };
+export { getRouter, router_BfBQI4u4_exports as t };

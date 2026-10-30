@@ -1,22 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   Briefcase,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Circle,
+  Compass,
   Download,
   Eye,
   EyeOff,
   FileText,
   GraduationCap,
+  HelpCircle,
   Info,
+  Layers,
   Palette,
   PenLine,
   Plus,
   Redo2,
   RotateCcw,
   ShieldCheck,
+  SkipForward,
   Sparkles,
   Trash2,
   Undo2,
@@ -29,7 +36,7 @@ import { auditDocument, type AuditIssue } from "@/cv/audit";
 import { activePage, getStudioUnboundElements, useStudio } from "@/cv/store";
 import { TEMPLATES } from "@/cv/templates";
 import { COLOR_PALETTES } from "@/cv/palettes";
-import { FONTS, PAGE_H, PAGE_W, snippet, TYPE_LABEL } from "@/cv/types";
+import { FONTS, PAGE_H, PAGE_W } from "@/cv/types";
 import { getRandomBoost } from "@/cv/presets";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +50,95 @@ function release() {
 }
 
 type SectionId = "profile" | "summary" | "experience" | "education" | "skills" | "languages";
+
+interface StepGuidance {
+  id: SectionId;
+  stepNumber: number;
+  label: string;
+  shortLabel: string;
+  icon: typeof User;
+  whatToFill: string;
+  whyUseful: string;
+  whatCanBeIgnored: string;
+  optionalBadge?: string;
+}
+
+const GUIDED_STEPS: StepGuidance[] = [
+  {
+    id: "profile",
+    stepNumber: 1,
+    label: "Profil & Contact",
+    shortLabel: "1. Contact",
+    icon: User,
+    whatToFill: "Indiquez votre nom, le titre du poste visé et un moyen de vous joindre directement.",
+    whyUseful:
+      "C'est le premier repère lu par le recruteur et les logiciels ATS pour identifier votre cible professionnelle en 3 secondes.",
+    whatCanBeIgnored:
+      "L'adresse postale complète et le lien LinkedIn/Portfolio sont facultatifs : une ville et un e-mail suffisent.",
+  },
+  {
+    id: "summary",
+    stepNumber: 2,
+    label: "Résumé / Bio",
+    shortLabel: "2. Accroche",
+    icon: Sparkles,
+    whatToFill: "Rédigez 2 à 3 phrases résumant votre spécialité, votre niveau d'expérience et votre valeur ajoutée.",
+    whyUseful:
+      "Donne immédiatement le fil conducteur de votre candidature avant même la lecture détaillée des expériences.",
+    whatCanBeIgnored:
+      "Si vos expériences parlent d'elles-mêmes, vous pouvez passer cette étape ou masquer la rubrique sans pénalité.",
+    optionalBadge: "Optionnel",
+  },
+  {
+    id: "experience",
+    stepNumber: 3,
+    label: "Expériences professionnelles",
+    shortLabel: "3. Expériences",
+    icon: Briefcase,
+    whatToFill: "Saisissez vos postes les plus pertinents en privilégiant 2 à 4 réalisations concrètes par poste.",
+    whyUseful:
+      "C'est le cœur de décision du recruteur : les actions concrètes et résultats mesurables prouvent votre impact réel.",
+    whatCanBeIgnored:
+      "Inutile de lister chaque tâche quotidienne ou les jobs très anciens sans rapport avec le poste visé.",
+  },
+  {
+    id: "education",
+    stepNumber: 4,
+    label: "Formation & Diplômes",
+    shortLabel: "4. Formation",
+    icon: GraduationCap,
+    whatToFill: "Mentionnez votre diplôme principal ou vos certifications les plus récentes.",
+    whyUseful:
+      "Valide votre socle académique ou vos qualifications réglementaires auprès des RH.",
+    whatCanBeIgnored:
+      "Avec plus de 5 ans d'expérience, inutile de détailler les diplômes secondaires ou les mentions anciennes.",
+  },
+  {
+    id: "skills",
+    stepNumber: 5,
+    label: "Compétences",
+    shortLabel: "5. Compétences",
+    icon: Palette,
+    whatToFill: "Listez 6 à 10 compétences clés (outils, méthodes, technologies) séparées par des virgules.",
+    whyUseful:
+      "Permet aux recruteurs et aux filtres ATS de repérer instantanément les mots-clés techniques attendus sur l'offre.",
+    whatCanBeIgnored:
+      "Évitez les listes génériques (« motivé, dynamique ») ou les outils bureautiques évidents.",
+  },
+  {
+    id: "languages",
+    stepNumber: 6,
+    label: "Langues",
+    shortLabel: "6. Langues",
+    icon: Compass,
+    whatToFill: "Ajoutez uniquement les langues utiles dans votre contexte professionnel et estimez votre aisance.",
+    whyUseful:
+      "Indispensable pour les postes en environnement international, technique ou au contact de clients étrangers.",
+    whatCanBeIgnored:
+      "Si la maîtrise d'une langue étrangère n'est pas demandée dans votre secteur, vous pouvez masquer cette section.",
+    optionalBadge: "Optionnel",
+  },
+];
 
 export function SimpleEditor() {
   const doc = useStudio((s) => s.doc);
@@ -84,11 +180,14 @@ export function SimpleEditor() {
 
   const [activeSection, setActiveSection] = useState<SectionId>("experience");
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [showStructureDrawer, setShowStructureDrawer] = useState(false);
+  const [showAppearanceBar, setShowAppearanceBar] = useState(false);
 
   const page = activePage(doc, activePageId);
   const profile = doc.profile;
   const studioUnbound = doc.pages.flatMap((p) => getStudioUnboundElements(p));
-  const currentGlobalFont = page.elements.find((el) => el.style?.fontFamily)?.style.fontFamily || "Source Sans 3";
+  const currentGlobalFont =
+    page.elements.find((el) => el.style?.fontFamily)?.style.fontFamily || "Source Sans 3";
 
   const audit = useMemo(
     () => auditDocument(doc, { editorMode: "guided", paginationBlocked }),
@@ -114,15 +213,6 @@ export function SimpleEditor() {
     return () => window.removeEventListener("cv-focus-issue", onFocusIssue);
   }, [doc]);
 
-  const sectionsList: { id: SectionId; label: string; icon: typeof User; bindKind?: string }[] = [
-    { id: "profile", label: "Profil & Contact", icon: User },
-    { id: "summary", label: "Résumé / Bio", icon: Sparkles },
-    { id: "experience", label: "Expériences professionnelles", icon: Briefcase },
-    { id: "education", label: "Formation & Diplômes", icon: GraduationCap },
-    { id: "skills", label: "Compétences", icon: Palette },
-    { id: "languages", label: "Langues", icon: Palette },
-  ];
-
   // Check if section is currently visible across pages
   const isSectionVisible = (secId: SectionId) => {
     const matches = (el: any) => {
@@ -139,6 +229,32 @@ export function SimpleEditor() {
     if (!sectionEls.length) return true;
     return sectionEls.some((el) => !el.hidden);
   };
+
+  // Evaluate whether a step has meaningful content
+  const isStepCompleted = (secId: SectionId): boolean => {
+    if (!isSectionVisible(secId)) return false;
+    switch (secId) {
+      case "profile":
+        return Boolean(profile.name.trim() && (profile.role.trim() || profile.email.trim()));
+      case "summary":
+        return Boolean(profile.summary.trim().length > 15);
+      case "experience":
+        return profile.experiences.some((e) => Boolean(e.role.trim() || e.company.trim()));
+      case "education":
+        return profile.educations.some((e) => Boolean(e.degree.trim() || e.school.trim()));
+      case "skills":
+        return profile.skills.length > 0;
+      case "languages":
+        return profile.languages.length > 0;
+    }
+  };
+
+  const currentStepIndex = GUIDED_STEPS.findIndex((s) => s.id === activeSection);
+  const currentStep = GUIDED_STEPS[currentStepIndex] ?? GUIDED_STEPS[0];
+  const prevStep = currentStepIndex > 0 ? GUIDED_STEPS[currentStepIndex - 1] : null;
+  const nextStep =
+    currentStepIndex < GUIDED_STEPS.length - 1 ? GUIDED_STEPS[currentStepIndex + 1] : null;
+  const completedCount = GUIDED_STEPS.filter((s) => isStepCompleted(s.id)).length;
 
   const handleBoostSummary = () => {
     const phrase = getRandomBoost();
@@ -163,8 +279,19 @@ export function SimpleEditor() {
     const exp = profile.experiences[index];
     if (!exp) return;
     const curDesc = exp.desc || "";
-    const nextDesc = curDesc ? `${curDesc}\n• Nouvelle réalisation impactante` : `• Nouvelle réalisation impactante`;
+    const nextDesc = curDesc
+      ? `${curDesc}\n• Nouvelle réalisation impactante`
+      : `• Nouvelle réalisation impactante`;
     updateExperience(index, { desc: nextDesc }, false);
+  };
+
+  const handleSkipCurrentStep = () => {
+    if (nextStep) {
+      setActiveSection(nextStep.id);
+      notify(`Étape « ${currentStep.label} » passée — vous pourrez y revenir à tout moment.`);
+    } else {
+      setActiveSection("profile");
+    }
   };
 
   return (
@@ -186,10 +313,16 @@ export function SimpleEditor() {
             <span className="font-semibold text-slate-800" data-testid="guided-page-count">
               {doc.pages.length > 1 ? `${doc.pages.length} pages A4` : page.name}
             </span>
-            <span aria-hidden="true" className="text-slate-300">·</span>
+            <span aria-hidden="true" className="text-slate-300">
+              ·
+            </span>
             <span
               className="inline-flex items-center gap-1 text-slate-500"
-              title={lastSavedAt ? `Dernière sauvegarde automatique à ${lastSavedAt}` : "Sauvegarde automatique active"}
+              title={
+                lastSavedAt
+                  ? `Dernière sauvegarde automatique à ${lastSavedAt}`
+                  : "Sauvegarde automatique active"
+              }
             >
               <Check size={13} className="text-emerald-600 shrink-0" />
               <span>{saveStatus === "saving" ? "Sauvegarde…" : "Enregistré"}</span>
@@ -313,210 +446,256 @@ export function SimpleEditor() {
       {/* Real-time Document Alert Banner */}
       <DocumentAlertBanner />
 
-      {/* 3-Column Layout: Left (Sections & Order), Center (Live CV Preview), Right (Selected Section Form) */}
+      {/* 2-ZONE ACCOMPANIED LAYOUT: Left (Guided Step Companion) + Right (Live Interactive A4 CV) */}
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden md:flex-row">
-        {/* LEFT COLUMN: SECTIONS LIST & REORDER */}
-        <div
+        {/* ZONE 1: ACCOMPANIED GUIDED COMPANION */}
+        <aside
           data-testid="guided-sections-sidebar"
-          className={`${showMobilePreview ? "hidden" : "flex"} w-full min-h-0 min-w-0 flex-1 flex-col bg-slate-50/90 border-r border-slate-200 shadow-sm z-10 md:flex md:w-[280px] md:flex-none`}
+          aria-label="Parcours guidé étape par étape"
+          className={cn(
+            showMobilePreview ? "hidden" : "flex",
+            "w-full min-h-0 min-w-0 flex-1 flex-col bg-white border-r border-slate-200 shadow-sm z-10 md:flex md:w-[500px] lg:w-[560px] xl:w-[600px] md:flex-none",
+          )}
         >
-          <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">Sections du CV</h3>
-            <span className="text-[11px] font-medium text-slate-400">{sectionsList.length} sections</span>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 space-y-2">
-            {sectionsList.map((sec, index) => {
-              const Icon = sec.icon;
-              const visible = isSectionVisible(sec.id);
-              const isSelected = activeSection === sec.id;
-
-              return (
-                <div
-                  key={sec.id}
-                  onClick={() => setActiveSection(sec.id)}
-                  className={cn(
-                    "group flex items-center justify-between rounded-xl border p-3 text-xs font-semibold transition cursor-pointer shadow-2xs",
-                    isSelected
-                      ? "border-blue-600 bg-white text-blue-700 shadow-xs ring-1 ring-blue-600/20"
-                      : "border-slate-200 bg-white/70 text-slate-700 hover:bg-white hover:border-slate-300",
-                  )}
+          {/* STEPPER BAR + SECTION STRUCTURE CONTROLS */}
+          <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-3 shrink-0 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span
+                  data-testid="guided-step-indicator"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon size={15} className={isSelected ? "text-blue-600 shrink-0" : "text-slate-400 shrink-0"} />
-                    <span className="truncate">{sec.label}</span>
-                  </div>
+                  Étape {currentStep.stepNumber} sur {GUIDED_STEPS.length}
+                </span>
+                <span className="text-xs font-bold text-slate-800">{currentStep.label}</span>
+                <span className="text-[11px] text-slate-500 hidden sm:inline">
+                  ({completedCount}/{GUIDED_STEPS.length} rubriques complétées)
+                </span>
+              </div>
 
-                  <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-                    {/* Hide / Show toggle */}
-                    <button
-                      type="button"
-                      onClick={() => toggleSectionVisibility(sec.id)}
-                      className={cn(
-                        "flex size-7 items-center justify-center rounded-lg transition",
-                        visible ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900" : "text-amber-600 bg-amber-50 hover:bg-amber-100",
-                      )}
-                      title={visible ? "Masquer la section sur le CV" : "Afficher la section sur le CV"}
-                    >
-                      {visible ? <Eye size={13} /> : <EyeOff size={13} />}
-                    </button>
-
-                    {/* Move Up */}
-                    <button
-                      type="button"
-                      onClick={() => moveSection(sec.id, "up")}
-                      disabled={index === 0}
-                      className="flex size-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20 transition"
-                      title="Monter la section"
-                    >
-                      <ChevronUp size={13} />
-                    </button>
-
-                    {/* Move Down */}
-                    <button
-                      type="button"
-                      onClick={() => moveSection(sec.id, "down")}
-                      disabled={index === sectionsList.length - 1}
-                      className="flex size-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20 transition"
-                      title="Descendre la section"
-                    >
-                      <ChevronDown size={13} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="p-3 border-t border-slate-200 bg-white shrink-0 space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveSection("experience");
-                addExperience();
-              }}
-              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition shadow-2xs"
-            >
-              <Plus size={14} />
-              <span>Ajouter une expérience</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveSection("education");
-                addEducation();
-              }}
-              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition shadow-2xs"
-            >
-              <Plus size={14} />
-              <span>Ajouter une formation</span>
-            </button>
-          </div>
-        </div>
-
-        {/* CENTER COLUMN: LIVE CV PREVIEW */}
-        <div
-          className={`${showMobilePreview ? "flex" : "hidden"} md:flex min-h-0 flex-1 flex-col bg-slate-200/60 overflow-hidden relative`}
-        >
-          {/* Customization Banner */}
-          {layoutCustomized && (
-            <div className="px-4 pt-3 z-20 shrink-0 no-print">
-              <div className="rounded-xl border border-blue-200 bg-blue-50/95 px-4 py-2 text-xs text-blue-900 shadow-xs flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Info size={15} className="shrink-0 text-blue-600" />
-                  <span>Mise en page personnalisée du Studio active. Les textes modifiés ici se mettent à jour en direct.</span>
-                </div>
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => requestResetLayout()}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-md border border-blue-300 bg-white px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 transition"
+                  data-testid="toggle-structure-drawer-btn"
+                  onClick={() => setShowStructureDrawer((v) => !v)}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition",
+                    showStructureDrawer
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100",
+                  )}
+                  title="Organiser l'ordre ou masquer des rubriques du CV"
                 >
-                  <RotateCcw size={11} />
-                  <span>Réinitialiser</span>
+                  <Layers size={12} />
+                  <span>Gérer les sections</span>
                 </button>
               </div>
             </div>
-          )}
 
-          <div className="min-h-0 flex-1 overflow-auto p-6 md:p-10 flex flex-col items-center">
+            {/* Horizontal non-blocking step pills + inline section controls */}
             <div
-              className="simple-preview-sheet flex flex-col items-center gap-8 transition-all origin-top scale-[0.72] sm:scale-[0.80] md:scale-[0.85] lg:scale-[0.90]"
-              style={{ width: PAGE_W, transformOrigin: "top center" }}
+              role="navigation"
+              aria-label="Étapes du parcours guidé"
+              className="grid grid-cols-2 sm:grid-cols-3 gap-1.5"
             >
-              {doc.pages.map((p, pageIdx) => (
-                <div
-                  key={p.id}
-                  data-testid={`guided-page-${pageIdx + 1}`}
-                  className="flex flex-col items-center gap-2"
-                >
-                  {doc.pages.length > 1 && (
-                    <div className="w-full flex items-center justify-between px-1 text-xs font-bold text-slate-600">
-                      <span>
-                        Page {pageIdx + 1} sur {doc.pages.length} — Format A4 (1123 px)
-                      </span>
-                      <span className="text-[11px] font-medium text-slate-500">{p.name}</span>
-                    </div>
-                  )}
-                  <div
-                    className="simple-preview-frame bg-white shadow-2xl rounded-sm relative"
-                    style={{ width: PAGE_W, height: PAGE_H }}
-                    onClick={(e) => {
-                      const target = (e.target as HTMLElement | null)?.closest?.("[data-element]") as HTMLElement | null;
-                      const elId = target?.getAttribute("data-element");
-                      setActive(p.id);
-                      if (!elId) return;
-                      select([elId]);
-                      const clickedEl = p.elements.find((item) => item.id === elId);
-                      if (!clickedEl?.bind) return;
-                      if (["name", "role", "contact"].includes(clickedEl.bind.kind)) setActiveSection("profile");
-                      else if (clickedEl.bind.kind === "summary") setActiveSection("summary");
-                      else if (clickedEl.bind.kind === "experience") setActiveSection("experience");
-                      else if (clickedEl.bind.kind === "education") setActiveSection("education");
-                      else if (clickedEl.bind.kind === "skills") setActiveSection("skills");
-                      else if (clickedEl.bind.kind === "languages") setActiveSection("languages");
-                    }}
-                  >
-                    <PageSheet
-                      page={p}
-                      interactive={false}
-                      selectedIds={selectedIds}
-                      editingId={null}
-                      showGrid={false}
-                      showMargins={false}
-                      guides={{ x: [], y: [] }}
-                      marquee={null}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+              {GUIDED_STEPS.map((sec, index) => {
+                const visible = isSectionVisible(sec.id);
+                const completed = isStepCompleted(sec.id);
+                const isSelected = activeSection === sec.id;
 
-        {/* RIGHT COLUMN: FIELDS OF SELECTED SECTION */}
-        <div
-          className={`${showMobilePreview ? "hidden" : "flex"} w-full min-h-0 min-w-0 flex-1 flex-col bg-white border-l border-slate-200 shadow-sm z-10 md:flex md:w-[420px] md:flex-none`}
-        >
-          <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                {sectionsList.find((s) => s.id === activeSection)?.label ?? "Édition"}
+                return (
+                  <div
+                    key={sec.id}
+                    data-testid={`guided-step-tab-${sec.id}`}
+                    onClick={() => setActiveSection(sec.id)}
+                    className={cn(
+                      "group flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer",
+                      isSelected
+                        ? "border-blue-600 bg-white text-blue-700 shadow-2xs ring-1 ring-blue-600/20"
+                        : visible
+                          ? "border-slate-200 bg-white/80 text-slate-700 hover:bg-white hover:border-slate-300"
+                          : "border-dashed border-slate-200 bg-slate-100/60 text-slate-400 hover:bg-white",
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {!visible ? (
+                        <EyeOff size={12} className="text-amber-600 shrink-0" />
+                      ) : completed ? (
+                        <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                      ) : (
+                        <Circle
+                          size={12}
+                          className={isSelected ? "text-blue-600 shrink-0" : "text-slate-300 shrink-0"}
+                        />
+                      )}
+                      <span className="truncate text-[11px]" title={sec.label}>
+                        {sec.label}
+                      </span>
+                    </div>
+
+                    <div
+                      className={cn(
+                        "flex items-center gap-0.5 shrink-0",
+                        showStructureDrawer ? "opacity-100" : "opacity-75 group-hover:opacity-100",
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleSectionVisibility(sec.id)}
+                        className={cn(
+                          "flex size-5 items-center justify-center rounded transition",
+                          visible
+                            ? "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            : "text-amber-600 bg-amber-50 hover:bg-amber-100",
+                        )}
+                        title={
+                          visible
+                            ? "Masquer la section sur le CV"
+                            : "Afficher la section sur le CV"
+                        }
+                      >
+                        {visible ? <Eye size={11} /> : <EyeOff size={11} />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSection(sec.id, "up")}
+                        disabled={index === 0}
+                        className="flex size-5 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20 transition"
+                        title="Monter la section"
+                      >
+                        <ChevronUp size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSection(sec.id, "down")}
+                        disabled={index === GUIDED_STEPS.length - 1}
+                        className="flex size-5 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20 transition"
+                        title="Descendre la section"
+                      >
+                        <ChevronDown size={11} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick add shortcuts */}
+            <div className="flex items-center justify-between gap-2 pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSection("experience");
+                    addExperience();
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs"
+                >
+                  <Plus size={12} />
+                  <span>Ajouter une expérience</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSection("education");
+                    addEducation();
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs"
+                >
+                  <Plus size={12} />
+                  <span>Ajouter une formation</span>
+                </button>
+              </div>
+              <span className="text-[11px] text-slate-400 hidden sm:inline">
+                Parcours libre et non bloquant
               </span>
             </div>
-            <span className="text-[11px] text-slate-400">Mise à jour en direct</span>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-6">
-            {activeSection === "profile" && (
-              <div className="space-y-4 animate-in fade-in">
+          {/* SCROLLABLE STEP WORKSPACE */}
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-5">
+            {/* ACCOMPANIED COACHING CARD: Answers the 4 core UX questions */}
+            <div
+              data-testid="guided-step-coaching"
+              className="rounded-2xl border border-blue-200/80 bg-gradient-to-br from-blue-50/90 via-white to-slate-50 p-4 shadow-2xs space-y-3"
+            >
+              <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Profil & Contact</h3>
-                  <p className="text-[11px] text-slate-500">Ces informations apparaissent en haut de votre CV.</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                      Quoi remplir maintenant
+                    </span>
+                    {currentStep.optionalBadge && (
+                      <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                        {currentStep.optionalBadge}
+                      </span>
+                    )}
+                    {!isSectionVisible(currentStep.id) && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                        Section masquée sur le CV
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900 leading-snug">
+                    {currentStep.whatToFill}
+                  </p>
                 </div>
 
+                {!isSectionVisible(currentStep.id) ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleSectionVisibility(currentStep.id)}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700 transition"
+                  >
+                    <Eye size={13} />
+                    <span>Réafficher sur le CV</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleSectionVisibility(currentStep.id)}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    title="Masquer cette rubrique sans perdre vos textes"
+                  >
+                    <EyeOff size={12} />
+                    <span>Masquer cette rubrique</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-blue-100/80 text-xs">
+                <div className="rounded-xl bg-white/90 border border-slate-200/70 p-2.5 space-y-0.5">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 text-[11px]">
+                    <HelpCircle size={12} className="text-blue-600 shrink-0" />
+                    <span>Pourquoi c'est utile</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    {currentStep.whyUseful}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white/90 border border-slate-200/70 p-2.5 space-y-0.5">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 text-[11px]">
+                    <SkipForward size={12} className="text-slate-500 shrink-0" />
+                    <span>Ce que vous pouvez ignorer</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    {currentStep.whatCanBeIgnored}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 1: PROFILE & CONTACT */}
+            {activeSection === "profile" && (
+              <div className="space-y-4 animate-in fade-in">
                 <div className="space-y-3">
                   <label className="block">
-                    <span className="text-xs font-semibold text-slate-700">Nom & Prénom</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-700">Nom & Prénom</span>
+                      <span className="text-[11px] text-blue-600 font-medium">Essentiel</span>
+                    </div>
                     <input
                       className={cn(inputStyle, "mt-1")}
                       value={profile.name}
@@ -527,7 +706,12 @@ export function SimpleEditor() {
                   </label>
 
                   <label className="block">
-                    <span className="text-xs font-semibold text-slate-700">Intitulé du poste recherché</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-700">
+                        Intitulé du poste recherché
+                      </span>
+                      <span className="text-[11px] text-blue-600 font-medium">Recommandé</span>
+                    </div>
                     <input
                       className={cn(inputStyle, "mt-1")}
                       value={profile.role}
@@ -537,7 +721,7 @@ export function SimpleEditor() {
                     />
                   </label>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label className="block">
                       <span className="text-xs font-semibold text-slate-700">Adresse e-mail</span>
                       <input
@@ -560,9 +744,14 @@ export function SimpleEditor() {
                     </label>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label className="block">
-                      <span className="text-xs font-semibold text-slate-700">Ville / Localisation</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-700">
+                          Ville / Localisation
+                        </span>
+                        <span className="text-[10px] text-slate-400">Optionnel</span>
+                      </div>
                       <input
                         className={cn(inputStyle, "mt-1")}
                         value={profile.location}
@@ -572,7 +761,12 @@ export function SimpleEditor() {
                       />
                     </label>
                     <label className="block">
-                      <span className="text-xs font-semibold text-slate-700">Lien (LinkedIn / Portfolio)</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-700">
+                          Lien (LinkedIn / Portfolio)
+                        </span>
+                        <span className="text-[10px] text-slate-400">Optionnel</span>
+                      </div>
                       <input
                         className={cn(inputStyle, "mt-1")}
                         value={profile.link}
@@ -586,16 +780,24 @@ export function SimpleEditor() {
               </div>
             )}
 
+            {/* STEP 2: SUMMARY / BIO */}
             {activeSection === "summary" && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Résumé de profil / Bio</h3>
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Votre accroche en quelques lignes
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      2 à 3 phrases suffisent. Vous pouvez aussi laisser vide ou utiliser une formulation type.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={handleBoostSummary}
-                    className="flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 hover:bg-amber-500/25 transition"
+                    className="flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-500/25 transition shrink-0"
                   >
-                    <Sparkles size={11} />
+                    <Sparkles size={12} />
                     <span>✨ Formuler comme un pro</span>
                   </button>
                 </div>
@@ -609,18 +811,24 @@ export function SimpleEditor() {
               </div>
             )}
 
+            {/* STEP 3: EXPERIENCES */}
             {activeSection === "experience" && (
-              <div className="space-y-5 animate-in fade-in">
+              <div className="space-y-4 animate-in fade-in">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Expériences professionnelles</h3>
-                    <p className="text-[11px] text-slate-500">Ajoutez et détaillez vos réalisations.</p>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Vos expériences ({profile.experiences.length})
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Commencez par le poste le plus récent. Privilégiez les résultats concrets.
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => addExperience()}
                     className="flex items-center gap-1 rounded-lg bg-signal px-3 py-1.5 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-xs"
                   >
+                    <Plus size={13} />
                     <span>+ Ajouter un poste</span>
                   </button>
                 </div>
@@ -633,7 +841,19 @@ export function SimpleEditor() {
                       className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 relative group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-800">Poste #{index + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex size-5 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-800">
+                            {index + 1}
+                          </span>
+                          <span className="text-xs font-bold text-slate-800">
+                            {exp.role?.trim() ? exp.role : `Poste #${index + 1}`}
+                          </span>
+                          {exp.company?.trim() && (
+                            <span className="text-xs text-slate-500 truncate max-w-[180px]">
+                              · {exp.company}
+                            </span>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => removeExperience(index)}
@@ -644,9 +864,11 @@ export function SimpleEditor() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <label className="block space-y-1">
-                          <span className="text-[11px] font-semibold text-slate-700">Intitulé du poste</span>
+                          <span className="text-[11px] font-semibold text-slate-700">
+                            Intitulé du poste
+                          </span>
                           <input
                             className={inputStyle}
                             value={exp.role}
@@ -656,7 +878,9 @@ export function SimpleEditor() {
                           />
                         </label>
                         <label className="block space-y-1">
-                          <span className="text-[11px] font-semibold text-slate-700">Entreprise — Ville</span>
+                          <span className="text-[11px] font-semibold text-slate-700">
+                            Entreprise — Ville
+                          </span>
                           <input
                             className={inputStyle}
                             value={exp.company}
@@ -668,7 +892,9 @@ export function SimpleEditor() {
                       </div>
 
                       <label className="block space-y-1">
-                        <span className="text-[11px] font-semibold text-slate-700">Période</span>
+                        <span className="text-[11px] font-semibold text-slate-700">
+                          Période (dates)
+                        </span>
                         <input
                           className={inputStyle}
                           value={exp.date}
@@ -679,9 +905,12 @@ export function SimpleEditor() {
                       </label>
 
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label htmlFor={`exp-desc-${index}`} className="text-[11px] font-semibold text-slate-700">
-                            Missions & Réalisations (puces)
+                        <div className="flex items-center justify-between flex-wrap gap-1">
+                          <label
+                            htmlFor={`exp-desc-${index}`}
+                            className="text-[11px] font-semibold text-slate-700"
+                          >
+                            Missions & Réalisations (1 réalisation par ligne)
                           </label>
                           <div className="flex items-center gap-1.5">
                             <button
@@ -717,27 +946,39 @@ export function SimpleEditor() {
               </div>
             )}
 
+            {/* STEP 4: EDUCATION */}
             {activeSection === "education" && (
-              <div className="space-y-5 animate-in fade-in">
+              <div className="space-y-4 animate-in fade-in">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Formation & Diplômes</h3>
-                    <p className="text-[11px] text-slate-500">Ajoutez vos cursus académiques.</p>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Formations & Diplômes ({profile.educations.length})
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Indiquez vos diplômes principaux ou certifications professionnelles.
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => addEducation()}
                     className="flex items-center gap-1 rounded-lg bg-signal px-3 py-1.5 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-xs"
                   >
+                    <Plus size={13} />
                     <span>+ Ajouter une formation</span>
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   {profile.educations.map((edu, index) => (
-                    <div key={index} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                    <div
+                      key={index}
+                      data-testid={`guided-education-${index}`}
+                      className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-800">Formation #{index + 1}</span>
+                        <span className="text-xs font-bold text-slate-800">
+                          {edu.degree?.trim() ? edu.degree : `Formation #${index + 1}`}
+                        </span>
                         <button
                           type="button"
                           onClick={() => removeEducation(index)}
@@ -758,9 +999,11 @@ export function SimpleEditor() {
                           placeholder="Diplôme (ex: Master Informatique)"
                         />
                       </label>
-                      <div className="grid grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <label className="block space-y-1">
-                          <span className="text-[11px] font-semibold text-slate-700">École / Université</span>
+                          <span className="text-[11px] font-semibold text-slate-700">
+                            École / Université
+                          </span>
                           <input
                             className={inputStyle}
                             value={edu.school}
@@ -770,7 +1013,9 @@ export function SimpleEditor() {
                           />
                         </label>
                         <label className="block space-y-1">
-                          <span className="text-[11px] font-semibold text-slate-700">Période / Année</span>
+                          <span className="text-[11px] font-semibold text-slate-700">
+                            Période / Année
+                          </span>
                           <input
                             className={inputStyle}
                             value={edu.date}
@@ -786,11 +1031,16 @@ export function SimpleEditor() {
               </div>
             )}
 
+            {/* STEP 5: SKILLS */}
             {activeSection === "skills" && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="space-y-1">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Compétences clés</h3>
-                  <p className="text-[11px] text-slate-500">Séparez vos compétences par des virgules ou des retours à la ligne.</p>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Compétences clés ({profile.skills.length})
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Séparez vos compétences par des virgules ou des retours à la ligne.
+                  </p>
                 </div>
                 <textarea
                   className={cn(textareaStyle, "h-36")}
@@ -805,17 +1055,40 @@ export function SimpleEditor() {
                   onBlur={release}
                   placeholder="Figma, Design system, React, TypeScript..."
                 />
+                {profile.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {profile.skills.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
+            {/* STEP 6: LANGUAGES */}
             {activeSection === "languages" && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Langues & Niveaux (%)</h3>
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                      Langues & Niveaux (%)
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      100 % = Bilingue / Maternel · 80 % = Courant · 60 % = Opérationnel
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
-                      updateLanguages([...profile.languages, { label: "Nouvelle langue", value: 75 }], false);
+                      updateLanguages(
+                        [...profile.languages, { label: "Nouvelle langue", value: 75 }],
+                        false,
+                      );
                     }}
                     className="flex items-center gap-1 rounded-md bg-signal/15 px-2.5 py-1 text-xs font-bold text-signal hover:bg-signal/25 transition"
                   >
@@ -826,7 +1099,10 @@ export function SimpleEditor() {
 
                 <div className="space-y-3">
                   {profile.languages.map((lang, index) => (
-                    <div key={index} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                    >
                       <input
                         className={cn(inputStyle, "flex-1 h-9")}
                         value={lang.label}
@@ -869,6 +1145,272 @@ export function SimpleEditor() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* ACCOMPANIED STEP NAVIGATION FOOTER (Non-blocking) */}
+          <div
+            data-testid="guided-step-footer"
+            className="border-t border-slate-200 bg-slate-50 px-5 py-3.5 shrink-0 space-y-2.5"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                data-testid="guided-prev-step-btn"
+                disabled={!prevStep}
+                onClick={() => prevStep && setActiveSection(prevStep.id)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition shadow-2xs"
+              >
+                <ArrowLeft size={13} />
+                <span>{prevStep ? prevStep.shortLabel : "Début"}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                {nextStep && (
+                  <button
+                    type="button"
+                    data-testid="guided-skip-step-btn"
+                    onClick={handleSkipCurrentStep}
+                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                    title="Passer cette étape sans bloquer la suite"
+                  >
+                    <span>Passer cette étape</span>
+                  </button>
+                )}
+
+                {nextStep ? (
+                  <button
+                    type="button"
+                    data-testid="guided-next-step-btn"
+                    onClick={() => setActiveSection(nextStep.id)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition shadow-xs"
+                  >
+                    <span>Étape suivante : {nextStep.label}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid="guided-finish-export-btn"
+                    onClick={() => requestPdfExport()}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-xs"
+                  >
+                    <Download size={13} />
+                    <span>Terminer & Exporter le PDF</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/70">
+              <span>
+                {nextStep
+                  ? `Prochaine étape : ${nextStep.label}`
+                  : "Parcours terminé — votre CV est prêt à être téléchargé ou personnalisé."}
+              </span>
+              <button
+                type="button"
+                data-testid="guided-footer-studio-link"
+                onClick={() => setEditorMode("pro")}
+                className="font-semibold text-blue-700 hover:underline"
+              >
+                Personnaliser librement dans le Studio →
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* ZONE 2: LIVE INTERACTIVE A4 CV PREVIEW */}
+        <div
+          className={cn(
+            showMobilePreview ? "flex" : "hidden",
+            "md:flex min-h-0 flex-1 flex-col bg-slate-200/70 overflow-hidden relative",
+          )}
+        >
+          {/* Preview Top Bar: Quick Template / Style Switcher & Studio Info */}
+          <div className="no-print border-b border-slate-300/80 bg-white/90 backdrop-blur-xs px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0 z-20">
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <span className="font-semibold text-slate-800">Aperçu A4 en direct</span>
+              <span className="text-slate-300">·</span>
+              <span className="text-[11px] text-slate-500">
+                Cliquez sur n'importe quelle section du CV pour l'éditer à gauche
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                data-testid="toggle-appearance-bar-btn"
+                onClick={() => setShowAppearanceBar((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition",
+                  showAppearanceBar
+                    ? "border-blue-600 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                )}
+              >
+                <Palette size={13} />
+                <span>Modèle & Couleurs</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Collapsible Appearance Bar (Template, Palette, Font) */}
+          {showAppearanceBar && (
+            <div
+              data-testid="guided-appearance-bar"
+              className="no-print border-b border-slate-300 bg-slate-50 px-4 py-3 flex flex-wrap items-center gap-4 shrink-0 z-20 animate-in fade-in"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase text-slate-500">Modèle :</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  {TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => requestApplyTemplate(tpl.id)}
+                      className={cn(
+                        "rounded-lg border px-2.5 py-1 text-xs font-semibold transition",
+                        activeTemplate === tpl.id
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      {tpl.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase text-slate-500">Palette :</span>
+                <div className="flex items-center gap-1.5">
+                  {COLOR_PALETTES.map((pal) => (
+                    <button
+                      key={pal.id}
+                      type="button"
+                      onClick={() => applyPalette(pal.id)}
+                      title={pal.name}
+                      className="size-5 rounded-full border border-slate-300 shadow-2xs transition hover:scale-110"
+                      style={{ background: pal.primary }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase text-slate-500">Police :</span>
+                <select
+                  value={currentGlobalFont}
+                  onChange={(e) => applyGlobalFont(e.target.value)}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-800"
+                >
+                  {FONTS.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Customization Banner & Studio Unbound Notice */}
+          {(layoutCustomized || studioUnbound.length > 0) && (
+            <div className="px-4 pt-3 z-20 shrink-0 no-print">
+              <div className="rounded-xl border border-blue-200 bg-blue-50/95 px-4 py-2 text-xs text-blue-900 shadow-xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Info size={15} className="shrink-0 text-blue-600" />
+                  <span>
+                    {studioUnbound.length > 0
+                      ? `${studioUnbound.length} élément(s) libre(s) créé(s) dans le Studio sont conservés sur votre CV.`
+                      : "Mise en page personnalisée du Studio active. Les textes modifiés ici se mettent à jour en direct."}
+                  </span>
+                </div>
+                {layoutCustomized && (
+                  <button
+                    type="button"
+                    onClick={() => requestResetLayout()}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-md border border-blue-300 bg-white px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 transition"
+                  >
+                    <RotateCcw size={11} />
+                    <span>Réinitialiser</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="min-h-0 flex-1 overflow-auto p-6 md:p-8 flex flex-col items-center">
+            <div
+              className="simple-preview-sheet flex flex-col items-center gap-8 transition-all origin-top scale-[0.68] sm:scale-[0.76] md:scale-[0.78] lg:scale-[0.86] xl:scale-[0.92]"
+              style={{ width: PAGE_W, transformOrigin: "top center" }}
+            >
+              {doc.pages.map((p, pageIdx) => (
+                <div
+                  key={p.id}
+                  data-testid={`guided-page-${pageIdx + 1}`}
+                  className="flex flex-col items-center gap-2"
+                >
+                  {doc.pages.length > 1 && (
+                    <div className="w-full flex items-center justify-between px-1 text-xs font-bold text-slate-600">
+                      <span>
+                        Page {pageIdx + 1} sur {doc.pages.length} — Format A4 (1123 px)
+                      </span>
+                      <span className="text-[11px] font-medium text-slate-500">{p.name}</span>
+                    </div>
+                  )}
+                  <div
+                    className="simple-preview-frame bg-white shadow-2xl rounded-sm relative cursor-pointer"
+                    style={{ width: PAGE_W, height: PAGE_H }}
+                    onClick={(e) => {
+                      const target = (e.target as HTMLElement | null)?.closest?.(
+                        "[data-element]",
+                      ) as HTMLElement | null;
+                      const elId = target?.getAttribute("data-element");
+                      setActive(p.id);
+                      if (!elId) return;
+                      select([elId]);
+                      const clickedEl = p.elements.find((item) => item.id === elId);
+                      if (!clickedEl) return;
+                      if (clickedEl.bind) {
+                        if (["name", "role", "contact"].includes(clickedEl.bind.kind))
+                          setActiveSection("profile");
+                        else if (clickedEl.bind.kind === "summary") setActiveSection("summary");
+                        else if (clickedEl.bind.kind === "experience") setActiveSection("experience");
+                        else if (clickedEl.bind.kind === "education") setActiveSection("education");
+                        else if (clickedEl.bind.kind === "skills") setActiveSection("skills");
+                        else if (clickedEl.bind.kind === "languages") setActiveSection("languages");
+                        return;
+                      }
+                      const rawHeading = (clickedEl.content?.text || "").trim();
+                      if (/formation|éducation|études|diplôme/i.test(rawHeading))
+                        setActiveSection("education");
+                      else if (/expérience|parcours/i.test(rawHeading))
+                        setActiveSection("experience");
+                      else if (/compétence|expertise|outil/i.test(rawHeading))
+                        setActiveSection("skills");
+                      else if (/langue/i.test(rawHeading))
+                        setActiveSection("languages");
+                      else if (/profil|résumé|propos/i.test(rawHeading))
+                        setActiveSection("summary");
+                      else if (/contact|coordonnées/i.test(rawHeading))
+                        setActiveSection("profile");
+                    }}
+                  >
+                    <PageSheet
+                      page={p}
+                      interactive={false}
+                      selectedIds={selectedIds}
+                      editingId={null}
+                      showGrid={false}
+                      showMargins={false}
+                      guides={{ x: [], y: [] }}
+                      marquee={null}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

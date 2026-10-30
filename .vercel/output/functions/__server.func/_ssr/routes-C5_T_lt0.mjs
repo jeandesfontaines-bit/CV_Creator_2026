@@ -1,13 +1,13 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { W as require_react, y as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as TSS_SERVER_FUNCTION, r as getServerFnById, t as createServerFn } from "./ssr.mjs";
-import { $ as Cloud, A as LoaderCircle, B as GraduationCap, C as Minus, D as Magnet, E as Mail, F as Italic, G as FileUp, H as Gauge, I as Info, J as FileCheck, K as FileType, L as Image$1, M as LayoutTemplate, N as Layers, O as Lock, P as Languages, Q as Copy, R as Heading, S as Palette, T as MapPin, U as FolderOpen, V as Globe, W as FolderGit2, X as EyeOff, Y as Eye, Z as Download, _ as Redo2, a as Undo2, at as Check, b as Phone, c as Trash2, ct as Bold, d as Sparkles, dt as ArrowLeft, et as Circle, f as Smartphone, ft as ArrowDownToLine, g as RefreshCw, h as RotateCcw, ht as AlignCenter, i as Upload, it as ChevronDown, j as Link, k as LockOpen, l as Tags, lt as Award, m as SendToBack, mt as AlignRight, n as WandSparkles, nt as CircleAlert, o as Type, ot as BringToFront, p as SlidersHorizontal, pt as AlignLeft, q as FileText, r as User, rt as ChevronUp, s as TriangleAlert, st as Briefcase, t as X, tt as CircleCheck, u as Square, ut as ArrowRight, v as Printer, w as Maximize2, x as PenLine, y as Plus, z as Grid3x3 } from "../_libs/lucide-react.mjs";
+import { $ as Eye, A as Mail, B as Info, C as Phone, D as Minus, E as Palette, F as Link, G as Globe, H as Heading, I as LayoutTemplate, J as FolderOpen, K as Gauge, L as Layers, M as Lock, N as LockOpen, O as Maximize2, P as LoaderCircle, Q as FileCheck, R as Languages, S as Plus, St as AlignCenter, T as PenLine, U as Grid3x3, V as Image$1, W as GraduationCap, X as FileUp, Y as FolderGit2, Z as FileText, _ as SendToBack, _t as ArrowRight, a as Upload, at as ClipboardPaste, b as Redo2, bt as AlignLeft, c as TriangleAlert, ct as CircleCheck, d as Square, dt as ChevronDown, et as EyeOff, f as Sparkles, ft as Check, g as ShieldCheck, gt as Award, h as SkipForward, ht as Bold, i as User, it as Cloud, j as Magnet, k as MapPin, l as Trash2, lt as CircleAlert, m as SlidersHorizontal, mt as Briefcase, n as Wrench, nt as Copy, o as Undo2, ot as Circle, p as Smartphone, pt as BringToFront, q as FolderPlus, r as WandSparkles, rt as Compass, s as Type, st as CircleHelp, t as X, tt as Download, u as Tags, ut as ChevronUp, v as RotateCcw, vt as ArrowLeft, w as Pencil, x as Printer, xt as AlignRight, y as RefreshCw, yt as ArrowDownToLine, z as Italic } from "../_libs/lucide-react.mjs";
 import { t as clsx } from "../_libs/clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { t as create } from "../_libs/zustand.mjs";
 import { t as require_jspdf_node_min } from "../_libs/jspdf.mjs";
 import { n as toPng } from "../_libs/html-to-image.mjs";
-// node_modules/.nitro/vite/services/ssr/assets/routes-Cp0m2E-D.js
+// node_modules/.nitro/vite/services/ssr/assets/routes-C5_T_lt0.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var import_jspdf_node_min = /* @__PURE__ */ __toESM(require_jspdf_node_min());
@@ -730,7 +730,8 @@ function computeElementAutoHeight(el, minH) {
 		const text = el.content.text ?? "";
 		const lines = text ? text.split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(Math.max(1, line.trim().length) / charsPerLine)), 0) : 1;
 		const needed = Math.ceil(lines * linePx + pad + 8);
-		return Math.max(minH ?? (el.type === "heading" ? 28 : 54), needed);
+		const defaultMin = el.type === "heading" ? 20 : el.bind?.kind === "summary" ? 48 : 22;
+		return Math.max(minH ?? defaultMin, needed);
 	}
 	if (el.type === "skills") {
 		const items = el.content.items ?? [];
@@ -753,18 +754,24 @@ function computeElementAutoHeight(el, minH) {
 	}
 	return el.h;
 }
+var TEMPLATE_ID_RE$2 = /^(seed|modern|editorial|minimal|executive|creative|tech|swiss|timeline|split|monogram|preset|extracted|imported|page)-\d+$|^(seed|modern|editorial|minimal|executive|creative|tech|swiss|timeline|split|monogram|preset|extracted|imported|page)-/;
+function isFreeStudioEl(el) {
+	if (el.type === "photo" && Boolean(el.content.src)) return true;
+	if (!el.bind && !TEMPLATE_ID_RE$2.test(el.id)) return true;
+	return false;
+}
 function resizeElementWithFlow(page, elId, nextH) {
 	const target = page.elements.find((e) => e.id === elId);
 	if (!target) return page;
-	const prevH = target.h;
-	const dh = nextH - prevH;
+	const dh = nextH - target.h;
 	if (Math.abs(dh) < 2) return page;
 	const isBelowInColumn = (other) => {
 		if (other.id === target.id) return false;
-		if ((other.type === "rect" || other.type === "rule") && other.h > 400) return false;
-		if (other.y >= 990 && other.type === "rect" && other.w >= 700) return false;
+		if (isFreeStudioEl(other)) return false;
+		if ((other.type === "rect" || other.type === "rule" || other.type === "ellipse") && (other.h > 200 || other.y < 180)) return false;
+		if (other.y >= 1e3 && (other.type === "rect" || other.type === "text" && !other.bind && (other.style.color === "#b7b1a6" || other.style.color === "#f6f3ec"))) return false;
 		if (Math.min(target.x + target.w, other.x + other.w) - Math.max(target.x, other.x) <= 32) return false;
-		return other.y >= target.y + Math.min(prevH, 28) && other.y >= target.y + prevH - 20;
+		return other.y > target.y + 8;
 	};
 	return {
 		...page,
@@ -942,29 +949,33 @@ function applyExperienceAdd(doc, activePageId, entry) {
 		...doc.profile,
 		experiences: [...doc.profile.experiences, newExp]
 	};
-	const targetPageId = doc.pages.some((p) => p.id === activePageId) ? activePageId : doc.pages[0].id;
+	let hostPageId = doc.pages.some((p) => p.id === activePageId) ? activePageId : doc.pages[0].id;
+	let bestExpIdx = -1;
+	for (const p of doc.pages) for (const el of p.elements) if (el.bind?.kind === "experience" && el.bind.index > bestExpIdx) {
+		bestExpIdx = el.bind.index;
+		hostPageId = p.id;
+	}
 	const pages = doc.pages.map((page) => {
-		if (page.id !== targetPageId) return page;
+		if (page.id !== hostPageId) return page;
 		const expElements = page.elements.filter((el) => el.type === "experience");
 		const lastExp = expElements.length ? expElements.reduce((a, b) => a.y + a.h >= b.y + b.h ? a : b) : null;
 		const x = lastExp ? lastExp.x : 40;
 		const w = lastExp ? lastExp.w : 714;
-		const h = lastExp ? Math.min(120, Math.max(96, lastExp.h)) : 104;
-		const gap = 12;
-		const y = lastExp ? lastExp.y + lastExp.h + gap : Math.min(PAGE_H - 120, page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48) + 16);
-		const maxZ = Math.max(1, ...page.elements.map((e) => e.z)) + 1;
 		const style = lastExp ? { ...lastExp.style } : baseStyle({
 			fontSize: 13,
 			color: INK,
 			lineHeight: 1.4
 		});
-		const newEl = {
+		const gap = 12;
+		const y = lastExp ? lastExp.y + lastExp.h + gap : Math.min(PAGE_H - 120, page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48) + 16);
+		const maxZ = Math.max(1, ...page.elements.map((e) => e.z)) + 1;
+		const draftEl = {
 			id: uid(),
 			type: "experience",
 			x,
 			y,
 			w,
-			h,
+			h: lastExp ? Math.min(120, Math.max(96, lastExp.h)) : 104,
 			rotation: 0,
 			z: maxZ,
 			locked: false,
@@ -976,10 +987,16 @@ function applyExperienceAdd(doc, activePageId, entry) {
 			content: { ...newExp },
 			style
 		};
+		const h = computeElementAutoHeight(draftEl);
+		const newEl = {
+			...draftEl,
+			h
+		};
 		const shiftedElements = lastExp ? page.elements.map((el) => {
-			if ((el.type === "rect" || el.type === "rule") && el.h > 400) return el;
-			if (el.y >= 990 && el.type === "rect" && el.w >= 700) return el;
-			if (Math.min(x + w, el.x + el.w) - Math.max(x, el.x) > 32 && el.y >= lastExp.y + lastExp.h - 8) return {
+			if (isFreeStudioEl(el)) return el;
+			if ((el.type === "rect" || el.type === "rule" || el.type === "ellipse") && (el.h > 200 || el.y < 180)) return el;
+			if (el.y >= 990 && (el.type === "rect" || !el.bind && el.w >= 450)) return el;
+			if (Math.min(x + w, el.x + el.w) - Math.max(x, el.x) > 32 && el.y > lastExp.y + 8) return {
 				...el,
 				y: el.y + h + gap
 			};
@@ -1013,10 +1030,10 @@ function applyExperienceRemove(doc, index) {
 					index: el.bind.index - 1
 				}
 			};
-			if (removed) {
-				if ((el.type === "rect" || el.type === "rule") && el.h > 400) return nextEl;
-				if (el.y >= 990 && el.type === "rect" && el.w >= 700) return nextEl;
-				if (Math.min(removed.x + removed.w, el.x + el.w) - Math.max(removed.x, el.x) > 32 && el.y >= removed.y + removed.h - 8) return {
+			if (removed && !isFreeStudioEl(el)) {
+				if ((el.type === "rect" || el.type === "rule" || el.type === "ellipse") && (el.h > 200 || el.y < 180)) return nextEl;
+				if (el.y >= 990 && (el.type === "rect" || !el.bind && el.w >= 450)) return nextEl;
+				if (Math.min(removed.x + removed.w, el.x + el.w) - Math.max(removed.x, el.x) > 32 && el.y > removed.y + 8) return {
 					...nextEl,
 					y: Math.max(24, nextEl.y - (removed.h + 12))
 				};
@@ -1092,9 +1109,14 @@ function applyEducationAdd(doc, activePageId, entry) {
 		...doc.profile,
 		educations: [...doc.profile.educations, newEdu]
 	};
-	const targetPageId = doc.pages.some((p) => p.id === activePageId) ? activePageId : doc.pages[0].id;
+	let hostPageId = doc.pages.some((p) => p.id === activePageId) ? activePageId : doc.pages[0].id;
+	let bestEduIdx = -1;
+	for (const p of doc.pages) for (const el of p.elements) if (el.bind?.kind === "education" && el.bind.index > bestEduIdx) {
+		bestEduIdx = el.bind.index;
+		hostPageId = p.id;
+	}
 	const pages = doc.pages.map((page) => {
-		if (page.id !== targetPageId) return page;
+		if (page.id !== hostPageId) return page;
 		const eduElements = page.elements.filter((el) => el.type === "education");
 		const lastEdu = eduElements.length ? eduElements.reduce((a, b) => a.y + a.h >= b.y + b.h ? a : b) : null;
 		const x = lastEdu ? lastEdu.x : 40;
@@ -1126,9 +1148,10 @@ function applyEducationAdd(doc, activePageId, entry) {
 			style
 		};
 		const shiftedElements = lastEdu ? page.elements.map((el) => {
-			if ((el.type === "rect" || el.type === "rule") && el.h > 400) return el;
-			if (el.y >= 990 && el.type === "rect" && el.w >= 700) return el;
-			if (Math.min(x + w, el.x + el.w) - Math.max(x, el.x) > 32 && el.y >= lastEdu.y + lastEdu.h - 6) return {
+			if (isFreeStudioEl(el)) return el;
+			if ((el.type === "rect" || el.type === "rule" || el.type === "ellipse") && (el.h > 200 || el.y < 180)) return el;
+			if (el.y >= 990 && (el.type === "rect" || !el.bind && el.w >= 450)) return el;
+			if (Math.min(x + w, el.x + el.w) - Math.max(x, el.x) > 32 && el.y > lastEdu.y + 8) return {
 				...el,
 				y: el.y + h + gap
 			};
@@ -1162,10 +1185,10 @@ function applyEducationRemove(doc, index) {
 					index: el.bind.index - 1
 				}
 			};
-			if (removed) {
-				if ((el.type === "rect" || el.type === "rule") && el.h > 400) return nextEl;
-				if (el.y >= 990 && el.type === "rect" && el.w >= 700) return nextEl;
-				if (Math.min(removed.x + removed.w, el.x + el.w) - Math.max(removed.x, el.x) > 32 && el.y >= removed.y + removed.h - 6) return {
+			if (removed && !isFreeStudioEl(el)) {
+				if ((el.type === "rect" || el.type === "rule" || el.type === "ellipse") && (el.h > 200 || el.y < 180)) return nextEl;
+				if (el.y >= 990 && (el.type === "rect" || !el.bind && el.w >= 450)) return nextEl;
+				if (Math.min(removed.x + removed.w, el.x + el.w) - Math.max(removed.x, el.x) > 32 && el.y > removed.y + 8) return {
 					...nextEl,
 					y: Math.max(24, nextEl.y - (removed.h + 8))
 				};
@@ -1259,7 +1282,7 @@ function applyLanguagesUpdate(doc, languages) {
 		pages
 	};
 }
-function syncBoundElementsFromProfile(doc) {
+function syncBoundElementsFromProfile(doc, preserveCustomGeometry = false) {
 	const p = doc.profile;
 	const pages = doc.pages.map((page) => {
 		const toResize = [];
@@ -1274,6 +1297,7 @@ function syncBoundElementsFromProfile(doc) {
 				}
 			};
 			if (bind.kind === "summary") {
+				const textChanged = el.content.text !== p.summary;
 				const updated = {
 					...el,
 					content: {
@@ -1281,11 +1305,13 @@ function syncBoundElementsFromProfile(doc) {
 						text: p.summary
 					}
 				};
-				const nextH = computeElementAutoHeight(updated, 54);
-				if (Math.abs(nextH - el.h) >= 2) toResize.push({
-					id: el.id,
-					nextH
-				});
+				if (!preserveCustomGeometry || textChanged) {
+					const nextH = computeElementAutoHeight(updated, 54);
+					if (Math.abs(nextH - el.h) >= 2) toResize.push({
+						id: el.id,
+						nextH
+					});
+				}
 				return updated;
 			}
 			if (bind.kind === "role") {
@@ -1311,6 +1337,7 @@ function syncBoundElementsFromProfile(doc) {
 			if (bind.kind === "experience") {
 				const exp = p.experiences[bind.index];
 				if (!exp) return el;
+				const expChanged = el.content.role !== exp.role || el.content.company !== exp.company || el.content.date !== exp.date || el.content.desc !== exp.desc;
 				const updated = {
 					...el,
 					content: {
@@ -1321,16 +1348,19 @@ function syncBoundElementsFromProfile(doc) {
 						desc: exp.desc
 					}
 				};
-				const nextH = computeElementAutoHeight(updated);
-				if (Math.abs(nextH - el.h) >= 2) toResize.push({
-					id: el.id,
-					nextH
-				});
+				if (!preserveCustomGeometry || expChanged) {
+					const nextH = computeElementAutoHeight(updated);
+					if (Math.abs(nextH - el.h) >= 2) toResize.push({
+						id: el.id,
+						nextH
+					});
+				}
 				return updated;
 			}
 			if (bind.kind === "education") {
 				const edu = p.educations[bind.index];
 				if (!edu) return el;
+				const eduChanged = el.content.degree !== edu.degree || el.content.school !== edu.school || el.content.date !== edu.date;
 				const updated = {
 					...el,
 					content: {
@@ -1340,11 +1370,13 @@ function syncBoundElementsFromProfile(doc) {
 						date: edu.date
 					}
 				};
-				const nextH = computeElementAutoHeight(updated, 44);
-				if (Math.abs(nextH - el.h) >= 2) toResize.push({
-					id: el.id,
-					nextH
-				});
+				if (!preserveCustomGeometry || eduChanged) {
+					const nextH = computeElementAutoHeight(updated, 44);
+					if (Math.abs(nextH - el.h) >= 2) toResize.push({
+						id: el.id,
+						nextH
+					});
+				}
 				return updated;
 			}
 			if (bind.kind === "skills") return {
@@ -3766,6 +3798,482 @@ function deduction(value, from, confidence, rule) {
 }
 function pageOf(line) {
 	return line?.page ?? null;
+}
+var CvImportError = class extends Error {
+	code;
+	constructor(code, message) {
+		super(message);
+		this.name = "CvImportError";
+		this.code = code;
+	}
+};
+var IMPORT_ERROR_MESSAGES = {
+	FILE_TOO_LARGE: "Ce fichier dépasse la limite de 10 Mo.\nChoisis un fichier plus léger.",
+	PDF_NO_TEXT: "Ce PDF ne contient pas de texte sélectionnable.\nTu peux copier-coller ton contenu ou créer un CV avec l’IA.",
+	UNSUPPORTED_FORMAT: "Ce format n’est pas supporté.\nImporte un fichier PDF, Word ou TXT.",
+	PARTIAL_EXTRACTION: "Certaines sections n’ont pas été détectées.\nTu peux les vérifier et les compléter avant de créer ton CV.",
+	NO_SECTION_DETECTED: "Nous n’avons pas pu détecter automatiquement la structure.\nTu peux coller ton texte ou créer un CV avec l’IA.",
+	TECHNICAL_ERROR: "L’import a échoué.\nRéessaie ou choisis un autre fichier."
+};
+function bytesOf(data) {
+	return data instanceof Uint8Array ? data : new Uint8Array(data);
+}
+/**
+* Normalizes raw extracted text:
+* - removes invisible characters
+* - normalizes bullet characters
+* - collapses multiple spaces
+* - strips repetitive page headers/footers ("Page 1 sur 2", "Page 1 of 2", etc.)
+* - collapses excessive blank lines
+*/
+function normalizeExtractedText(raw) {
+	if (!raw) return "";
+	const cleanedLines = raw.replace(/\r\n?/g, "\n").replace(/[\u200B-\u200D\uFEFF\u00AD\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").split("\n").map((line) => {
+		let l = line.replace(/[ \t\u00A0]{2,}/g, " ").trim();
+		l = l.replace(/^(?:[▪▫●◦‣⁃\uF0B7\u2022*]|-(?=\s))\s*/, "• ");
+		return l;
+	});
+	const lineCounts = /* @__PURE__ */ new Map();
+	for (const l of cleanedLines) {
+		if (!l) continue;
+		lineCounts.set(l, (lineCounts.get(l) ?? 0) + 1);
+	}
+	return cleanedLines.filter((l) => {
+		if (!l) return true;
+		if (/^(?:page\s*)?\d+\s*(?:\/|sur|of)\s*\d+$/i.test(l)) return false;
+		return true;
+	}).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+async function detectSupportedKind(name, bytes) {
+	const ext = (name.toLowerCase().split(".").pop() ?? "").trim();
+	const isPdfHeader = bytes.length >= 4 && bytes[0] === 37 && bytes[1] === 80 && bytes[2] === 68 && bytes[3] === 70;
+	if (ext === "pdf" || isPdfHeader) {
+		if (!isPdfHeader) throw new CvImportError("TECHNICAL_ERROR", IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR);
+		return "pdf";
+	}
+	const isZipHeader = bytes.length >= 2 && bytes[0] === 80 && bytes[1] === 75;
+	if (ext === "docx" || isZipHeader) {
+		if (ext !== "docx" && ext !== "") throw new CvImportError("UNSUPPORTED_FORMAT", IMPORT_ERROR_MESSAGES.UNSUPPORTED_FORMAT);
+		try {
+			if ((await (await import("../_libs/jszip+[...].mjs").then((n) => /* @__PURE__ */ __toESM(n.t()))).default.loadAsync(bytes)).file("word/document.xml")) return "docx";
+		} catch {
+			throw new CvImportError("TECHNICAL_ERROR", IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR);
+		}
+		throw new CvImportError("UNSUPPORTED_FORMAT", IMPORT_ERROR_MESSAGES.UNSUPPORTED_FORMAT);
+	}
+	if (ext === "txt") {
+		if (bytes.slice(0, 256).includes(0)) throw new CvImportError("UNSUPPORTED_FORMAT", IMPORT_ERROR_MESSAGES.UNSUPPORTED_FORMAT);
+		return "txt";
+	}
+	throw new CvImportError("UNSUPPORTED_FORMAT", IMPORT_ERROR_MESSAGES.UNSUPPORTED_FORMAT);
+}
+function glyphsToLines(glyphs, page, pageWidth) {
+	const sorted = [...glyphs].sort((a, b) => a.y - b.y || a.x - b.x);
+	const rows = [];
+	for (const glyph of sorted) {
+		const row = rows[rows.length - 1];
+		const ref = row?.[0];
+		if (ref && Math.abs(glyph.y - ref.y) <= Math.max(ref.fontSize, glyph.fontSize) * .45) row.push(glyph);
+		else rows.push([glyph]);
+	}
+	const lines = [];
+	for (const row of rows) {
+		row.sort((a, b) => a.x - b.x);
+		let chunk = [];
+		const emit = () => {
+			if (!chunk.length) return;
+			let text = "";
+			let end = chunk[0].x;
+			for (const glyph of chunk) {
+				const gap = glyph.x - end;
+				if (!text) text = glyph.str;
+				else if (text.endsWith("-") && gap < glyph.fontSize * .25) text = `${text.slice(0, -1)}${glyph.str}`;
+				else text += `${gap > glyph.fontSize * .22 ? " " : ""}${glyph.str}`;
+				end = Math.max(end, glyph.end);
+			}
+			const value = text.replace(/[ \t]{2,}/g, " ").trim();
+			if (value) {
+				const first = chunk[0];
+				lines.push(plainLine(value, {
+					page,
+					x: first.x,
+					y: first.y,
+					width: Math.max(end - first.x, 1),
+					height: first.height || first.fontSize,
+					fontSize: Math.max(...chunk.map((item) => item.fontSize)),
+					bold: chunk.some((item) => item.bold),
+					pageWidth
+				}));
+			}
+			chunk = [];
+		};
+		for (const glyph of row) {
+			const prev = chunk[chunk.length - 1];
+			if (prev && glyph.x - prev.end > Math.max(glyph.fontSize, prev.fontSize) * 3.2) emit();
+			chunk.push(glyph);
+		}
+		emit();
+	}
+	return lines;
+}
+/**
+* Fallback extractor for uncompressed PDF text streams (BT ... (text) Tj ... ET)
+* in case pdfjs worker fails or when parsing lightweight synthetic PDFs.
+*/
+function fallbackExtractPdfStreamText(bytes) {
+	const raw = new TextDecoder("latin1").decode(bytes);
+	const extracted = [];
+	const btBlocks = raw.match(/BT[\s\S]*?ET/g) ?? [];
+	for (const block of btBlocks) {
+		const matches = block.matchAll(/\((?:\\.|[^\\()])*\)\s*Tj|\[((?:\\.|[^\]])*)\]\s*TJ/g);
+		for (const m of matches) {
+			const token = m[0];
+			const line = Array.from(token.matchAll(/\(((?:\\.|[^\\()])*)\)/g)).map((p) => p[1].replace(/\\n/g, "\n").replace(/\\r/g, "").replace(/\\\(/g, "(").replace(/\\\)/g, ")").replace(/\\\\/g, "\\").replace(/\\(\d{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))).join("").trim();
+			if (line) extracted.push(line);
+		}
+	}
+	return extracted;
+}
+async function extractPdfLines(bytes) {
+	let lines = [];
+	let pdfLoaded = false;
+	try {
+		const pdfjs = await import("../_libs/pdfjs-dist.mjs").then((n) => n.t);
+		if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+			const worker = await import("./pdf.worker.min-CAmOfDaL.mjs");
+			pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+		}
+		const doc = await pdfjs.getDocument({
+			data: bytes.slice(),
+			isEvalSupported: false,
+			useSystemFonts: true
+		}).promise;
+		pdfLoaded = true;
+		const pageCount = Math.min(doc.numPages, 15);
+		for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+			const page = await doc.getPage(pageNumber);
+			const viewport = page.getViewport({ scale: 1 });
+			const content = await page.getTextContent();
+			const styles = content.styles;
+			const glyphs = [];
+			for (const item of content.items) {
+				if (!("str" in item) || !item.str) continue;
+				const transform = item.transform;
+				const fontSize = Math.hypot(transform[2] ?? 0, transform[3] ?? 0) || Math.hypot(transform[0] ?? 0, transform[1] ?? 0) || 12;
+				const fontName = `${item.fontName ?? ""} ${styles[item.fontName ?? ""]?.fontFamily ?? ""}`;
+				const x = transform[4] ?? 0;
+				glyphs.push({
+					str: item.str,
+					x,
+					end: x + (item.width ?? 0),
+					y: viewport.height - (transform[5] ?? 0),
+					fontSize,
+					bold: /bold|black|semibold|heavy|demi/i.test(fontName),
+					width: item.width ?? 0,
+					height: item.height || fontSize
+				});
+			}
+			lines.push(...glyphsToLines(glyphs, pageNumber, viewport.width));
+		}
+	} catch {
+		const fallbackStrings = fallbackExtractPdfStreamText(bytes);
+		if (fallbackStrings.length > 0) {
+			lines = fallbackStrings.map((s, idx) => plainLine(s, {
+				page: 1,
+				y: idx * 16
+			}));
+			pdfLoaded = true;
+		}
+	}
+	if (!pdfLoaded) throw new CvImportError("TECHNICAL_ERROR", IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR);
+	if (lines.length === 0) {
+		const fallbackStrings = fallbackExtractPdfStreamText(bytes);
+		if (fallbackStrings.length > 0) lines = fallbackStrings.map((s, idx) => plainLine(s, {
+			page: 1,
+			y: idx * 16
+		}));
+	}
+	const combinedText = lines.map((l) => l.text.trim()).filter(Boolean).join("\n");
+	if (!combinedText || combinedText.length < 3) throw new CvImportError("PDF_NO_TEXT", IMPORT_ERROR_MESSAGES.PDF_NO_TEXT);
+	return lines;
+}
+function htmlToLines(html) {
+	const doc = new DOMParser().parseFromString(html, "text/html");
+	const lines = [];
+	const walk = (el) => {
+		for (const child of Array.from(el.children)) {
+			const tag = child.tagName.toLowerCase();
+			if (/^h[1-4]$/.test(tag) || tag === "p" || tag === "li" || tag === "tr") {
+				const text = (child.textContent ?? "").replace(/\s+/g, " ").trim();
+				if (text) lines.push(plainLine(text, {
+					bold: /^h[1-4]$/.test(tag) || Boolean(child.querySelector("strong, b")),
+					headingHint: /^h[1-4]$/.test(tag),
+					listItem: tag === "li",
+					fontSize: /^h[1-4]$/.test(tag) ? 18 : 12
+				}));
+				continue;
+			}
+			walk(child);
+		}
+	};
+	if (doc.body) walk(doc.body);
+	return lines;
+}
+async function extractDocxLines(bytes) {
+	try {
+		const mammoth = await import("../_libs/mammoth+xmlbuilder.mjs").then((n) => /* @__PURE__ */ __toESM(n.t()));
+		const api = mammoth.default ?? mammoth;
+		const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+		const lines = htmlToLines((await api.convertToHtml({ arrayBuffer })).value);
+		if (lines.length > 0) return lines;
+	} catch {}
+	try {
+		const docXml = await (await (await import("../_libs/jszip+[...].mjs").then((n) => /* @__PURE__ */ __toESM(n.t()))).default.loadAsync(bytes)).file("word/document.xml")?.async("string");
+		if (!docXml) throw new Error("Missing word/document.xml");
+		const xml = new DOMParser().parseFromString(docXml, "application/xml");
+		const paragraphs = Array.from(xml.getElementsByTagName("w:p"));
+		const lines = [];
+		for (const p of paragraphs) {
+			const joined = Array.from(p.getElementsByTagName("w:t")).map((t) => t.textContent ?? "").join("").replace(/\s+/g, " ").trim();
+			if (joined) lines.push(plainLine(joined));
+		}
+		return lines;
+	} catch {
+		throw new CvImportError("TECHNICAL_ERROR", IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR);
+	}
+}
+async function extractTextFromFile(file) {
+	if (file.size > 10485760) throw new CvImportError("FILE_TOO_LARGE", IMPORT_ERROR_MESSAGES.FILE_TOO_LARGE);
+	let bytes;
+	try {
+		bytes = bytesOf(await file.arrayBuffer());
+	} catch {
+		throw new CvImportError("TECHNICAL_ERROR", IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR);
+	}
+	if (bytes.length === 0) throw new CvImportError("TECHNICAL_ERROR", IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR);
+	const kind = await detectSupportedKind(file.name, bytes);
+	if (kind === "pdf") {
+		const rawLines = await extractPdfLines(bytes);
+		const rawText = rawLines.map((l) => l.text).join("\n");
+		const normalizedText = normalizeExtractedText(rawText);
+		const normalizedLines = textToLines(normalizedText);
+		return {
+			filename: file.name,
+			kind: "pdf",
+			rawText,
+			normalizedText,
+			lines: rawLines.length > 0 ? rawLines : normalizedLines
+		};
+	}
+	if (kind === "docx") {
+		const rawLines = await extractDocxLines(bytes);
+		const rawText = rawLines.map((l) => l.text).join("\n");
+		const normalizedText = normalizeExtractedText(rawText);
+		if (!normalizedText) throw new CvImportError("NO_SECTION_DETECTED", IMPORT_ERROR_MESSAGES.NO_SECTION_DETECTED);
+		return {
+			filename: file.name,
+			kind: "docx",
+			rawText,
+			normalizedText,
+			lines: rawLines
+		};
+	}
+	const rawText = new TextDecoder("utf-8").decode(bytes);
+	const normalizedText = normalizeExtractedText(rawText);
+	if (!normalizedText) throw new CvImportError("NO_SECTION_DETECTED", IMPORT_ERROR_MESSAGES.NO_SECTION_DETECTED);
+	return {
+		filename: file.name,
+		kind: "txt",
+		rawText,
+		normalizedText,
+		lines: textToLines(normalizedText)
+	};
+}
+function extractTextFromRawInput(rawInput, filename = "Texte collé") {
+	const normalizedText = normalizeExtractedText(rawInput);
+	if (!normalizedText) throw new CvImportError("NO_SECTION_DETECTED", IMPORT_ERROR_MESSAGES.NO_SECTION_DETECTED);
+	return {
+		filename,
+		kind: "txt",
+		rawText: rawInput,
+		normalizedText,
+		lines: textToLines(normalizedText)
+	};
+}
+function assignUnrecognizedBlock(draft, blockId, target) {
+	const block = draft.unrecognizedBlocks.find((b) => b.id === blockId);
+	if (!block) return draft;
+	const remainingBlocks = draft.unrecognizedBlocks.filter((b) => b.id !== blockId);
+	const next = {
+		...draft,
+		profile: { ...draft.profile },
+		experiences: [...draft.experiences],
+		educations: [...draft.educations],
+		skills: [...draft.skills],
+		languages: [...draft.languages],
+		unrecognizedBlocks: remainingBlocks
+	};
+	const cleanText = block.text.trim();
+	if (!cleanText) return next;
+	if (target === "profile") {
+		next.profile.summary = [next.profile.summary, cleanText].filter(Boolean).join("\n\n");
+		if (!next.detectedSections.includes("Profil")) next.detectedSections = ["Profil", ...next.detectedSections];
+	} else if (target === "experience") {
+		const lines = cleanText.split("\n").map((l) => l.trim()).filter(Boolean);
+		const firstLine = lines[0] || block.heading || "Expérience importée";
+		const parts = firstLine.split(/\s*(?:\||—|–|@|-)\s*/).map((p) => p.trim()).filter(Boolean);
+		const role = parts[0] || firstLine;
+		const company = parts[1] || (block.heading !== "Contenu à vérifier" ? block.heading : "");
+		const desc = (lines.length > 1 ? lines.slice(1) : lines).join("\n");
+		const newExp = {
+			id: `exp-assigned-${Date.now()}-${next.experiences.length + 1}`,
+			role,
+			company,
+			date: "",
+			location: "",
+			desc,
+			needsReview: !role || !company,
+			dateNeedsReview: true,
+			reviewReason: "attribué manuellement · dates à vérifier"
+		};
+		next.experiences.push(newExp);
+		if (!next.detectedSections.includes("Expériences")) next.detectedSections = [...next.detectedSections, "Expériences"];
+	} else if (target === "education") {
+		const lines = cleanText.split("\n").map((l) => l.trim()).filter(Boolean);
+		const firstLine = lines[0] || block.heading || "Formation importée";
+		const parts = firstLine.split(/\s*(?:\||—|–|,|-)\s*/).map((p) => p.trim()).filter(Boolean);
+		const degree = parts[0] || firstLine;
+		const school = parts[1] || (lines[1] ?? "");
+		const newEdu = {
+			id: `edu-assigned-${Date.now()}-${next.educations.length + 1}`,
+			degree,
+			school,
+			date: "",
+			location: "",
+			needsReview: !degree || !school,
+			dateNeedsReview: true,
+			reviewReason: "attribué manuellement · dates à vérifier"
+		};
+		next.educations.push(newEdu);
+		if (!next.detectedSections.includes("Formations")) next.detectedSections = [...next.detectedSections, "Formations"];
+	} else if (target === "skills") {
+		const tokens = cleanText.split(/[\n,;|•·]+/).map((s) => s.replace(/^[•●▪▸►*-]\s*/, "").trim()).filter(Boolean);
+		for (const tok of tokens) if (!next.skills.some((s) => s.toLowerCase() === tok.toLowerCase())) next.skills.push(tok);
+		if (!next.detectedSections.includes("Compétences")) next.detectedSections = [...next.detectedSections, "Compétences"];
+	} else if (target === "languages") {
+		cleanText.split(/[\n,;|•·]+/).map((s) => s.replace(/^[•●▪▸►*-]\s*/, "").trim()).filter(Boolean).forEach((tok, idx) => {
+			const sep = tok.split(/\s*[:–—()-]\s*/).filter(Boolean);
+			const name = sep[0] || tok;
+			const level = sep[1] || "À préciser";
+			next.languages.push({
+				id: `lang-assigned-${Date.now()}-${idx}`,
+				name,
+				level,
+				pct: 75
+			});
+		});
+		if (!next.detectedSections.includes("Langues")) next.detectedSections = [...next.detectedSections, "Langues"];
+	}
+	return next;
+}
+function ignoreUnrecognizedBlock(draft, blockId) {
+	return {
+		...draft,
+		unrecognizedBlocks: draft.unrecognizedBlocks.filter((b) => b.id !== blockId)
+	};
+}
+/**
+* Converts the user-verified ImportMappingDraft into a CV Creator Profile.
+* Never invents missing information or falls back to SAMPLE data.
+*/
+function draftToProfile(draft) {
+	const formatLocationDate = (date, location) => {
+		const d = date.trim();
+		const loc = location.trim();
+		if (d && loc && !d.toLowerCase().includes(loc.toLowerCase())) return `${d} · ${loc}`;
+		return d || loc || "";
+	};
+	return {
+		name: draft.profile.name.trim(),
+		role: draft.profile.role.trim(),
+		email: draft.profile.email.trim(),
+		phone: draft.profile.phone.trim(),
+		location: draft.profile.location.trim(),
+		link: draft.profile.link.trim(),
+		summary: draft.profile.summary.trim(),
+		experiences: draft.experiences.map((exp) => ({
+			role: exp.role.trim(),
+			company: exp.company.trim(),
+			date: formatLocationDate(exp.date, exp.location),
+			desc: exp.desc.trim()
+		})),
+		educations: draft.educations.map((edu) => ({
+			degree: edu.degree.trim(),
+			school: edu.school.trim(),
+			date: formatLocationDate(edu.date, edu.location)
+		})),
+		skills: draft.skills.map((s) => s.trim()).filter(Boolean),
+		languages: draft.languages.map((l) => {
+			const cleanName = l.name.trim();
+			const cleanLevel = l.level.trim();
+			return {
+				label: cleanLevel && cleanLevel !== "À préciser" && !cleanName.toLowerCase().includes(cleanLevel.toLowerCase()) ? `${cleanName} (${cleanLevel})` : cleanName,
+				value: typeof l.pct === "number" ? Math.max(10, Math.min(100, l.pct)) : 75
+			};
+		})
+	};
+}
+function getRecommendedTemplates(draft) {
+	const expCount = draft.experiences.length;
+	const totalTextLen = draft.profile.summary.length + draft.experiences.reduce((acc, e) => acc + e.desc.length, 0);
+	const isDense = expCount >= 4 || totalTextLen > 1400;
+	const primaryId = isDense ? "minimal" : "executive";
+	const atsId = primaryId === "minimal" ? "swiss" : "minimal";
+	const modernId = "modern";
+	const findMeta = (id) => TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
+	return [
+		{
+			template: findMeta(primaryId),
+			badge: "Recommandé",
+			reason: isDense ? "Idéal pour structurer un parcours dense sans perte de lisibilité" : "Mise en page équilibrée et hiérarchie claire pour ton profil"
+		},
+		{
+			template: findMeta(atsId),
+			badge: "ATS-safe",
+			reason: "Lecture linéaire 100 % compatible avec les recruteurs et logiciels ATS"
+		},
+		{
+			template: findMeta(modernId),
+			badge: "Moderne",
+			reason: "Bandeau contrasté qui met en valeur compétences et expériences"
+		}
+	];
+}
+function filterTemplatesForImport(filter) {
+	if (filter === "all") return TEMPLATES;
+	if (filter === "ats") return TEMPLATES.filter((t) => [
+		"minimal",
+		"modern",
+		"swiss",
+		"executive"
+	].includes(t.id));
+	if (filter === "onepage") return TEMPLATES.filter((t) => [
+		"executive",
+		"modern",
+		"swiss",
+		"minimal"
+	].includes(t.id));
+	if (filter === "moderne") return TEMPLATES.filter((t) => [
+		"modern",
+		"executive",
+		"swiss"
+	].includes(t.id));
+	if (filter === "creatif") return TEMPLATES.filter((t) => [
+		"creative",
+		"editorial",
+		"swiss"
+	].includes(t.id));
+	return TEMPLATES;
 }
 var MONTHS = [
 	["janvier", 1],
@@ -6326,440 +6834,1377 @@ function parseLines(input) {
 		verification
 	};
 }
-function parseText(text, filename = "texte-colle.txt") {
-	return parseLines({
-		filename,
-		format: "text",
-		lines: textToLines(text)
+function stripAccents(value) {
+	return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+function normalizeHeadingKey(line) {
+	return stripAccents(line).toLowerCase().replace(/^[\s•●▪▸►*\-–—#0-9.)]+/, "").replace(/[\s:.;,\-–—/\\|()[\]]+$/g, "").replace(/\s+/g, " ").trim();
+}
+var SECTION_MATCHERS = [
+	{
+		key: "profile",
+		label: "Profil",
+		patterns: [/^(profil|profil professionnel|resume|resume professionnel|a propos|a propos de moi|about|about me|summary|professional summary|executive summary|objectif|objectifs|infos|introduction|presentation|bio)$/i]
+	},
+	{
+		key: "experience",
+		label: "Expériences",
+		patterns: [/^(experience|experiences|experiences professionnelles|experience professionnelle|parcours professionnel|parcours|work experience|professional experience|employment|employment history|career|career history|carriere|historique professionnel|postes occupes)$/i]
+	},
+	{
+		key: "education",
+		label: "Formations",
+		patterns: [/^(formation|formations|education|etudes|diplomes|diplome|academic background|academics|scolarite|cursus|cursus academique|qualifications)$/i]
+	},
+	{
+		key: "skills",
+		label: "Compétences",
+		patterns: [/^(competence|competences|competences cles|competences techniques|principales competences|skills|technical skills|core competencies|key skills|expertise|savoir faire|stack technique|technologies|outils)$/i]
+	},
+	{
+		key: "languages",
+		label: "Langues",
+		patterns: [/^(langue|langues|languages|langues parlees|foreign languages)$/i]
+	},
+	{
+		key: "projects",
+		label: "Projets",
+		patterns: [/^(projet|projets|projects|personal projects|side projects|realisations|projets personnels|projets cles)$/i]
+	},
+	{
+		key: "certifications",
+		label: "Certifications",
+		patterns: [/^(certification|certifications|certificats|certificates|licenses|licenses & certifications|licences et certifications|formations complementaires|distinctions|awards)$/i]
+	},
+	{
+		key: "links",
+		label: "Liens / portfolio",
+		patterns: [/^(liens|lien|portfolio|links|reseaux|reseaux sociaux|web|coordonnees|contact|contacts)$/i]
+	},
+	{
+		key: "interests",
+		label: "Centres d'intérêt",
+		patterns: [/^(centres d'interet|centre d'interet|interets|loisirs|hobbies|interests|activites)$/i]
+	}
+];
+function matchSectionHeading(line) {
+	const trimmed = line.trim();
+	if (!trimmed || trimmed.length > 56) return null;
+	if (/^[•●▪▸►*-]\s+.{32,}/.test(trimmed)) return null;
+	const key = normalizeHeadingKey(trimmed);
+	if (!key) return null;
+	for (const matcher of SECTION_MATCHERS) if (matcher.patterns.some((re) => re.test(key))) return {
+		key: matcher.key,
+		label: matcher.label
+	};
+	return null;
+}
+var DATE_RANGE_REGEX = /\b((?:(?:janv?\.?|fevr?\.?|feb\.?|mars|mar\.?|avr\.?|apr\.?|mai|may|juin|jun\.?|juil\.?|jul\.?|aout|aug\.?|sept?\.?|oct\.?|nov\.?|dec\.?)\s+)?(?:19|20)\d{2}|(?:0?[1-9]|1[0-2])\/(?:19|20)\d{2})\s*(?:-|–|—|to|au|jusqu['’]a|à|\/)\s*((?:(?:janv?\.?|fevr?\.?|feb\.?|mars|mar\.?|avr\.?|apr\.?|mai|may|juin|jun\.?|juil\.?|jul\.?|aout|aug\.?|sept?\.?|oct\.?|nov\.?|dec\.?)\s+)?(?:19|20)\d{2}|(?:0?[1-9]|1[0-2])\/(?:19|20)\d{2}|present|aujourd['’]hui|actuel|current|now|en cours)\b/i;
+var SINGLE_YEAR_REGEX = /\b((?:19|20)\d{2})\b/;
+var AMBIGUOUS_DATE_PATTERNS = [
+	/^\d{1,2}\s*(?:ans?|mois|years?|months?)$/i,
+	/^(?:depuis|since)\b/i,
+	/\?/
+];
+function evaluateDateQuality(dateStr) {
+	const trimmed = dateStr.trim();
+	if (!trimmed) return {
+		cleanDate: "",
+		dateNeedsReview: true
+	};
+	const stripped = stripAccents(trimmed);
+	if (AMBIGUOUS_DATE_PATTERNS.some((re) => re.test(stripped))) return {
+		cleanDate: trimmed,
+		dateNeedsReview: true
+	};
+	if (DATE_RANGE_REGEX.test(stripped)) return {
+		cleanDate: trimmed,
+		dateNeedsReview: false
+	};
+	const years = stripped.match(/\b(?:19|20)\d{2}\b/g);
+	if (years && years.length >= 1) return {
+		cleanDate: trimmed,
+		dateNeedsReview: false
+	};
+	return {
+		cleanDate: trimmed,
+		dateNeedsReview: true
+	};
+}
+function mapLanguagePct(level) {
+	const norm = stripAccents(level || "").toLowerCase();
+	if (!norm) return {
+		level: "À préciser",
+		pct: 70
+	};
+	if (/maternelle|natif|native|bilingue|fluent|c2/.test(norm)) return {
+		level: level.trim(),
+		pct: 100
+	};
+	if (/c1|avance|advanced|courant|full professional|professionnel complet/.test(norm)) return {
+		level: level.trim(),
+		pct: 85
+	};
+	if (/b2|intermediaire|intermediate|working proficiency|professionnel/.test(norm)) return {
+		level: level.trim(),
+		pct: 72
+	};
+	if (/b1|a2|scolaire|notions|elementary|debutant|basic/.test(norm)) return {
+		level: level.trim(),
+		pct: 48
+	};
+	return {
+		level: level.trim(),
+		pct: 70
+	};
+}
+function cleanLinkedInNoise(lines) {
+	return lines.filter((line) => {
+		const trimmed = line.trim();
+		if (!trimmed) return true;
+		if (/^Page\s+\d+\s+(?:of|sur)\s+\d+$/i.test(trimmed)) return false;
+		if (/^Generated by LinkedIn$/i.test(trimmed)) return false;
+		if (/^\d+\s*(?:ans?|yrs?|years?)(?:\s+\d+\s*(?:mois|mos?|months?))?$/i.test(stripAccents(trimmed))) return false;
+		if (/^\d+\s*(?:mois|mos?|months?)$/i.test(stripAccents(trimmed))) return false;
+		return true;
 	});
 }
-function bytesOf(data) {
-	return data instanceof Uint8Array ? data : new Uint8Array(data);
-}
-async function detectKind(name, bytes) {
-	const ext = name.toLowerCase().split(".").pop() ?? "";
-	if (bytes[0] === 37 && bytes[1] === 80 && bytes[2] === 68 && bytes[3] === 70) return "pdf";
-	if (bytes[0] === 208 && bytes[1] === 207 && bytes[2] === 17 && bytes[3] === 224) return "doc-legacy";
-	if (bytes[0] === 80 && bytes[1] === 75) {
-		if (ext === "odt") return "odt";
-		if (ext === "docx") return "docx";
-		const zip = await (await import("../_libs/jszip+[...].mjs").then((n) => /* @__PURE__ */ __toESM(n.t()))).default.loadAsync(bytes);
-		if ((await zip.file("mimetype")?.async("string"))?.includes("opendocument.text")) return "odt";
-		if (zip.file("word/document.xml")) return "docx";
-		return "unknown";
-	}
-	const head = new TextDecoder().decode(bytes.slice(0, 500)).trimStart().toLowerCase();
-	if (head.startsWith("{\\rtf") || ext === "rtf") return "rtf";
-	if (ext === "html" || ext === "htm" || head.startsWith("<!doctype html") || head.startsWith("<html")) return "html";
-	if (ext === "pdf") return "pdf";
-	if (bytes.slice(0, 200).includes(0)) return "unknown";
-	return "text";
-}
-function htmlToLines(html) {
-	const doc = new DOMParser().parseFromString(html, "text/html");
-	const lines = [];
-	const walk = (el) => {
-		for (const child of Array.from(el.children)) {
-			const tag = child.tagName.toLowerCase();
-			if (/^h[1-3]$/.test(tag) || tag === "p" || tag === "li" || tag === "tr") {
-				const text = (child.textContent ?? "").replace(/\s+/g, " ").trim();
-				if (text) lines.push(plainLine(text, {
-					bold: /^h[1-3]$/.test(tag) || Boolean(child.querySelector("strong, b")),
-					headingHint: /^h[1-3]$/.test(tag),
-					listItem: tag === "li",
-					fontSize: /^h[1-3]$/.test(tag) ? 18 : 12
-				}));
-				continue;
-			}
-			walk(child);
-		}
-	};
-	if (doc.body) walk(doc.body);
-	return lines;
-}
-function rtfToText(input) {
-	let index = 0;
-	let out = "";
-	const destinations = /* @__PURE__ */ new Set([
-		"fonttbl",
-		"colortbl",
-		"stylesheet",
-		"info",
-		"pict",
-		"datastore",
-		"themedata",
-		"listtable",
-		"listoverridetable",
-		"generator",
-		"header",
-		"footer",
-		"headerl",
-		"headerr",
-		"footerl",
-		"footerr"
-	]);
-	const parseGroup = (skip) => {
-		while (index < input.length) {
-			const char = input[index];
-			if (char === "{") {
-				index += 1;
-				let nested = skip;
-				if (input[index] === "\\" && input[index + 1] === "*") nested = true;
-				else {
-					const word = /^\\([a-zA-Z]+)/.exec(input.slice(index));
-					if (word && destinations.has(word[1].toLowerCase())) nested = true;
-				}
-				parseGroup(nested);
-				continue;
-			}
-			if (char === "}") {
-				index += 1;
-				return;
-			}
-			if (char === "\\") {
-				if (input[index + 1] === "\\") {
-					if (!skip) out += "\\";
-					index += 2;
-					continue;
-				}
-				if (input[index + 1] === "{") {
-					if (!skip) out += "{";
-					index += 2;
-					continue;
-				}
-				if (input[index + 1] === "}") {
-					if (!skip) out += "}";
-					index += 2;
-					continue;
-				}
-				if (input[index + 1] === "'") {
-					const hex = input.slice(index + 2, index + 4);
-					if (!skip && /^[0-9a-fA-F]{2}$/.test(hex)) out += new TextDecoder("windows-1252").decode(new Uint8Array([Number.parseInt(hex, 16)]));
-					index += 4;
-					continue;
-				}
-				const control = /^\\([a-zA-Z]+)(-?\d+)? ?/.exec(input.slice(index));
-				if (control) {
-					const word = control[1]?.toLowerCase() ?? "";
-					if (!skip && (word === "par" || word === "line")) out += "\n";
-					else if (!skip && word === "tab") out += "	";
-					else if (!skip && word === "u" && control[2]) {
-						let code = Number(control[2]);
-						if (code < 0) code += 65536;
-						out += String.fromCharCode(code);
-					}
-					index += control[0].length;
-					continue;
-				}
-				index += 1;
-				continue;
-			}
-			if (!skip && char !== "\r" && char !== "\n") out += char;
-			index += 1;
-		}
-	};
-	if (input.startsWith("{")) {
-		index = 1;
-		parseGroup(false);
-	} else parseGroup(false);
-	return out.replace(/\n{3,}/g, "\n\n").trim();
-}
-async function docxToLines(bytes) {
-	const mammoth = await import("../_libs/mammoth+xmlbuilder.mjs").then((n) => /* @__PURE__ */ __toESM(n.t()));
-	return htmlToLines((await (mammoth.default ?? mammoth).convertToHtml({ arrayBuffer: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) })).value);
-}
-async function odtToLines(bytes) {
-	const file = (await (await import("../_libs/jszip+[...].mjs").then((n) => /* @__PURE__ */ __toESM(n.t()))).default.loadAsync(bytes)).file("content.xml");
-	if (!file) throw new Error("Ce fichier ODT n'a pas de contenu lisible.");
-	const doc = new DOMParser().parseFromString(await file.async("string"), "application/xml");
-	const lines = [];
-	let root = null;
-	for (const el of Array.from(doc.getElementsByTagName("*"))) if (el.localName === "text" && el.parentElement?.localName === "body") {
-		root = el;
-		break;
-	}
-	const walk = (el, list) => {
-		for (const child of Array.from(el.children)) {
-			const local = child.localName;
-			if (local === "p" || local === "h") {
-				const text = (child.textContent ?? "").replace(/\s+/g, " ").trim();
-				if (text) lines.push(plainLine(text, {
-					headingHint: local === "h",
-					bold: local === "h",
-					listItem: list,
-					fontSize: local === "h" ? 18 : 12
-				}));
-			} else walk(child, list || local === "list" || local === "list-item");
-		}
-	};
-	if (root) walk(root, false);
-	return lines;
-}
-function glyphsToLines(glyphs, page, pageWidth) {
-	const sorted = [...glyphs].sort((a, b) => a.y - b.y || a.x - b.x);
-	const rows = [];
-	for (const glyph of sorted) {
-		const row = rows[rows.length - 1];
-		const ref = row?.[0];
-		if (ref && Math.abs(glyph.y - ref.y) <= Math.max(ref.fontSize, glyph.fontSize) * .45) row.push(glyph);
-		else rows.push([glyph]);
-	}
-	const lines = [];
-	for (const row of rows) {
-		row.sort((a, b) => a.x - b.x);
-		let chunk = [];
-		const emit = () => {
-			if (!chunk.length) return;
-			let text = "";
-			let end = chunk[0].x;
-			for (const glyph of chunk) {
-				const gap = glyph.x - end;
-				if (!text) text = glyph.str;
-				else if (text.endsWith("-") && gap < glyph.fontSize * .25) text = `${text.slice(0, -1)}${glyph.str}`;
-				else text += `${gap > glyph.fontSize * .22 ? " " : ""}${glyph.str}`;
-				end = Math.max(end, glyph.end);
-			}
-			const value = text.replace(/[ \t]{2,}/g, " ").trim();
-			if (value) {
-				const first = chunk[0];
-				lines.push(plainLine(value, {
-					page,
-					x: first.x,
-					y: first.y,
-					width: Math.max(end - first.x, 1),
-					height: first.height || first.fontSize,
-					fontSize: Math.max(...chunk.map((item) => item.fontSize)),
-					bold: chunk.some((item) => item.bold),
-					pageWidth
-				}));
-			}
-			chunk = [];
+function extractDateFromLine(line) {
+	const rangeMatch = stripAccents(line).match(DATE_RANGE_REGEX);
+	if (rangeMatch && rangeMatch.index !== void 0) {
+		const rawMatched = line.slice(rangeMatch.index, rangeMatch.index + rangeMatch[0].length);
+		const rest = (line.slice(0, rangeMatch.index) + " " + line.slice(rangeMatch.index + rangeMatch[0].length)).replace(/^[\s|•—–,-]+|[\s|•—–,-]+$/g, "").replace(/\s{2,}/g, " ").trim();
+		return {
+			date: rawMatched.trim(),
+			rest
 		};
-		for (const glyph of row) {
-			const prev = chunk[chunk.length - 1];
-			if (prev && glyph.x - prev.end > Math.max(glyph.fontSize, prev.fontSize) * 3.2) emit();
-			chunk.push(glyph);
-		}
-		emit();
 	}
-	return lines;
-}
-async function pdfToLines(bytes) {
-	const pdfjs = await import("../_libs/pdfjs-dist.mjs").then((n) => n.t);
-	if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-		const worker = await import("./pdf.worker.min-CAmOfDaL.mjs");
-		pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-	}
-	const doc = await pdfjs.getDocument({
-		data: bytes,
-		isEvalSupported: false,
-		useSystemFonts: true
-	}).promise;
-	const pageCount = Math.min(doc.numPages, 15);
-	const lines = [];
-	for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
-		const page = await doc.getPage(pageNumber);
-		const viewport = page.getViewport({ scale: 1 });
-		const content = await page.getTextContent();
-		const styles = content.styles;
-		const glyphs = [];
-		for (const item of content.items) {
-			if (!("str" in item) || !item.str) continue;
-			const transform = item.transform;
-			const fontSize = Math.hypot(transform[2] ?? 0, transform[3] ?? 0) || Math.hypot(transform[0] ?? 0, transform[1] ?? 0) || 12;
-			const fontName = `${item.fontName ?? ""} ${styles[item.fontName ?? ""]?.fontFamily ?? ""}`;
-			const x = transform[4] ?? 0;
-			glyphs.push({
-				str: item.str,
-				x,
-				end: x + (item.width ?? 0),
-				y: viewport.height - (transform[5] ?? 0),
-				fontSize,
-				bold: /bold|black|semibold|heavy|demi/i.test(fontName),
-				width: item.width ?? 0,
-				height: item.height || fontSize
-			});
-		}
-		lines.push(...glyphsToLines(glyphs, pageNumber, viewport.width));
+	const yearMatches = [...line.matchAll(/\b(?:19|20)\d{2}(?:\s*[-–—]\s*(?:(?:19|20)\d{2}|Présent|Present|Aujourd'hui|Actuel|Current))?\b/gi)];
+	if (yearMatches.length > 0) {
+		const m = yearMatches[yearMatches.length - 1];
+		const rawMatched = m[0];
+		const idx = m.index ?? 0;
+		const rest = (line.slice(0, idx) + " " + line.slice(idx + rawMatched.length)).replace(/^[\s|•—–,-]+|[\s|•—–,-]+$/g, "").replace(/\s{2,}/g, " ").trim();
+		return {
+			date: rawMatched.trim(),
+			rest
+		};
 	}
 	return {
-		lines,
-		truncated: doc.numPages > 15
+		date: "",
+		rest: line.trim()
 	};
 }
-async function parseFile(file) {
-	if (file.size > 12582912) throw new Error("Fichier trop volumineux (maximum 12 Mo).");
-	const bytes = bytesOf(await file.arrayBuffer());
-	const kind = await detectKind(file.name, bytes);
-	if (kind === "doc-legacy") throw new Error("Le format .doc (Word 97-2003) n'est pas lu : la conversion abîmerait le texte. Enregistrez-le en PDF ou en DOCX.");
-	if (kind === "unknown") throw new Error("Format non reconnu. Déposez un PDF texte, un DOCX, un ODT, un RTF, un HTML ou un TXT.");
-	if (kind === "pdf") {
-		const pdf = await pdfToLines(bytes);
-		return parseLines({
-			filename: file.name,
-			format: "pdf",
-			lines: pdf.lines,
-			truncated: pdf.truncated
+function parseExperienceSectionLines(lines) {
+	if (lines.map((l) => l.trim()).filter(Boolean).length === 0) return [];
+	const rawBlocks = [];
+	let current = [];
+	for (const rawLine of lines) {
+		const line = rawLine.trim();
+		if (!line) {
+			if (current.length > 0) {
+				rawBlocks.push(current);
+				current = [];
+			}
+			continue;
+		}
+		const isBullet = /^[•●▪▸►*-]\s+/.test(line);
+		const hasDateRange = DATE_RANGE_REGEX.test(stripAccents(line));
+		if (!isBullet && current.length >= 2 && (hasDateRange || current.some((prev) => /^[•●▪▸►*-]\s+/.test(prev)))) {
+			rawBlocks.push(current);
+			current = [line];
+		} else current.push(line);
+	}
+	if (current.length > 0) rawBlocks.push(current);
+	const items = [];
+	rawBlocks.forEach((block, idx) => {
+		const bulletLines = [];
+		const headerLines = [];
+		for (const line of block) if (/^[•●▪▸►*-]\s+/.test(line)) bulletLines.push(line.replace(/^[•●▪▸►*-]\s+/, "").trim());
+		else if (headerLines.length < 3 && bulletLines.length === 0) headerLines.push(line);
+		else bulletLines.push(line);
+		let role = "";
+		let company = "";
+		let date = "";
+		let location = "";
+		const combinedHeaders = [...headerLines];
+		for (let i = 0; i < combinedHeaders.length; i++) {
+			const { date: extractedDate, rest } = extractDateFromLine(combinedHeaders[i]);
+			if (extractedDate && !date) {
+				date = extractedDate;
+				combinedHeaders[i] = rest;
+			}
+		}
+		const cleanHeaders = combinedHeaders.map((h) => h.trim()).filter(Boolean);
+		if (cleanHeaders.length >= 1) {
+			const first = cleanHeaders[0];
+			const parts = first.split(/\s*(?:\||—|–|@|\bchez\b|\bat\b)\s*/i).map((p) => p.trim()).filter(Boolean);
+			if (parts.length >= 2) {
+				role = parts[0];
+				company = parts[1];
+				if (parts.length >= 3) location = parts.slice(2).join(", ");
+			} else role = first;
+		}
+		if (cleanHeaders.length >= 2) {
+			const second = cleanHeaders[1];
+			if (!company) {
+				const subParts = second.split(/\s*(?:\||—|–|·|,)\s*/).map((p) => p.trim()).filter(Boolean);
+				company = subParts[0] || "";
+				if (subParts.length >= 2 && !location) location = subParts.slice(1).join(", ");
+			} else if (!location && second.length <= 45) location = second;
+			else bulletLines.unshift(second);
+		}
+		if (cleanHeaders.length >= 3) {
+			const third = cleanHeaders[2];
+			if (!location && third.length <= 40) location = third;
+			else bulletLines.unshift(third);
+		}
+		const desc = bulletLines.filter(Boolean).join("\n").trim();
+		const { cleanDate, dateNeedsReview } = evaluateDateQuality(date);
+		const needsReview = !role.trim() || !company.trim() || dateNeedsReview;
+		const reasons = [];
+		if (!role.trim()) reasons.push("intitulé de poste manquant");
+		if (!company.trim()) reasons.push("entreprise à vérifier");
+		if (dateNeedsReview) reasons.push("dates à vérifier");
+		if (role || company || desc || cleanDate) items.push({
+			id: `exp-imp-${idx + 1}`,
+			role: role.trim(),
+			company: company.trim(),
+			date: cleanDate,
+			location: location.trim(),
+			desc,
+			needsReview,
+			dateNeedsReview,
+			reviewReason: reasons.length > 0 ? reasons.join(" · ") : void 0
+		});
+	});
+	return items;
+}
+function parseEducationSectionLines(lines) {
+	if (lines.map((l) => l.trim()).filter(Boolean).length === 0) return [];
+	const rawBlocks = [];
+	let current = [];
+	for (const rawLine of lines) {
+		const line = rawLine.trim();
+		if (!line) {
+			if (current.length > 0) {
+				rawBlocks.push(current);
+				current = [];
+			}
+			continue;
+		}
+		const hasYear = SINGLE_YEAR_REGEX.test(line);
+		if (current.length >= 2 && hasYear && current.some((prev) => SINGLE_YEAR_REGEX.test(prev))) {
+			rawBlocks.push(current);
+			current = [line];
+		} else current.push(line);
+	}
+	if (current.length > 0) rawBlocks.push(current);
+	const items = [];
+	rawBlocks.forEach((block, idx) => {
+		let degree = "";
+		let school = "";
+		let date = "";
+		let location = "";
+		const processed = block.map((line) => {
+			const { date: d, rest } = extractDateFromLine(line.replace(/^[•●▪▸►*-]\s+/, ""));
+			if (d && !date) {
+				date = d;
+				return rest;
+			}
+			return line.replace(/^[•●▪▸►*-]\s+/, "").trim();
+		}).filter(Boolean);
+		if (processed.length >= 1) {
+			const parts = processed[0].split(/\s*(?:\||—|–|,|-)\s*/).map((p) => p.trim()).filter(Boolean);
+			if (parts.length >= 2) {
+				degree = parts[0];
+				school = parts[1];
+				if (parts.length >= 3) location = parts.slice(2).join(", ");
+			} else degree = processed[0];
+		}
+		if (processed.length >= 2 && !school) school = processed[1];
+		else if (processed.length >= 2 && !location && processed[1].length <= 45) location = processed[1];
+		const { cleanDate, dateNeedsReview } = evaluateDateQuality(date);
+		const needsReview = !degree.trim() || !school.trim() || dateNeedsReview;
+		const reasons = [];
+		if (!degree.trim()) reasons.push("diplôme à vérifier");
+		if (!school.trim()) reasons.push("établissement à vérifier");
+		if (dateNeedsReview) reasons.push("dates à vérifier");
+		if (degree || school || cleanDate) items.push({
+			id: `edu-imp-${idx + 1}`,
+			degree: degree.trim(),
+			school: school.trim(),
+			date: cleanDate,
+			location: location.trim(),
+			needsReview,
+			dateNeedsReview,
+			reviewReason: reasons.length > 0 ? reasons.join(" · ") : void 0
+		});
+	});
+	return items;
+}
+function parseSkillsLines(lines) {
+	const skills = [];
+	const seen = /* @__PURE__ */ new Set();
+	for (const rawLine of lines) {
+		const cleaned = rawLine.replace(/^[•●▪▸►*-]\s*/, "").replace(/^[^:]{2,28}:\s*/, "").trim();
+		if (!cleaned) continue;
+		const parts = cleaned.split(/[,;|•·/]+|\s{2,}/).map((s) => s.trim()).filter((s) => s.length >= 2 && s.length <= 48);
+		for (const part of parts) {
+			const key = part.toLowerCase();
+			if (!seen.has(key)) {
+				seen.add(key);
+				skills.push(part);
+			}
+		}
+	}
+	return skills;
+}
+function parseLanguagesLines(lines) {
+	const items = [];
+	const seen = /* @__PURE__ */ new Set();
+	const tokens = [];
+	for (const line of lines) {
+		const cleaned = line.replace(/^[•●▪▸►*-]\s*/, "").trim();
+		if (!cleaned) continue;
+		const sub = cleaned.split(/[;|•]+/).map((s) => s.trim()).filter(Boolean);
+		tokens.push(...sub);
+	}
+	tokens.forEach((token, idx) => {
+		const parenMatch = token.match(/^([^():–—-]+?)\s*\(([^)]+)\)\s*$/);
+		const sepMatch = token.match(/^([^:–—-]+?)\s*[:–—-]\s*(.+)$/);
+		let name = "";
+		let rawLevel = "";
+		if (parenMatch) {
+			name = parenMatch[1].trim();
+			rawLevel = parenMatch[2].trim();
+		} else if (sepMatch) {
+			name = sepMatch[1].trim();
+			rawLevel = sepMatch[2].trim();
+		} else {
+			name = token.trim();
+			rawLevel = "";
+		}
+		if (!name || name.length > 40) return;
+		const key = name.toLowerCase();
+		if (seen.has(key)) return;
+		seen.add(key);
+		const { level, pct } = mapLanguagePct(rawLevel);
+		items.push({
+			id: `lang-imp-${idx + 1}`,
+			name,
+			level,
+			pct
+		});
+	});
+	return items;
+}
+function parseExtractedDocument(doc) {
+	const rawLines = cleanLinkedInNoise(doc.normalizedText.split("\n"));
+	if (rawLines.map((l) => l.trim()).filter(Boolean).length === 0) throw new CvImportError("NO_SECTION_DETECTED", IMPORT_ERROR_MESSAGES.NO_SECTION_DETECTED);
+	const parsedFromEngine = parseLines({
+		filename: doc.filename,
+		format: doc.kind,
+		lines: doc.lines
+	});
+	const preambleLines = [];
+	const sectionBuckets = /* @__PURE__ */ new Map();
+	const detectedSectionLabels = [];
+	const unrecognizedBlocks = [];
+	let currentSection = null;
+	let unknownHeading = null;
+	let unknownLines = [];
+	const flushUnknown = () => {
+		const text = unknownLines.join("\n").trim();
+		if (text) unrecognizedBlocks.push({
+			id: `unrec-${unrecognizedBlocks.length + 1}`,
+			heading: unknownHeading || "Contenu à vérifier",
+			text,
+			kind: "unclassified"
+		});
+		unknownHeading = null;
+		unknownLines = [];
+	};
+	for (const rawLine of rawLines) {
+		const trimmed = rawLine.trim();
+		const matched = matchSectionHeading(trimmed);
+		if (matched) {
+			flushUnknown();
+			currentSection = matched.key;
+			if (!detectedSectionLabels.includes(matched.label)) detectedSectionLabels.push(matched.label);
+			if (!sectionBuckets.has(matched.key)) sectionBuckets.set(matched.key, []);
+			continue;
+		}
+		if (trimmed.length >= 4 && trimmed.length <= 38 && !/\d/.test(trimmed) && trimmed === trimmed.toUpperCase() && /[A-ZÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸ]{4,}/.test(trimmed) && currentSection !== null) {
+			flushUnknown();
+			currentSection = null;
+			unknownHeading = trimmed;
+			continue;
+		}
+		if (unknownHeading !== null) unknownLines.push(rawLine);
+		else if (currentSection !== null) sectionBuckets.get(currentSection).push(rawLine);
+		else preambleLines.push(rawLine);
+	}
+	flushUnknown();
+	const emailRegex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+	const phoneRegex = /(?:\+?\d[\d\s().-]{7,}\d)/;
+	const urlRegex = /(?:https?:\/\/[^\s,;|]+|(?:www\.|linkedin\.com\/in\/|github\.com\/)[a-zA-Z0-9._/-]+)/i;
+	const allContactLines = [...preambleLines, ...sectionBuckets.get("links") || []];
+	let email = parsedFromEngine.identity.emails[0]?.text.text || "";
+	let phone = parsedFromEngine.identity.phones[0]?.text.text || "";
+	let link = parsedFromEngine.identity.urls[0]?.text.text || "";
+	let location = parsedFromEngine.identity.location?.text || "";
+	let name = parsedFromEngine.identity.fullName?.text || "";
+	let role = parsedFromEngine.identity.headline?.text || "";
+	const remainingPreamble = [];
+	for (const rawLine of allContactLines) {
+		const line = rawLine.trim();
+		if (!line) continue;
+		const emailMatch = line.match(emailRegex);
+		if (emailMatch && !email) email = emailMatch[0];
+		const urlMatch = line.match(urlRegex);
+		if (urlMatch && !link) link = urlMatch[0].replace(/^https?:\/\//i, "");
+		const phoneMatch = line.match(phoneRegex);
+		if (phoneMatch && !phone && !DATE_RANGE_REGEX.test(stripAccents(line))) phone = phoneMatch[0].trim();
+		const stripped = line.replace(emailRegex, "").replace(urlRegex, "").replace(phoneRegex, "").replace(/^[\s|•·,;-]+|[\s|•·,;-]+$/g, "").trim();
+		if (!stripped) continue;
+		if (!location && stripped.length <= 45 && /\b(paris|lyon|marseille|bordeaux|lille|nantes|toulouse|nice|rennes|strasbourg|montpellier|france|belgique|suisse|canada|luxembourg|london|remote|teletravail|\d{5})\b/i.test(stripAccents(stripped))) {
+			location = stripped;
+			continue;
+		}
+		if (!name && stripped.split(/\s+/).length >= 2 && stripped.split(/\s+/).length <= 5 && !/\d/.test(stripped)) {
+			name = stripped;
+			continue;
+		}
+		if (!role && stripped.length <= 75 && remainingPreamble.length === 0) {
+			role = stripped;
+			continue;
+		}
+		remainingPreamble.push(stripped);
+	}
+	const explicitProfileLines = (sectionBuckets.get("profile") || []).map((l) => l.trim()).filter(Boolean);
+	let summary = "";
+	if (explicitProfileLines.length > 0) summary = explicitProfileLines.join(" ");
+	else if (parsedFromEngine.profile.text?.text) summary = parsedFromEngine.profile.text.text;
+	else if (remainingPreamble.length > 0) {
+		const summaryCandidates = remainingPreamble.filter((l) => l.length >= 30);
+		const leftoverShort = remainingPreamble.filter((l) => l.length < 30);
+		if (summaryCandidates.length > 0) summary = summaryCandidates.join(" ");
+		if (leftoverShort.length > 0) unrecognizedBlocks.push({
+			id: `unrec-${unrecognizedBlocks.length + 1}`,
+			heading: "En-tête / Informations complémentaires",
+			text: leftoverShort.join("\n"),
+			kind: "unclassified"
 		});
 	}
-	if (kind === "docx") return parseLines({
-		filename: file.name,
-		format: "docx",
-		lines: await docxToLines(bytes)
-	});
-	if (kind === "odt") return parseLines({
-		filename: file.name,
-		format: "odt",
-		lines: await odtToLines(bytes)
-	});
-	const decoded = new TextDecoder().decode(bytes);
-	if (kind === "rtf") return parseLines({
-		filename: file.name,
-		format: "rtf",
-		lines: textToLines(rtfToText(decoded))
-	});
-	if (kind === "html") return parseLines({
-		filename: file.name,
-		format: "html",
-		lines: htmlToLines(decoded)
-	});
-	return parseLines({
-		filename: file.name,
-		format: "text",
-		lines: textToLines(decoded)
-	});
-}
-function formatDatePoint(point) {
-	if (!point) return "";
-	if (point.month != null) return `${String(point.month).padStart(2, "0")}/${point.year}`;
-	return String(point.year);
-}
-function extractDatesString(dated) {
-	if (!dated) return "";
-	if (dated.raw?.text) return dated.raw.text.trim();
-	const parsed = dated.parsed?.value;
-	if (!parsed) return "";
-	const start = formatDatePoint(parsed.start);
-	if (parsed.openEnded) return start ? `${start} — Aujourd'hui` : "En cours";
-	const end = formatDatePoint(parsed.end);
-	if (start && end) return `${start} — ${end}`;
-	return start || end || "";
-}
-function parseLevelToValue(levelText) {
-	if (!levelText) return 80;
-	const t = levelText.toLowerCase();
-	if (/c2|natif|maternelle|fluent|bilingue/i.test(t)) return 100;
-	if (/c1|courant|avancé|avance/i.test(t)) return 90;
-	if (/b2|professionnel|intermédiaire sup/i.test(t)) return 75;
-	if (/b1|intermédiaire|intermediaire/i.test(t)) return 60;
-	if (/a2|élémentaire|notions/i.test(t)) return 40;
-	if (/a1|débutant|debutant/i.test(t)) return 25;
-	const num = t.match(/(\d{1,3})\s*%/);
-	if (num) return Math.min(100, Math.max(0, parseInt(num[1], 10)));
-	return 75;
-}
-function cvExtractionToProfile(extraction, base = SAMPLE) {
-	const ident = extraction.identity;
-	const fullName = ident.fullName?.text?.trim();
-	const name = fullName && fullName.length > 2 && fullName.length < 80 ? fullName : base.name;
-	const headline = ident.headline?.text?.trim() || extraction.experiences[0]?.title?.text?.trim();
-	const role = headline && headline.length > 2 && headline.length < 100 ? headline : base.role;
-	const email = ident.emails[0]?.text?.text?.trim() || base.email;
-	const phone = ident.phones[0]?.text?.text?.trim() || base.phone;
-	const location = ident.location?.text?.trim() || base.location;
-	const link = ident.urls[0]?.text?.text?.trim() || base.link;
-	const summary = extraction.profile.text?.text?.trim() || ident.intro?.text?.trim() || base.summary;
-	const experiences = extraction.experiences.map((exp) => {
-		const roleName = exp.title?.text?.trim() || "Poste";
-		const company = exp.organization?.text?.trim() || "";
-		const date = extractDatesString(exp.dates);
-		let desc = "";
-		if (exp.realizations && exp.realizations.length > 0) desc = exp.realizations.map((r) => `• ${r.trim()}`).join("\n");
-		else if (exp.description?.text) desc = exp.description.text.trim();
-		else if (exp.rawLines && exp.rawLines.length > 2) desc = exp.rawLines.slice(2).join(" ").trim();
+	let experiences = parseExperienceSectionLines(sectionBuckets.get("experience") || []);
+	if (experiences.length === 0 && parsedFromEngine.experiences.length > 0) experiences = parsedFromEngine.experiences.map((exp, idx) => {
+		const { cleanDate, dateNeedsReview } = evaluateDateQuality(exp.dates?.raw.text || "");
+		const roleVal = exp.title?.text.trim() || "";
+		const companyVal = exp.organization?.text.trim() || "";
+		const needsReview = !roleVal || !companyVal || dateNeedsReview;
+		const reasons = [];
+		if (!roleVal) reasons.push("intitulé de poste manquant");
+		if (!companyVal) reasons.push("entreprise à vérifier");
+		if (dateNeedsReview) reasons.push("dates à vérifier");
+		const descParts = [exp.description?.text || "", ...exp.realizations || []].filter(Boolean);
 		return {
-			role: roleName,
-			company,
-			date,
-			desc
+			id: `exp-imp-${idx + 1}`,
+			role: roleVal,
+			company: companyVal,
+			date: cleanDate,
+			location: exp.location?.text.trim() || "",
+			desc: descParts.join("\n").trim(),
+			needsReview,
+			dateNeedsReview,
+			reviewReason: reasons.length > 0 ? reasons.join(" · ") : void 0
 		};
-	}).filter((e) => e.role || e.company || e.desc);
-	const educations = extraction.education.map((edu) => {
+	});
+	let educations = parseEducationSectionLines(sectionBuckets.get("education") || []);
+	if (educations.length === 0 && parsedFromEngine.education.length > 0) educations = parsedFromEngine.education.map((edu, idx) => {
+		const { cleanDate, dateNeedsReview } = evaluateDateQuality(edu.dates?.raw.text || "");
+		const degreeVal = edu.degree?.text.trim() || "";
+		const schoolVal = edu.school?.text.trim() || "";
+		const needsReview = !degreeVal || !schoolVal || dateNeedsReview;
+		const reasons = [];
+		if (!degreeVal) reasons.push("diplôme à vérifier");
+		if (!schoolVal) reasons.push("établissement à vérifier");
+		if (dateNeedsReview) reasons.push("dates à vérifier");
 		return {
-			degree: edu.degree?.text?.trim() || "Diplôme",
-			school: edu.school?.text?.trim() || "",
-			date: extractDatesString(edu.dates)
+			id: `edu-imp-${idx + 1}`,
+			degree: degreeVal,
+			school: schoolVal,
+			date: cleanDate,
+			location: edu.location?.text.trim() || "",
+			needsReview,
+			dateNeedsReview,
+			reviewReason: reasons.length > 0 ? reasons.join(" · ") : void 0
 		};
-	}).filter((e) => e.degree || e.school);
-	const rawSkills = [];
-	for (const group of extraction.skills) for (const item of group.items) {
-		const s = item.text.text.trim();
-		if (s && s.length > 1 && s.length < 50) rawSkills.push(s);
+	});
+	let skills = parseSkillsLines(sectionBuckets.get("skills") || []);
+	if (skills.length === 0 && parsedFromEngine.skills.length > 0) skills = parsedFromEngine.skills.flatMap((g) => g.items.map((item) => item.text.text.trim())).filter(Boolean);
+	let languages = parseLanguagesLines(sectionBuckets.get("languages") || []);
+	if (languages.length === 0 && parsedFromEngine.languages.length > 0) languages = parsedFromEngine.languages.map((l, idx) => {
+		const { level, pct } = mapLanguagePct(l.levelRaw?.text || "");
+		return {
+			id: `lang-imp-${idx + 1}`,
+			name: l.name.text.trim(),
+			level,
+			pct
+		};
+	});
+	const projectLines = (sectionBuckets.get("projects") || []).map((l) => l.trim()).filter(Boolean);
+	if (projectLines.length > 0) unrecognizedBlocks.push({
+		id: `unrec-${unrecognizedBlocks.length + 1}`,
+		heading: "Projets détectés",
+		text: projectLines.join("\n"),
+		kind: "project"
+	});
+	const certLines = (sectionBuckets.get("certifications") || []).map((l) => l.trim()).filter(Boolean);
+	if (certLines.length > 0) unrecognizedBlocks.push({
+		id: `unrec-${unrecognizedBlocks.length + 1}`,
+		heading: "Certifications détectées",
+		text: certLines.join("\n"),
+		kind: "certification"
+	});
+	const interestLines = (sectionBuckets.get("interests") || []).map((l) => l.trim()).filter(Boolean);
+	if (interestLines.length > 0) unrecognizedBlocks.push({
+		id: `unrec-${unrecognizedBlocks.length + 1}`,
+		heading: "Centres d'intérêt",
+		text: interestLines.join("\n"),
+		kind: "interest"
+	});
+	if (!(detectedSectionLabels.length > 0 || experiences.length > 0 || educations.length > 0 || skills.length > 0 || languages.length > 0 || Boolean(email || phone))) throw new CvImportError("NO_SECTION_DETECTED", IMPORT_ERROR_MESSAGES.NO_SECTION_DETECTED);
+	if (summary && !detectedSectionLabels.includes("Profil")) detectedSectionLabels.unshift("Profil");
+	if (experiences.length > 0 && !detectedSectionLabels.includes("Expériences")) detectedSectionLabels.push("Expériences");
+	if (educations.length > 0 && !detectedSectionLabels.includes("Formations")) detectedSectionLabels.push("Formations");
+	if (skills.length > 0 && !detectedSectionLabels.includes("Compétences")) detectedSectionLabels.push("Compétences");
+	if (languages.length > 0 && !detectedSectionLabels.includes("Langues")) detectedSectionLabels.push("Langues");
+	const warnings = [];
+	const partialDetection = [
+		experiences.length > 0,
+		educations.length > 0,
+		skills.length > 0,
+		Boolean(name && (email || phone || summary))
+	].filter(Boolean).length < 3 || experiences.some((e) => e.needsReview) || educations.some((e) => e.needsReview) || unrecognizedBlocks.length > 0;
+	if (partialDetection) warnings.push(IMPORT_ERROR_MESSAGES.PARTIAL_EXTRACTION);
+	return {
+		filename: doc.filename,
+		sourceKind: doc.kind,
+		rawText: doc.normalizedText,
+		profile: {
+			name: name.trim(),
+			role: role.trim(),
+			email: email.trim(),
+			phone: phone.trim(),
+			location: location.trim(),
+			link: link.trim(),
+			summary: summary.trim()
+		},
+		experiences,
+		educations,
+		skills,
+		languages,
+		unrecognizedBlocks,
+		detectedSections: detectedSectionLabels,
+		partialDetection,
+		warnings
+	};
+}
+async function extractCVFromFile(file) {
+	const draft = parseExtractedDocument(await extractTextFromFile(file));
+	const profile = draftToProfile(draft);
+	const recommendedTemplate = getRecommendedTemplates(draft)[0]?.template.id || TEMPLATES[0].id;
+	return {
+		filename: draft.filename,
+		sourceKind: draft.sourceKind,
+		profile,
+		recommendedTemplate,
+		confidence: draft.partialDetection ? .72 : .92,
+		warnings: draft.warnings,
+		sectionsCount: draft.detectedSections.length,
+		draft
+	};
+}
+async function extractCVFromText(text, sourceLabel = "Texte collé") {
+	const draft = parseExtractedDocument(extractTextFromRawInput(text, sourceLabel));
+	const profile = draftToProfile(draft);
+	const recommendedTemplate = getRecommendedTemplates(draft)[0]?.template.id || TEMPLATES[0].id;
+	return {
+		filename: draft.filename,
+		sourceKind: draft.sourceKind,
+		profile,
+		recommendedTemplate,
+		confidence: draft.partialDetection ? .72 : .92,
+		warnings: draft.warnings,
+		sectionsCount: draft.detectedSections.length,
+		draft
+	};
+}
+function extractFromText(text, _fallbackProfile) {
+	const draft = parseExtractedDocument(extractTextFromRawInput(text, "Texte collé"));
+	const profile = draftToProfile(draft);
+	const recommendedTemplate = getRecommendedTemplates(draft)[0]?.template.id || TEMPLATES[0].id;
+	return {
+		filename: draft.filename,
+		sourceKind: draft.sourceKind,
+		profile,
+		recommendedTemplate,
+		confidence: draft.partialDetection ? .72 : .92,
+		warnings: draft.warnings,
+		sectionsCount: draft.detectedSections.length,
+		draft
+	};
+}
+var TEMPLATE_ID_RE$1 = /^(seed|modern|editorial|minimal|executive|creative|tech|swiss|timeline|split|monogram|preset|extracted|imported|page)-\d+$|^(seed|modern|editorial|minimal|executive|creative|tech|swiss|timeline|split|monogram|preset|extracted|imported|page)-/;
+var TOP_FLOW_Y = 48;
+var BOTTOM_SAFE_Y = PAGE_H - 18;
+var PULLBACK_SAFE_Y = PAGE_H - 24;
+function isStudioFreeElement(el) {
+	if (el.hidden) return false;
+	if (el.type === "photo" && Boolean(el.content.src)) return true;
+	if (!el.bind && !TEMPLATE_ID_RE$1.test(el.id)) return true;
+	return false;
+}
+function isDecorativeElement(el) {
+	if (el.type === "rect" || el.type === "ellipse" || el.type === "photo") return true;
+	if (el.type === "rule" && (el.h > 200 || el.y < 180)) return true;
+	if (el.type === "text" && !el.bind && TEMPLATE_ID_RE$1.test(el.id) && el.y >= 1e3 && (el.style.color === "#b7b1a6" || el.style.color === "#f6f3ec")) return true;
+	return false;
+}
+function isFlowableElement(el) {
+	if (el.hidden) return false;
+	if (isStudioFreeElement(el)) return false;
+	if (isDecorativeElement(el)) return false;
+	if (el.bind) return [
+		"summary",
+		"experience",
+		"education",
+		"skills",
+		"languages"
+	].includes(el.bind.kind);
+	if (el.type === "heading" && TEMPLATE_ID_RE$1.test(el.id) && el.y >= 40) return true;
+	if (el.type === "rule" && TEMPLATE_ID_RE$1.test(el.id) && el.h <= 6 && el.y >= 180) return true;
+	return false;
+}
+function horizontalOverlap(a, b) {
+	return Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+}
+function boxesOverlap(a, b, pad = 0) {
+	return a.x < b.x + b.w + pad && a.x + a.w + pad > b.x && a.y < b.y + b.h + pad && a.y + a.h + pad > b.y;
+}
+/**
+* Groups flowable elements on a page so that each section heading (and divider rule)
+* stays attached to the first bound element immediately below it in the same column.
+* Never splits a heading from its first content block.
+*/
+function buildColumnFlowGroups(flowElements) {
+	if (!flowElements.length) return [];
+	const sorted = [...flowElements].sort((a, b) => Math.abs(a.y - b.y) <= 4 ? a.x - b.x : a.y - b.y);
+	const used = /* @__PURE__ */ new Set();
+	const groups = [];
+	for (let i = 0; i < sorted.length; i++) {
+		const el = sorted[i];
+		if (used.has(el.id)) continue;
+		if (!el.bind && (el.type === "heading" || el.type === "rule")) {
+			const groupEls = [el];
+			used.add(el.id);
+			let lastBottom = el.y + el.h;
+			for (let j = i + 1; j < sorted.length; j++) {
+				const candidate = sorted[j];
+				if (used.has(candidate.id)) continue;
+				if (horizontalOverlap(el, candidate) <= 32) continue;
+				const vGap = candidate.y - lastBottom;
+				if (vGap >= -12 && vGap <= 56) {
+					groupEls.push(candidate);
+					used.add(candidate.id);
+					lastBottom = Math.max(lastBottom, candidate.y + candidate.h);
+					if (candidate.bind) break;
+				}
+			}
+			const top = Math.min(...groupEls.map((e) => e.y));
+			const bottom = Math.max(...groupEls.map((e) => e.y + e.h));
+			const minX = Math.min(...groupEls.map((e) => e.x));
+			const maxRight = Math.max(...groupEls.map((e) => e.x + e.w));
+			groups.push({
+				elements: groupEls,
+				x: minX,
+				w: maxRight - minX,
+				top,
+				bottom,
+				height: bottom - top
+			});
+		} else {
+			used.add(el.id);
+			groups.push({
+				elements: [el],
+				x: el.x,
+				w: el.w,
+				top: el.y,
+				bottom: el.y + el.h,
+				height: el.h
+			});
+		}
 	}
-	const cleanSkills = Array.from(new Set(rawSkills));
-	const languages = extraction.languages.map((l) => {
-		const name = l.name.text.trim();
-		const level = l.levelCanon?.value ? l.levelCanon.value.value : l.levelRaw?.text || "";
+	return groups.sort((a, b) => a.top - b.top);
+}
+/**
+* Checks if a Studio free element blocks automatic pagination on a page
+* (e.g. a free element overlaps or sits in the flow column where bound elements overflow).
+*/
+function hasFreeElementBlockingPagination(page) {
+	const freeEls = page.elements.filter(isStudioFreeElement);
+	if (!freeEls.length) return false;
+	const flowEls = page.elements.filter(isFlowableElement);
+	if (!flowEls.some((el) => el.y + el.h > BOTTOM_SAFE_Y)) return false;
+	for (const free of freeEls) for (const flow of flowEls) if (horizontalOverlap(free, flow) > 24 && free.y >= flow.y - 40) return true;
+	return false;
+}
+/**
+* Ensures all bound flow elements on every page have at least their auto-computed height
+* so no text is visually clipped, shifting following elements in the same column via resizeElementWithFlow.
+*/
+function ensureAutoHeightsOnPages(doc) {
+	const pages = doc.pages.map((page) => {
+		let nextPage = page;
+		const boundIds = [...nextPage.elements].filter((el) => !el.hidden && el.bind && [
+			"summary",
+			"experience",
+			"education",
+			"skills",
+			"languages"
+		].includes(el.bind.kind)).sort((a, b) => a.y - b.y).map((el) => el.id);
+		for (const id of boundIds) {
+			const currentEl = nextPage.elements.find((e) => e.id === id);
+			if (!currentEl) continue;
+			const neededH = computeElementAutoHeight(currentEl);
+			if (neededH > currentEl.h + 2) nextPage = resizeElementWithFlow(nextPage, id, neededH);
+		}
+		return nextPage;
+	});
+	return {
+		...doc,
+		pages
+	};
+}
+/**
+* Main A4 automatic pagination engine for bound elements in Guided mode (and explicit pagination action).
+* - Preserves Studio free elements (never moves or deletes them).
+* - Pulls flow groups back to previous page when content is shortened and space becomes available.
+* - Pushes overflowing flow groups (above 1123px) to the next page (creating it if needed).
+* - Removes trailing empty pages if they contain no Studio free elements.
+*/
+function paginateDocFlow(inputDoc, options) {
+	const force = Boolean(options?.force);
+	let workingDoc = ensureAutoHeightsOnPages(inputDoc);
+	let blockedByFreeElement = false;
+	const pages = workingDoc.pages.map((p) => ({
+		...p,
+		elements: p.elements.map((el) => ({ ...el }))
+	}));
+	for (let p = 0; p < pages.length - 1; p++) {
+		const currPage = pages[p];
+		const nextPage = pages[p + 1];
+		if (!force && hasFreeElementBlockingPagination(currPage)) continue;
+		const nextFlowEls = nextPage.elements.filter(isFlowableElement);
+		if (!nextFlowEls.length) continue;
+		const nextGroups = buildColumnFlowGroups(nextFlowEls);
+		const pulledElementIds = /* @__PURE__ */ new Set();
+		for (const group of nextGroups) {
+			const sameColOnCurr = currPage.elements.filter((el) => {
+				if (el.hidden) return false;
+				if (isDecorativeElement(el)) return false;
+				return horizontalOverlap(el, group) > 32;
+			});
+			if (nextGroups.some((earlier) => earlier.top < group.top && horizontalOverlap(earlier, group) > 32 && !earlier.elements.every((e) => pulledElementIds.has(e.id)))) continue;
+			const colBottom = sameColOnCurr.length ? Math.max(...sameColOnCurr.map((e) => e.y + e.h)) : TOP_FLOW_Y;
+			const gap = group.elements[0]?.type === "heading" ? 18 : 12;
+			const targetTop = sameColOnCurr.length ? colBottom + gap : TOP_FLOW_Y;
+			if (targetTop + group.height <= PULLBACK_SAFE_Y) {
+				const dy = targetTop - group.top;
+				const movedEls = group.elements.map((el) => ({
+					...el,
+					y: Math.round(el.y + dy)
+				}));
+				const freeOnCurr = currPage.elements.filter(isStudioFreeElement);
+				if (!movedEls.some((mEl) => freeOnCurr.some((fEl) => boxesOverlap(mEl, fEl, 4)))) {
+					currPage.elements.push(...movedEls);
+					for (const mEl of movedEls) pulledElementIds.add(mEl.id);
+				}
+			}
+		}
+		if (pulledElementIds.size > 0) {
+			nextPage.elements = nextPage.elements.filter((el) => !pulledElementIds.has(el.id));
+			const remainingFlow = nextPage.elements.filter(isFlowableElement);
+			if (remainingFlow.length > 0) {
+				const remGroups = buildColumnFlowGroups(remainingFlow);
+				const shiftedIds = /* @__PURE__ */ new Set();
+				for (const rg of remGroups) {
+					if (rg.elements.some((e) => shiftedIds.has(e.id))) continue;
+					const colGroups = remGroups.filter((g) => horizontalOverlap(g, rg) > 32);
+					const shiftUp = TOP_FLOW_Y - Math.min(...colGroups.map((g) => g.top));
+					if (Math.abs(shiftUp) >= 2) {
+						const colElIds = new Set(colGroups.flatMap((g) => g.elements.map((e) => e.id)));
+						nextPage.elements = nextPage.elements.map((el) => {
+							if (colElIds.has(el.id)) {
+								shiftedIds.add(el.id);
+								return {
+									...el,
+									y: Math.max(24, Math.round(el.y + shiftUp))
+								};
+							}
+							return el;
+						});
+					}
+				}
+			}
+		}
+	}
+	let pIdx = 0;
+	const MAX_PAGES = 8;
+	while (pIdx < pages.length && pages.length <= MAX_PAGES) {
+		const page = pages[pIdx];
+		const flowEls = page.elements.filter(isFlowableElement);
+		if (!flowEls.filter((el) => el.y + el.h > BOTTOM_SAFE_Y).length) {
+			pIdx += 1;
+			continue;
+		}
+		if (!force && hasFreeElementBlockingPagination(page)) {
+			blockedByFreeElement = true;
+			pIdx += 1;
+			continue;
+		}
+		const groups = buildColumnFlowGroups(flowEls);
+		const groupsToMove = [];
+		const movedGroupSet = /* @__PURE__ */ new Set();
+		for (const g of groups) {
+			if (movedGroupSet.has(g)) continue;
+			const isAtVeryTop = g.top <= 64;
+			if (g.bottom > BOTTOM_SAFE_Y && !isAtVeryTop) for (const candidate of groups) {
+				if (movedGroupSet.has(candidate)) continue;
+				if (candidate.top >= g.top && horizontalOverlap(candidate, g) > 32) {
+					movedGroupSet.add(candidate);
+					groupsToMove.push(candidate);
+				}
+			}
+		}
+		if (!groupsToMove.length) {
+			pIdx += 1;
+			continue;
+		}
+		if (pIdx + 1 >= pages.length) {
+			const nextNum = pages.length + 1;
+			const existingId = `page-${nextNum}`;
+			const newPageId = pages.some((pg) => pg.id === existingId) ? `page-${uid()}` : existingId;
+			pages.push({
+				id: newPageId,
+				name: `Page ${nextNum}`,
+				background: page.background || "#ffffff",
+				elements: []
+			});
+		}
+		const nextPage = pages[pIdx + 1];
+		const movingIds = new Set(groupsToMove.flatMap((g) => g.elements.map((e) => e.id)));
+		page.elements = page.elements.filter((el) => !movingIds.has(el.id));
+		const processedCols = /* @__PURE__ */ new Set();
+		const newlyPlacedOnNext = [];
+		for (const g of groupsToMove) {
+			if (processedCols.has(g)) continue;
+			const colMovedGroups = groupsToMove.filter((cg) => horizontalOverlap(cg, g) > 32).sort((a, b) => a.top - b.top);
+			colMovedGroups.forEach((cg) => processedCols.add(cg));
+			let cursorY = TOP_FLOW_Y;
+			for (let i = 0; i < colMovedGroups.length; i++) {
+				const cg = colMovedGroups[i];
+				if (i > 0) {
+					const prevCg = colMovedGroups[i - 1];
+					const originalGap = Math.max(10, Math.min(32, cg.top - prevCg.bottom));
+					cursorY += originalGap;
+				}
+				const dy = cursorY - cg.top;
+				for (const el of cg.elements) newlyPlacedOnNext.push({
+					...el,
+					y: Math.round(el.y + dy)
+				});
+				cursorY += cg.height;
+			}
+			const existingInCol = nextPage.elements.filter((el) => isFlowableElement(el) && horizontalOverlap(el, g) > 32);
+			if (existingInCol.length > 0) {
+				const minExistingY = Math.min(...existingInCol.map((e) => e.y));
+				if (minExistingY < cursorY + 16) {
+					const pushDown = cursorY + 16 - minExistingY;
+					const existingIds = new Set(existingInCol.map((e) => e.id));
+					nextPage.elements = nextPage.elements.map((el) => existingIds.has(el.id) ? {
+						...el,
+						y: Math.round(el.y + pushDown)
+					} : el);
+				}
+			}
+		}
+		nextPage.elements = [...newlyPlacedOnNext, ...nextPage.elements];
+		pIdx += 1;
+	}
+	const finalPages = pages.filter((page, idx) => {
+		if (idx === 0) return true;
+		if (page.elements.some(isStudioFreeElement)) return true;
+		return page.elements.some((el) => !el.hidden && !isDecorativeElement(el));
+	}).map((page, idx) => {
+		const isDefaultName = /^Page \d+$/i.test(page.name.trim());
 		return {
-			label: level ? `${name} (${level})` : name,
-			value: parseLevelToValue(level)
+			...page,
+			name: isDefaultName ? `Page ${idx + 1}` : page.name
 		};
-	}).filter((l) => l.label.length > 0);
+	});
 	return {
-		name,
-		role,
-		email,
-		phone,
-		location,
-		link,
-		summary,
-		experiences: experiences.length > 0 ? experiences : base.experiences,
-		educations: educations.length > 0 ? educations : base.educations,
-		skills: cleanSkills.length > 0 ? cleanSkills : base.skills,
-		languages: languages.length > 0 ? languages : base.languages
-	};
-}
-function computeExtractionStats(profile) {
-	return {
-		experiencesCount: profile.experiences.length,
-		educationsCount: profile.educations.length,
-		skillsCount: profile.skills.length,
-		languagesCount: profile.languages.length,
-		hasContact: Boolean(profile.email || profile.phone || profile.location)
+		doc: {
+			...workingDoc,
+			pages: finalPages
+		},
+		blockedByFreeElement
 	};
 }
 /**
-* Extrait le profil complet à partir d'un fichier (PDF, DOCX, ODT, RTF, HTML, TXT)
+* Compacts vertical spacing on a page without reducing font sizes,
+* then runs pagination so blocks that now fit on earlier pages move up.
 */
-async function extractFromFile(file, baseProfile = SAMPLE) {
-	const extraction = await parseFile(file);
-	const profile = cvExtractionToProfile(extraction, baseProfile);
-	const stats = computeExtractionStats(profile);
-	const warnings = (extraction.warnings || []).map((w) => w.message);
-	const ambiguities = (extraction.ambiguities || []).map((a) => a.message);
+function compactPageSpacing(doc, targetPageId) {
+	const pages = doc.pages.map((page) => {
+		if (targetPageId && page.id !== targetPageId) return page;
+		if (!page.elements.filter(isFlowableElement).length) return page;
+		const fittedElements = page.elements.map((el) => {
+			if (!el.hidden && el.bind && [
+				"summary",
+				"experience",
+				"education",
+				"skills",
+				"languages"
+			].includes(el.bind.kind)) {
+				const autoH = computeElementAutoHeight(el);
+				return {
+					...el,
+					h: autoH
+				};
+			}
+			return el;
+		});
+		const groups = buildColumnFlowGroups(fittedElements.filter(isFlowableElement));
+		const processed = /* @__PURE__ */ new Set();
+		const yPatches = /* @__PURE__ */ new Map();
+		for (const g of groups) {
+			if (processed.has(g)) continue;
+			const colGroups = groups.filter((cg) => horizontalOverlap(cg, g) > 32).sort((a, b) => a.top - b.top);
+			colGroups.forEach((cg) => processed.add(cg));
+			if (!colGroups.length) continue;
+			let cursorY = colGroups[0].top;
+			for (let i = 0; i < colGroups.length; i++) {
+				const cg = colGroups[i];
+				if (i > 0) {
+					const isSectionStart = cg.elements[0]?.type === "heading" || cg.elements[0]?.type === "rule";
+					cursorY += isSectionStart ? 12 : 8;
+				}
+				const dy = cursorY - cg.top;
+				for (const el of cg.elements) yPatches.set(el.id, Math.max(24, Math.round(el.y + dy)));
+				cursorY += cg.height;
+			}
+		}
+		return {
+			...page,
+			elements: fittedElements.map((el) => yPatches.has(el.id) ? {
+				...el,
+				y: yPatches.get(el.id)
+			} : el)
+		};
+	});
+	return paginateDocFlow({
+		...doc,
+		pages
+	}, { force: true }).doc;
+}
+function getElementLabel(el) {
+	if (el.bind) {
+		if (el.bind.kind === "experience") return `Expérience ${el.bind.index + 1}`;
+		if (el.bind.kind === "education") return `Formation ${el.bind.index + 1}`;
+		if (el.bind.kind === "skills") return "Compétences";
+		if (el.bind.kind === "languages") return "Langues";
+		if (el.bind.kind === "summary") return "Profil";
+		if (el.bind.kind === "name") return "Nom";
+		if (el.bind.kind === "role") return "Titre";
+		if (el.bind.kind === "contact") return `Contact (${el.bind.field})`;
+	}
+	if (el.type === "skills") return "Compétences";
+	if (el.type === "meters") return "Langues";
+	if (el.type === "experience") return el.content.role ? `Expérience (${el.content.role})` : "Expérience";
+	if (el.type === "education") return el.content.degree ? `Formation (${el.content.degree})` : "Formation";
+	const s = snippet(el).trim();
+	if (s && s.length <= 28) return s;
+	if (s) return `${s.slice(0, 25)}…`;
+	return TYPE_LABEL[el.type];
+}
+function parseHexRgb(hex) {
+	if (!hex || hex === "transparent") return null;
+	const clean = hex.trim().replace(/^#/, "");
+	if (clean.length === 3) {
+		const r = Number.parseInt(clean[0] + clean[0], 16);
+		const g = Number.parseInt(clean[1] + clean[1], 16);
+		const b = Number.parseInt(clean[2] + clean[2], 16);
+		if ([
+			r,
+			g,
+			b
+		].some(Number.isNaN)) return null;
+		return [
+			r,
+			g,
+			b
+		];
+	}
+	if (clean.length === 6) {
+		const r = Number.parseInt(clean.slice(0, 2), 16);
+		const g = Number.parseInt(clean.slice(2, 4), 16);
+		const b = Number.parseInt(clean.slice(4, 6), 16);
+		if ([
+			r,
+			g,
+			b
+		].some(Number.isNaN)) return null;
+		return [
+			r,
+			g,
+			b
+		];
+	}
+	return null;
+}
+function relativeLuminance([r, g, b]) {
+	const toLinear = (c) => {
+		const v = c / 255;
+		return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+	};
+	return .2126 * toLinear(r) + .7152 * toLinear(g) + .0722 * toLinear(b);
+}
+function contrastRatio(hexA, hexB) {
+	const rgbA = parseHexRgb(hexA);
+	const rgbB = parseHexRgb(hexB);
+	if (!rgbA || !rgbB) return null;
+	const lumA = relativeLuminance(rgbA);
+	const lumB = relativeLuminance(rgbB);
+	const brightest = Math.max(lumA, lumB);
+	const darkest = Math.min(lumA, lumB);
+	return (brightest + .05) / (darkest + .05);
+}
+function getEffectiveBackgroundColor(el, page) {
+	if (el.style.backgroundColor && el.style.backgroundColor !== "transparent") return el.style.backgroundColor;
+	const cx = el.x + el.w / 2;
+	const cy = el.y + el.h / 2;
+	const bgShapes = page.elements.filter((other) => !other.hidden && other.id !== el.id && (other.type === "rect" || other.type === "ellipse") && other.z <= el.z && other.style.backgroundColor && other.style.backgroundColor !== "transparent" && cx >= other.x && cx <= other.x + other.w && cy >= other.y && cy <= other.y + other.h).sort((a, b) => b.z - a.z);
+	if (bgShapes.length > 0) return bgShapes[0].style.backgroundColor;
+	return page.background || "#ffffff";
+}
+function isContentElement(el) {
+	if (el.hidden) return false;
+	return [
+		"heading",
+		"text",
+		"experience",
+		"education",
+		"skills",
+		"meters",
+		"contact"
+	].includes(el.type);
+}
+function auditDocument(doc, options) {
+	const issues = [];
+	const editorMode = options?.editorMode ?? "guided";
+	let totalStudioFreeBlocks = 0;
+	doc.pages.forEach((page, pageIdx) => {
+		const pageNumber = pageIdx + 1;
+		const freeBlocksOnPage = page.elements.filter(isStudioFreeElement);
+		totalStudioFreeBlocks += freeBlocksOnPage.length;
+		const visibleContentEls = page.elements.filter(isContentElement);
+		if (visibleContentEls.length === 0 && freeBlocksOnPage.length === 0) issues.push({
+			id: `empty-page-${page.id}`,
+			kind: "empty-page",
+			severity: "critical",
+			pageId: page.id,
+			pageNumber,
+			elementIds: [],
+			bannerTitle: `La page ${pageNumber} est vide.`,
+			message: `La page ${pageNumber} est vide et ne contient aucun bloc.`,
+			detail: "Supprimez cette page vide ou ajoutez-y du contenu avant d'exporter votre CV.",
+			actions: doc.pages.length > 1 ? ["delete-empty-page", "adjust-studio"] : ["adjust-studio"]
+		});
+		let pageTotalChars = 0;
+		for (const el of visibleContentEls) {
+			const label = getElementLabel(el);
+			if (el.y + el.h > 1124) {
+				const actions = ["paginate", "compact-spacing"];
+				if (editorMode === "guided") actions.push("adjust-studio");
+				else actions.push("adjust-studio", "switch-guided");
+				issues.push({
+					id: `overflow-bottom-${page.id}-${el.id}`,
+					kind: "overflow-bottom",
+					severity: "critical",
+					pageId: page.id,
+					pageNumber,
+					elementIds: [el.id],
+					bannerTitle: `Ton contenu dépasse la page ${pageNumber}.`,
+					message: `Le bloc “${label}” dépasse la page ${pageNumber}.`,
+					detail: `Bas du bloc à ${Math.round(el.y + el.h)} px (limite A4 : ${PAGE_H} px).`,
+					actions
+				});
+			}
+			if (el.x < -2 || el.x + el.w > 796) {
+				const actions = ["adjust-studio"];
+				if (editorMode === "pro") actions.push("switch-guided");
+				issues.push({
+					id: `overflow-right-${page.id}-${el.id}`,
+					kind: "overflow-right",
+					severity: "critical",
+					pageId: page.id,
+					pageNumber,
+					elementIds: [el.id],
+					bannerTitle: "Un bloc dépasse la page.",
+					message: `Le bloc “${label}” dépasse la largeur de la page ${pageNumber}.`,
+					detail: `Position horizontale (${Math.round(el.x)} px à ${Math.round(el.x + el.w)} px) hors de la feuille A4 (794 px).`,
+					actions
+				});
+			}
+			if ([
+				"experience",
+				"education",
+				"text",
+				"skills",
+				"meters"
+			].includes(el.type)) {
+				const minNeeded = computeElementAutoHeight(el);
+				if (el.h < minNeeded - 10) issues.push({
+					id: `truncated-${page.id}-${el.id}`,
+					kind: "truncated-text",
+					severity: "critical",
+					pageId: page.id,
+					pageNumber,
+					elementIds: [el.id],
+					bannerTitle: "Un bloc dépasse la page.",
+					message: `Le texte du bloc “${label}” est tronqué ou coupé sur la page ${pageNumber}.`,
+					detail: `Hauteur actuelle ${Math.round(el.h)} px pour environ ${Math.round(minNeeded)} px nécessaires.`,
+					actions: ["compact-spacing", "adjust-studio"]
+				});
+			}
+			if (el.style.fontSize && el.style.fontSize < 10) issues.push({
+				id: `small-font-${page.id}-${el.id}`,
+				kind: "small-font",
+				severity: "warning",
+				pageId: page.id,
+				pageNumber,
+				elementIds: [el.id],
+				bannerTitle: `La police du bloc “${label}” est trop petite.`,
+				message: `La police du bloc “${label}” est trop petite (${el.style.fontSize} px).`,
+				detail: "Une taille minimale de 10 px est recommandée pour une lecture confortable par les recruteurs.",
+				actions: ["adjust-studio"]
+			});
+			const bgHex = getEffectiveBackgroundColor(el, page);
+			const ratio = contrastRatio(el.style.color || "#141311", bgHex);
+			if (ratio !== null && ratio < 2.8) issues.push({
+				id: `low-contrast-${page.id}-${el.id}`,
+				kind: "low-contrast",
+				severity: "warning",
+				pageId: page.id,
+				pageNumber,
+				elementIds: [el.id],
+				bannerTitle: `Contraste insuffisant sur le bloc “${label}”.`,
+				message: `Le contraste du bloc “${label}” est insuffisant sur la page ${pageNumber} (ratio ${ratio.toFixed(1)}:1).`,
+				detail: "Assurez un contraste net entre la couleur du texte et le fond.",
+				actions: ["adjust-studio"]
+			});
+			if (!(el.x <= 2 && el.w >= 790 && el.style.textAlign === "center") && (el.x < 14 || el.x + el.w > 780 || el.y < 14) && el.x >= -2 && el.x + el.w <= 796) issues.push({
+				id: `small-margin-${page.id}-${el.id}`,
+				kind: "small-margin",
+				severity: "warning",
+				pageId: page.id,
+				pageNumber,
+				elementIds: [el.id],
+				bannerTitle: `Marges faibles sur la page ${pageNumber}.`,
+				message: `Les marges du bloc “${label}” sont trop faibles sur la page ${pageNumber}.`,
+				detail: "Laissez au moins 20 à 36 px de marge par rapport au bord de la feuille A4.",
+				actions: ["adjust-studio"]
+			});
+			const textLen = (el.content.text?.length ?? 0) + (el.content.role?.length ?? 0) + (el.content.company?.length ?? 0) + (el.content.desc?.length ?? 0) + (el.content.degree?.length ?? 0) + (el.content.school?.length ?? 0) + (el.content.items?.join(", ").length ?? 0);
+			pageTotalChars += textLen;
+			if (el.type === "experience" && (el.content.desc?.length ?? 0) > 680) issues.push({
+				id: `high-density-${page.id}-${el.id}`,
+				kind: "high-density",
+				severity: "warning",
+				pageId: page.id,
+				pageNumber,
+				elementIds: [el.id],
+				bannerTitle: `Densité élevée dans “${label}”.`,
+				message: `Le bloc “${label}” contient un texte très dense (${el.content.desc?.length} caractères).`,
+				detail: "Synthétisez en 3 à 5 réalisations clés pour faciliter la lecture rapide.",
+				actions: ["adjust-studio"]
+			});
+		}
+		for (let i = 0; i < visibleContentEls.length; i++) for (let j = i + 1; j < visibleContentEls.length; j++) {
+			const a = visibleContentEls[i];
+			const b = visibleContentEls[j];
+			if (isDecorativeElement(a) || isDecorativeElement(b)) continue;
+			const interX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+			const interY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+			if (interX > 10 && interY > 8) {
+				const labelA = getElementLabel(a);
+				const labelB = getElementLabel(b);
+				const actions = ["compact-spacing", "adjust-studio"];
+				if (editorMode === "pro") actions.push("switch-guided");
+				issues.push({
+					id: `overlap-${page.id}-${a.id}-${b.id}`,
+					kind: "overlap",
+					severity: "critical",
+					pageId: page.id,
+					pageNumber,
+					elementIds: [a.id, b.id],
+					bannerTitle: "Deux blocs se chevauchent.",
+					message: `Deux blocs se chevauchent sur la page ${pageNumber} (“${labelA}” et “${labelB}”).`,
+					detail: "Déplacez l'un des blocs dans le Studio ou réorganisez l'espacement.",
+					actions
+				});
+			}
+		}
+		if (editorMode === "guided" && freeBlocksOnPage.length > 0) {
+			const freeIds = freeBlocksOnPage.map((e) => e.id);
+			if (options?.paginationBlocked) issues.push({
+				id: `free-block-blocking-${page.id}`,
+				kind: "free-block-limit",
+				severity: "warning",
+				pageId: page.id,
+				pageNumber,
+				elementIds: freeIds,
+				bannerTitle: "Un bloc libre du Studio empêche la pagination automatique.",
+				message: `Un bloc libre sur la page ${pageNumber} est situé dans la zone de flux. Ses coordonnées sont préservées ; utilisez l'action manuelle pour répartir sur les pages suivantes.`,
+				detail: "Les blocs libres ne sont jamais déplacés ni supprimés silencieusement en Mode Guidé.",
+				actions: ["paginate", "adjust-studio"]
+			});
+			else issues.push({
+				id: `free-block-info-${page.id}`,
+				kind: "free-block-limit",
+				severity: "info",
+				pageId: page.id,
+				pageNumber,
+				elementIds: freeIds,
+				bannerTitle: `${freeBlocksOnPage.length} bloc(s) libre(s) du Studio conservé(s) sur la page ${pageNumber}.`,
+				message: "Certains blocs ont été créés dans le Studio et restent en position libre. Ils sont conservés mais ne sont pas paginés automatiquement en Mode Guidé.",
+				detail: "Cliquez pour sélectionner le bloc libre ou basculez vers le Studio libre pour l'éditer.",
+				actions: ["adjust-studio"]
+			});
+		}
+	});
+	const criticalIssues = issues.filter((i) => i.severity === "critical");
+	const warningIssues = issues.filter((i) => i.severity === "warning");
+	const infoIssues = issues.filter((i) => i.severity === "info");
 	return {
-		profile,
-		rawExtraction: extraction,
-		sourceText: extraction.sourceText,
-		warnings,
-		ambiguities,
-		stats
+		issues,
+		criticalIssues,
+		warningIssues,
+		infoIssues,
+		primaryBannerIssue: criticalIssues[0] ?? warningIssues[0] ?? infoIssues[0] ?? null,
+		hasCriticalExportIssues: criticalIssues.length > 0,
+		totalStudioFreeBlocks
 	};
 }
 /**
-* Extrait le profil complet à partir d'un texte brut ou copié-collé
+* Generates an ATS-oriented plain text representation of the CV following the actual visual reading order
+* of all visible text/content blocks across pages (including Studio free blocks with text, excluding decorative shapes).
 */
-function extractFromText(text, baseProfile = SAMPLE) {
-	const extraction = parseText(text, "texte-colle.txt");
-	const profile = cvExtractionToProfile(extraction, baseProfile);
-	const stats = computeExtractionStats(profile);
+function generatePlainTextPreview(doc) {
+	const lines = [];
+	const warnings = [];
+	let blockCount = 0;
+	doc.pages.forEach((page, pageIdx) => {
+		if (pageIdx > 0) lines.push(`\n--- PAGE ${pageIdx + 1} ---`);
+		const textEls = page.elements.filter((el) => {
+			if (el.hidden) return false;
+			if (el.type === "rect" || el.type === "ellipse" || el.type === "rule" || el.type === "photo") return false;
+			return true;
+		});
+		const nameEl = textEls.find((e) => e.bind?.kind === "name");
+		const roleEl = textEls.find((e) => e.bind?.kind === "role");
+		const expHeading = textEls.find((e) => e.type === "heading" && !e.bind && /exp[eé]rience|parcours/i.test(e.content.text ?? ""));
+		const firstExp = textEls.filter((e) => e.type === "experience").sort((a, b) => a.y - b.y)[0];
+		if (nameEl && roleEl && roleEl.y + 8 < nameEl.y) warnings.push(`Page ${pageIdx + 1} : Le titre du poste (« ${roleEl.content.text} ») est placé visuellement au-dessus du nom du candidat.`);
+		if (expHeading && firstExp && firstExp.y + 6 < expHeading.y) warnings.push(`Page ${pageIdx + 1} : Une expérience apparaît visuellement au-dessus du titre de section « ${expHeading.content.text} ».`);
+		for (let i = 0; i < textEls.length; i++) for (let j = i + 1; j < textEls.length; j++) {
+			const a = textEls[i];
+			const b = textEls[j];
+			if (boxesOverlap(a, b, -6)) warnings.push(`Page ${pageIdx + 1} : Les blocs « ${getElementLabel(a)} » et « ${getElementLabel(b)} » se chevauchent, ce qui peut altérer l'ordre de lecture ATS.`);
+		}
+		const isHeaderIdentity = (el) => pageIdx === 0 && el.y < 245 && Boolean(el.bind && [
+			"name",
+			"role",
+			"contact"
+		].includes(el.bind.kind));
+		const headerEls = textEls.filter(isHeaderIdentity).sort((a, b) => {
+			const rank = (e) => {
+				if (e.bind?.kind === "name") return 0;
+				if (e.bind?.kind === "role") return 1;
+				return 2;
+			};
+			if (a.bind?.kind === "name" && b.bind?.kind === "role" && b.y + 8 < a.y) return 1;
+			if (b.bind?.kind === "name" && a.bind?.kind === "role" && a.y + 8 < b.y) return -1;
+			const rDiff = rank(a) - rank(b);
+			if (rDiff !== 0) return rDiff;
+			return Math.abs(a.y - b.y) <= 8 ? a.x - b.x : a.y - b.y;
+		});
+		const bodyEls = textEls.filter((el) => !isHeaderIdentity(el)).sort((a, b) => Math.abs(a.y - b.y) <= 10 ? a.x - b.x : a.y - b.y);
+		const ordered = [...headerEls, ...bodyEls];
+		for (const el of ordered) {
+			blockCount += 1;
+			if (el.type === "heading") {
+				const t = (el.content.text ?? "").trim();
+				if (!t) continue;
+				if (el.bind?.kind === "name") lines.push(t);
+				else {
+					if (lines.length > 0 && lines[lines.length - 1] !== "") lines.push("");
+					lines.push(t.toUpperCase());
+				}
+			} else if (el.type === "text" || el.type === "contact") {
+				const t = (el.content.text ?? "").trim();
+				if (t) lines.push(t);
+			} else if (el.type === "experience") {
+				const header = [
+					el.content.role?.trim(),
+					el.content.company?.trim(),
+					el.content.date?.trim()
+				].filter(Boolean).join(" — ");
+				if (header) lines.push(header);
+				const desc = (el.content.desc ?? "").trim();
+				if (desc) {
+					const descLines = desc.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => l.startsWith("•") || l.startsWith("-") ? l : `• ${l}`);
+					lines.push(...descLines);
+				}
+				lines.push("");
+			} else if (el.type === "education") {
+				const eduLine = [
+					el.content.degree?.trim(),
+					el.content.school?.trim(),
+					el.content.date?.trim()
+				].filter(Boolean).join(" — ");
+				if (eduLine) lines.push(eduLine);
+			} else if (el.type === "skills") {
+				const items = (el.content.items ?? []).map((s) => s.trim()).filter(Boolean);
+				if (items.length) lines.push(items.join(", "));
+			} else if (el.type === "meters") {
+				const meters = (el.content.meters ?? []).filter((m) => m.label?.trim()).map((m) => `${m.label.trim()} (${m.value}%)`);
+				if (meters.length) lines.push(meters.join(", "));
+			}
+		}
+	});
+	const compactLines = [];
+	for (const line of lines) {
+		if (line === "" && (compactLines.length === 0 || compactLines[compactLines.length - 1] === "")) continue;
+		compactLines.push(line);
+	}
+	while (compactLines.length > 0 && compactLines[compactLines.length - 1] === "") compactLines.pop();
 	return {
-		profile,
-		rawExtraction: extraction,
-		sourceText: text,
-		warnings: (extraction.warnings || []).map((w) => w.message),
-		ambiguities: (extraction.ambiguities || []).map((a) => a.message),
-		stats
+		text: compactLines.join("\n"),
+		readingOrderWarnings: [...new Set(warnings)],
+		blockCount
 	};
 }
 var KEY = "libre-cv-doc-v1";
@@ -6789,6 +8234,30 @@ function freshDoc() {
 			elements: buildTemplate("modern", profile, "seed")
 		}]
 	};
+}
+function buildPaginatedDocFromProfile(profile, template, firstPageId = "page-1") {
+	const cleanProfile = structuredClone(profile);
+	const baseProfile = {
+		...cleanProfile,
+		experiences: cleanProfile.experiences.slice(0, 3),
+		educations: cleanProfile.educations.slice(0, 2)
+	};
+	let nextDoc = {
+		profile: baseProfile,
+		pages: [{
+			id: firstPageId,
+			name: "Page 1",
+			background: SHEET,
+			elements: buildTemplate(template, baseProfile, `${template}-${uid()}`)
+		}]
+	};
+	for (let i = 3; i < cleanProfile.experiences.length; i++) nextDoc = applyExperienceAdd(nextDoc, firstPageId, cleanProfile.experiences[i]);
+	for (let i = 2; i < cleanProfile.educations.length; i++) nextDoc = applyEducationAdd(nextDoc, firstPageId, cleanProfile.educations[i]);
+	nextDoc = syncBoundElementsFromProfile({
+		...nextDoc,
+		profile: cleanProfile
+	});
+	return paginateDocFlow(nextDoc).doc;
 }
 function flushSave(doc) {
 	if (typeof window === "undefined") return;
@@ -6909,6 +8378,16 @@ var useStudio = create((set, get) => {
 			elements: page.elements.filter((el) => selectedIds.includes(el.id))
 		};
 	}
+	function maybePaginateGuided(nextDoc) {
+		if (get().editorMode !== "guided") return nextDoc;
+		const res = paginateDocFlow(nextDoc);
+		const nextActiveId = res.doc.pages.some((p) => p.id === get().activePageId) ? get().activePageId : res.doc.pages[res.doc.pages.length - 1]?.id ?? res.doc.pages[0].id;
+		set({
+			paginationBlocked: res.blockedByFreeElement,
+			activePageId: nextActiveId
+		});
+		return res.doc;
+	}
 	return {
 		doc: initial,
 		past: [],
@@ -6921,6 +8400,10 @@ var useStudio = create((set, get) => {
 		editorMode: "pro",
 		activeTemplate: "modern",
 		layoutCustomized: false,
+		paginationBlocked: false,
+		readabilityModalOpen: false,
+		plainTextModalOpen: false,
+		pendingExportConfirm: false,
 		confirmModal: null,
 		showGrid: false,
 		snap: true,
@@ -6945,6 +8428,68 @@ var useStudio = create((set, get) => {
 			saveMeta({ editorMode: mode });
 		},
 		setConfirmModal: (req) => set({ confirmModal: req }),
+		setReadabilityModalOpen: (open, pendingExport = false) => set({
+			readabilityModalOpen: open,
+			pendingExportConfirm: open ? pendingExport : false
+		}),
+		setPlainTextModalOpen: (open) => set({ plainTextModalOpen: open }),
+		paginateDocument: () => {
+			commit((doc) => {
+				const res = paginateDocFlow(doc, { force: true });
+				set({
+					paginationBlocked: false,
+					activePageId: res.doc.pages.some((p) => p.id === get().activePageId) ? get().activePageId : res.doc.pages[res.doc.pages.length - 1]?.id ?? res.doc.pages[0].id
+				});
+				return res.doc;
+			}, false);
+			get().notify("✓ Contenu réparti sur les pages A4");
+		},
+		compactSpacing: (targetPageId) => {
+			commit((doc) => {
+				const compacted = compactPageSpacing(doc, targetPageId);
+				set({
+					paginationBlocked: false,
+					activePageId: compacted.pages.some((p) => p.id === get().activePageId) ? get().activePageId : compacted.pages[compacted.pages.length - 1]?.id ?? compacted.pages[0].id
+				});
+				return compacted;
+			}, false);
+			get().notify("✓ Espacement vertical optimisé");
+		},
+		focusAuditIssue: (issue) => {
+			set({
+				activePageId: issue.pageId,
+				selectedIds: issue.elementIds,
+				editingId: null
+			});
+			saveMeta({ activePageId: issue.pageId });
+			if (typeof window !== "undefined") {
+				window.dispatchEvent(new CustomEvent("cv-focus-issue", { detail: issue }));
+				window.setTimeout(() => {
+					const targetId = issue.elementIds[0];
+					const selector = targetId ? `[data-sheet="${issue.pageId}"] [data-element="${targetId}"], [data-element="${targetId}"]` : `[data-sheet="${issue.pageId}"]`;
+					const node = document.querySelector(selector);
+					if (node instanceof HTMLElement) node.scrollIntoView({
+						behavior: "smooth",
+						block: "center",
+						inline: "center"
+					});
+				}, 40);
+			}
+		},
+		requestPdfExport: async () => {
+			const { doc, editorMode, paginationBlocked } = get();
+			if (auditDocument(doc, {
+				editorMode,
+				paginationBlocked
+			}).hasCriticalExportIssues) {
+				set({
+					readabilityModalOpen: true,
+					pendingExportConfirm: true
+				});
+				return;
+			}
+			await get().directPdfExport();
+		},
 		setCloudModalOpen: (open) => set({ cloudModalOpen: open }),
 		setExtractorModalOpen: (open) => set({ extractorModalOpen: open }),
 		setMobileTouchMode: (active) => set({ mobileTouchMode: active }),
@@ -6973,7 +8518,7 @@ var useStudio = create((set, get) => {
 				return;
 			}
 			if (!loaded) return;
-			const syncedDoc = syncBoundElementsFromProfile(loaded);
+			const syncedDoc = syncBoundElementsFromProfile(loaded, true);
 			set({
 				doc: syncedDoc,
 				activePageId: meta?.activePageId && syncedDoc.pages.some((p) => p.id === meta.activePageId) ? meta.activePageId : syncedDoc.pages[0].id,
@@ -7073,7 +8618,7 @@ var useStudio = create((set, get) => {
 		notify: (msg) => {
 			set({ notice: msg });
 			window.clearTimeout(noticeTimer);
-			noticeTimer = window.setTimeout(() => set({ notice: null }), 2400);
+			noticeTimer = window.setTimeout(() => set({ notice: null }), 5e3);
 		},
 		select: (ids) => set({
 			selectedIds: ids,
@@ -7148,14 +8693,16 @@ var useStudio = create((set, get) => {
 			if ((patch.x !== void 0 || patch.y !== void 0 || patch.w !== void 0 || patch.h !== void 0 || patch.rotation !== void 0 || patch.style !== void 0) && !get().layoutCustomized) set({ layoutCustomized: true });
 			commit((doc) => {
 				let profile = doc.profile;
+				let boundContentModified = false;
 				const pages = doc.pages.map((page) => {
-					if (page.id !== pageId) return page;
+					if (page.id !== pageId && !page.elements.some((e) => e.id === id)) return page;
 					let resized = null;
 					const elements = page.elements.map((el) => {
 						if (el.id !== id) return el;
 						const next = mergeElement(el, patch);
 						if (patch.content) {
 							profile = syncProfile(profile, next.bind, next.content);
+							if (next.bind) boundContentModified = true;
 							if ([
 								"experience",
 								"education",
@@ -7179,11 +8726,12 @@ var useStudio = create((set, get) => {
 					if (resized) nextPage = resizeElementWithFlow(nextPage, resized.id, resized.nextH);
 					return nextPage;
 				});
-				return {
+				const updatedDoc = {
 					...doc,
 					profile,
 					pages
 				};
+				return boundContentModified ? maybePaginateGuided(updatedDoc) : updatedDoc;
 			}, live);
 		},
 		patchSelectedStyle: (patch, live = false) => {
@@ -7197,37 +8745,37 @@ var useStudio = create((set, get) => {
 			})), live);
 		},
 		setIdentity: (field, value) => {
-			commit((doc) => applyIdentity(doc, field, value), true);
+			commit((doc) => maybePaginateGuided(applyIdentity(doc, field, value)), true);
 		},
 		updateExperience: (index, patch, live = true) => {
-			commit((doc) => applyExperienceUpdate(doc, index, patch), live);
+			commit((doc) => maybePaginateGuided(applyExperienceUpdate(doc, index, patch)), live);
 		},
 		addExperience: () => {
 			const pageId = get().activePageId;
-			commit((doc) => applyExperienceAdd(doc, pageId), false);
+			commit((doc) => maybePaginateGuided(applyExperienceAdd(doc, pageId)), false);
 			get().notify("Nouvelle expérience ajoutée");
 		},
 		removeExperience: (index) => {
-			commit((doc) => applyExperienceRemove(doc, index), false);
+			commit((doc) => maybePaginateGuided(applyExperienceRemove(doc, index)), false);
 			get().notify("Expérience supprimée");
 		},
 		updateEducation: (index, patch, live = true) => {
-			commit((doc) => applyEducationUpdate(doc, index, patch), live);
+			commit((doc) => maybePaginateGuided(applyEducationUpdate(doc, index, patch)), live);
 		},
 		addEducation: () => {
 			const pageId = get().activePageId;
-			commit((doc) => applyEducationAdd(doc, pageId), false);
+			commit((doc) => maybePaginateGuided(applyEducationAdd(doc, pageId)), false);
 			get().notify("Formation ajoutée");
 		},
 		removeEducation: (index) => {
-			commit((doc) => applyEducationRemove(doc, index), false);
+			commit((doc) => maybePaginateGuided(applyEducationRemove(doc, index)), false);
 			get().notify("Formation supprimée");
 		},
 		updateSkills: (skills, live = true) => {
-			commit((doc) => applySkillsUpdate(doc, skills), live);
+			commit((doc) => maybePaginateGuided(applySkillsUpdate(doc, skills)), live);
 		},
 		updateLanguages: (languages, live = true) => {
-			commit((doc) => applyLanguagesUpdate(doc, languages), live);
+			commit((doc) => maybePaginateGuided(applyLanguagesUpdate(doc, languages)), live);
 		},
 		deleteSelected: () => {
 			const { page, elements } = selectedOnActive();
@@ -7415,6 +8963,106 @@ var useStudio = create((set, get) => {
 				} : el)
 			})), false);
 		},
+		toggleSectionVisibility: (sectionId) => {
+			commit((doc) => {
+				const matches = (el) => {
+					if (!el.bind) return false;
+					if (sectionId === "profile" && [
+						"name",
+						"role",
+						"contact"
+					].includes(el.bind.kind)) return true;
+					if (sectionId === "summary" && el.bind.kind === "summary") return true;
+					if (sectionId === "experience" && el.bind.kind === "experience") return true;
+					if (sectionId === "education" && el.bind.kind === "education") return true;
+					if (sectionId === "skills" && el.bind.kind === "skills") return true;
+					if (sectionId === "languages" && el.bind.kind === "languages") return true;
+					return false;
+				};
+				const targetHidden = doc.pages.some((p) => p.elements.some((el) => matches(el) && !el.hidden));
+				const pages = doc.pages.map((page) => ({
+					...page,
+					elements: page.elements.map((el) => matches(el) ? {
+						...el,
+						hidden: targetHidden
+					} : el)
+				}));
+				return {
+					...doc,
+					pages
+				};
+			}, false);
+		},
+		moveSection: (sectionId, direction) => {
+			commit((doc) => {
+				const pageId = get().activePageId;
+				return maybePaginateGuided(mapPage(doc, pageId, (page) => {
+					const getSectionElements = (sid) => {
+						const boundEls = page.elements.filter((el) => {
+							if (!el.bind) return false;
+							if (sid === "profile" && [
+								"name",
+								"role",
+								"contact"
+							].includes(el.bind.kind)) return true;
+							if (sid === "summary" && el.bind.kind === "summary") return true;
+							if (sid === "experience" && el.bind.kind === "experience") return true;
+							if (sid === "education" && el.bind.kind === "education") return true;
+							if (sid === "skills" && el.bind.kind === "skills") return true;
+							if (sid === "languages" && el.bind.kind === "languages") return true;
+							return false;
+						});
+						if (!boundEls.length || sid === "profile") return boundEls;
+						const firstBound = [...boundEls].sort((a, b) => a.y - b.y)[0];
+						return [...page.elements.filter((el) => !el.bind && !isStudioFreeElement(el) && el.type === "heading" && Math.min(el.x + el.w, firstBound.x + firstBound.w) - Math.max(el.x, firstBound.x) > 32 && firstBound.y - el.y >= 6 && firstBound.y - el.y <= 38), ...boundEls];
+					};
+					const sectionOrder = [
+						"profile",
+						"summary",
+						"experience",
+						"education",
+						"skills",
+						"languages"
+					];
+					const idx = sectionOrder.indexOf(sectionId);
+					if (idx === -1) return page;
+					const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+					if (targetIdx < 0 || targetIdx >= sectionOrder.length) return page;
+					const otherSectionId = sectionOrder[targetIdx];
+					const elsA = getSectionElements(sectionId);
+					const elsB = getSectionElements(otherSectionId);
+					if (!elsA.length || !elsB.length) return page;
+					const minY_A = Math.min(...elsA.map((e) => e.y));
+					const minY_B = Math.min(...elsB.map((e) => e.y));
+					const upper = minY_A <= minY_B ? elsA : elsB;
+					const lower = minY_A <= minY_B ? elsB : elsA;
+					const topU = Math.min(...upper.map((e) => e.y));
+					const bottomU = Math.max(...upper.map((e) => e.y + e.h));
+					bottomU - topU;
+					const topL = Math.min(...lower.map((e) => e.y));
+					const hL = Math.max(...lower.map((e) => e.y + e.h)) - topL;
+					const gap = Math.max(12, topL - bottomU);
+					const dyLower = topU - topL;
+					const dyUpper = hL + gap;
+					const idsUpper = new Set(upper.map((e) => e.id));
+					const idsLower = new Set(lower.map((e) => e.id));
+					return {
+						...page,
+						elements: page.elements.map((el) => {
+							if (idsUpper.has(el.id)) return {
+								...el,
+								y: Math.round(el.y + dyUpper)
+							};
+							if (idsLower.has(el.id)) return {
+								...el,
+								y: Math.round(el.y + dyLower)
+							};
+							return el;
+						})
+					};
+				}));
+			}, false);
+		},
 		addElement: (type) => {
 			const page = get().doc.pages.find((p) => p.id === get().activePageId) ?? get().doc.pages[0];
 			const bottom = page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48);
@@ -7554,23 +9202,23 @@ var useStudio = create((set, get) => {
 			});
 		},
 		applyTemplate: (id) => {
-			const pageId = get().activePageId;
 			set({
 				activeTemplate: id,
 				layoutCustomized: false,
 				selectedIds: [],
-				editingId: null
+				editingId: null,
+				paginationBlocked: false
 			});
 			commit((doc) => {
-				return syncBoundElementsFromProfile(mapPage(doc, (doc.pages.find((p) => p.id === pageId) ?? doc.pages[0]).id, (p) => ({
-					...p,
-					background: SHEET,
-					elements: buildTemplate(id, doc.profile, `${id}-${uid()}`)
-				})));
+				const firstId = doc.pages[0]?.id || "page-1";
+				return buildPaginatedDocFromProfile(doc.profile, id, firstId);
 			}, false);
+			const firstId = get().doc.pages[0]?.id || "page-1";
+			set({ activePageId: firstId });
 			saveMeta({
 				activeTemplate: id,
-				layoutCustomized: false
+				layoutCustomized: false,
+				activePageId: firstId
 			});
 			get().notify(`Modèle ${id} appliqué`);
 		},
@@ -7870,21 +9518,21 @@ var useStudio = create((set, get) => {
 			saveMeta({ activePageId: synced.pages[0].id });
 			get().notify("Projet ouvert");
 		},
-		importExtractedProfile: (profile, template = "modern", asNewPage = false) => {
-			const activeId = get().activePageId;
+		importExtractedProfile: (profile, template = "executive", asNewPage = false) => {
 			set({
 				activeTemplate: template,
-				layoutCustomized: false
+				layoutCustomized: false,
+				paginationBlocked: false,
+				editorMode: "guided",
+				onboarding: false,
+				extractorModalOpen: false
 			});
 			commit((doc) => {
-				const nextProfile = {
-					...doc.profile,
-					...profile
-				};
+				const nextProfile = structuredClone(profile);
 				if (asNewPage) {
 					const newPage = {
 						id: `page-${uid()}`,
-						name: `Page ${doc.pages.length + 1} (${profile.name.split(" ")[0] || "CV"})`,
+						name: `Page ${doc.pages.length + 1} (${nextProfile.name.split(" ")[0] || "CV"})`,
 						background: SHEET,
 						elements: buildTemplate(template, nextProfile, `${template}-${uid()}`)
 					};
@@ -7893,24 +9541,23 @@ var useStudio = create((set, get) => {
 						profile: nextProfile,
 						pages: [...doc.pages, newPage]
 					});
-				} else return syncBoundElementsFromProfile(mapPage({
-					...doc,
-					profile: nextProfile
-				}, activeId, (p) => ({
-					...p,
-					elements: buildTemplate(template, nextProfile, `${template}-${uid()}`)
-				})));
+				} else return buildPaginatedDocFromProfile(nextProfile, template, "page-1");
 			}, false);
-			if (asNewPage) {
-				const pages = get().doc.pages;
-				const lastPage = pages[pages.length - 1];
-				if (lastPage) set({ activePageId: lastPage.id });
-			}
+			const pages = get().doc.pages;
+			const targetPageId = asNewPage ? pages[pages.length - 1]?.id || "page-1" : pages[0]?.id || "page-1";
 			set({
+				activePageId: targetPageId,
 				selectedIds: [],
 				editingId: null
 			});
-			get().notify(`CV extrait : ${profile.name} (${profile.experiences.length} exp, ${profile.educations.length} form)`);
+			flushSave(get().doc);
+			saveMeta({
+				editorMode: "guided",
+				activeTemplate: template,
+				activePageId: targetPageId,
+				layoutCustomized: false
+			});
+			get().notify("Ton CV a été importé. Vérifie les informations détectées et personnalise-le.");
 		},
 		importText: (raw, template) => {
 			const pageId = get().activePageId;
@@ -8497,8 +10144,8 @@ function Canvas({ narrow = false }) {
 		})
 	});
 }
-var inputClass = "h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none transition focus:border-signal focus:bg-white focus:ring-2 focus:ring-signal/15";
-var textareaClass = "w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-xs font-medium text-slate-900 leading-relaxed outline-none transition focus:border-signal focus:bg-white focus:ring-2 focus:ring-signal/15 resize-none";
+var inputClass$1 = "h-9 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 text-xs font-medium text-slate-900 outline-none transition focus:border-signal focus:bg-white focus:ring-2 focus:ring-signal/15";
+var textareaClass$1 = "w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-xs font-medium text-slate-900 leading-relaxed outline-none transition focus:border-signal focus:bg-white focus:ring-2 focus:ring-signal/15 resize-none";
 function Field({ label, hint, children }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
 		className: "block space-y-1",
@@ -8568,7 +10215,7 @@ function Inspector() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 							label: "Police typographique",
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
-								className: inputClass,
+								className: inputClass$1,
 								value: currentGlobalFont,
 								onChange: (e) => useStudio.getState().applyGlobalFont(e.target.value),
 								children: FONTS.map((font) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
@@ -8614,7 +10261,7 @@ function Inspector() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 							label: "Nom complet",
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								className: inputClass,
+								className: inputClass$1,
 								value: profile.name,
 								onChange: (e) => identity("name", e.target.value),
 								onBlur: release$1,
@@ -8624,7 +10271,7 @@ function Inspector() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 							label: "Intitulé du poste",
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								className: inputClass,
+								className: inputClass$1,
 								value: profile.role,
 								onChange: (e) => identity("role", e.target.value),
 								onBlur: release$1,
@@ -8636,7 +10283,7 @@ function Inspector() {
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "E-mail",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: inputClass,
+									className: inputClass$1,
 									value: profile.email,
 									onChange: (e) => identity("email", e.target.value),
 									onBlur: release$1,
@@ -8645,7 +10292,7 @@ function Inspector() {
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "Téléphone",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: inputClass,
+									className: inputClass$1,
 									value: profile.phone,
 									onChange: (e) => identity("phone", e.target.value),
 									onBlur: release$1,
@@ -8658,7 +10305,7 @@ function Inspector() {
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "Ville / Mobilité",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: inputClass,
+									className: inputClass$1,
 									value: profile.location,
 									onChange: (e) => identity("location", e.target.value),
 									onBlur: release$1,
@@ -8667,7 +10314,7 @@ function Inspector() {
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "Portfolio / LinkedIn",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: inputClass,
+									className: inputClass$1,
 									value: profile.link,
 									onChange: (e) => identity("link", e.target.value),
 									onBlur: release$1,
@@ -8678,7 +10325,7 @@ function Inspector() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 							label: "Profil / Accroche",
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-								className: cn(textareaClass, "h-24"),
+								className: cn(textareaClass$1, "h-24"),
 								value: profile.summary,
 								onChange: (e) => identity("summary", e.target.value),
 								onBlur: release$1,
@@ -8788,7 +10435,7 @@ function Inspector() {
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "X",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: cn(inputClass, "px-2 text-center font-mono tabular-nums"),
+									className: cn(inputClass$1, "px-2 text-center font-mono tabular-nums"),
 									type: "number",
 									value: Math.round(one.x),
 									onChange: (e) => live(one.id, { x: Number(e.target.value) }),
@@ -8798,7 +10445,7 @@ function Inspector() {
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "Y",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: cn(inputClass, "px-2 text-center font-mono tabular-nums"),
+									className: cn(inputClass$1, "px-2 text-center font-mono tabular-nums"),
 									type: "number",
 									value: Math.round(one.y),
 									onChange: (e) => live(one.id, { y: Number(e.target.value) }),
@@ -8808,7 +10455,7 @@ function Inspector() {
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "L",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: cn(inputClass, "px-2 text-center font-mono tabular-nums"),
+									className: cn(inputClass$1, "px-2 text-center font-mono tabular-nums"),
 									type: "number",
 									value: Math.round(one.w),
 									onChange: (e) => live(one.id, { w: Math.max(20, Number(e.target.value) || 20) }),
@@ -8818,7 +10465,7 @@ function Inspector() {
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 								label: "H",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									className: cn(inputClass, "px-2 text-center font-mono tabular-nums"),
+									className: cn(inputClass$1, "px-2 text-center font-mono tabular-nums"),
 									type: "number",
 									value: Math.round(one.h),
 									onChange: (e) => live(one.id, { h: Math.max(12, Number(e.target.value) || 12) }),
@@ -8867,7 +10514,7 @@ function ContentFields({ el, pageId }) {
 			el.type === "contact" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Type de coordonnée",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-					className: inputClass,
+					className: inputClass$1,
 					value: c.icon ?? "mail",
 					onChange: (e) => patch({ icon: e.target.value }, false),
 					children: [
@@ -8893,7 +10540,7 @@ function ContentFields({ el, pageId }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Texte",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-					className: cn(textareaClass, el.type === "contact" ? "h-16" : "h-24"),
+					className: cn(textareaClass$1, el.type === "contact" ? "h-16" : "h-24"),
 					value: c.text ?? "",
 					onChange: (e) => patch({ text: e.target.value }),
 					onBlur: release$1
@@ -8920,7 +10567,7 @@ function ContentFields({ el, pageId }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Intitulé du poste",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					className: inputClass,
+					className: inputClass$1,
 					value: c.role ?? "",
 					onChange: (e) => patch({ role: e.target.value }),
 					onBlur: release$1
@@ -8931,7 +10578,7 @@ function ContentFields({ el, pageId }) {
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 					label: "Entreprise & lieu",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						className: inputClass,
+						className: inputClass$1,
 						value: c.company ?? "",
 						onChange: (e) => patch({ company: e.target.value }),
 						onBlur: release$1
@@ -8939,7 +10586,7 @@ function ContentFields({ el, pageId }) {
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 					label: "Période",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						className: inputClass,
+						className: inputClass$1,
 						value: c.date ?? "",
 						onChange: (e) => patch({ date: e.target.value }),
 						onBlur: release$1
@@ -8949,7 +10596,7 @@ function ContentFields({ el, pageId }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Missions & résultats",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-					className: cn(textareaClass, "h-28"),
+					className: cn(textareaClass$1, "h-28"),
 					value: c.desc ?? "",
 					onChange: (e) => patch({ desc: e.target.value }),
 					onBlur: release$1
@@ -8967,7 +10614,7 @@ function ContentFields({ el, pageId }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Diplôme ou titre",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					className: inputClass,
+					className: inputClass$1,
 					value: c.degree ?? "",
 					onChange: (e) => patch({ degree: e.target.value }),
 					onBlur: release$1
@@ -8978,7 +10625,7 @@ function ContentFields({ el, pageId }) {
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 					label: "Établissement",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						className: inputClass,
+						className: inputClass$1,
 						value: c.school ?? "",
 						onChange: (e) => patch({ school: e.target.value }),
 						onBlur: release$1
@@ -8986,7 +10633,7 @@ function ContentFields({ el, pageId }) {
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 					label: "Années",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						className: inputClass,
+						className: inputClass$1,
 						value: c.date ?? "",
 						onChange: (e) => patch({ date: e.target.value }),
 						onBlur: release$1
@@ -9001,7 +10648,7 @@ function ContentFields({ el, pageId }) {
 			label: "Compétences",
 			hint: "1 par ligne",
 			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-				className: cn(textareaClass, "h-28"),
+				className: cn(textareaClass$1, "h-28"),
 				value: (c.items ?? []).join("\n"),
 				onChange: (e) => patch({ items: e.target.value.split("\n") }),
 				onBlur: (e) => {
@@ -9023,7 +10670,7 @@ function ContentFields({ el, pageId }) {
 				meters.map((meter, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "grid grid-cols-[1fr_4.5rem] gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						className: inputClass,
+						className: inputClass$1,
 						value: meter.label,
 						onChange: (e) => {
 							const next = meters.map((m, i) => i === index ? {
@@ -9034,7 +10681,7 @@ function ContentFields({ el, pageId }) {
 						},
 						onBlur: release$1
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						className: cn(inputClass, "font-mono tabular-nums text-center"),
+						className: cn(inputClass$1, "font-mono tabular-nums text-center"),
 						type: "number",
 						min: 0,
 						max: 100,
@@ -9126,7 +10773,7 @@ function StyleFields({ style, mixed, textual }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 					label: "Police",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
-						className: inputClass,
+						className: inputClass$1,
 						value: FONTS.includes(style.fontFamily) ? style.fontFamily : "Source Sans 3",
 						onChange: (e) => patch({ fontFamily: e.target.value }),
 						children: FONTS.map((font) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
@@ -9141,7 +10788,7 @@ function StyleFields({ style, mixed, textual }) {
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 						label: "Corps (px)",
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-							className: cn(inputClass, "font-mono tabular-nums"),
+							className: cn(inputClass$1, "font-mono tabular-nums"),
 							type: "number",
 							min: 8,
 							max: 160,
@@ -9839,21 +11486,209 @@ function Sidebar({ onDone }) {
 		})]
 	});
 }
+function DocumentAlertBanner() {
+	const doc = useStudio((s) => s.doc);
+	const editorMode = useStudio((s) => s.editorMode);
+	const paginationBlocked = useStudio((s) => s.paginationBlocked);
+	const focusAuditIssue = useStudio((s) => s.focusAuditIssue);
+	const paginateDocument = useStudio((s) => s.paginateDocument);
+	const compactSpacing = useStudio((s) => s.compactSpacing);
+	const setEditorMode = useStudio((s) => s.setEditorMode);
+	const deletePage = useStudio((s) => s.deletePage);
+	const setReadabilityModalOpen = useStudio((s) => s.setReadabilityModalOpen);
+	const audit = (0, import_react.useMemo)(() => auditDocument(doc, {
+		editorMode,
+		paginationBlocked
+	}), [
+		doc,
+		editorMode,
+		paginationBlocked
+	]);
+	const issue = audit.primaryBannerIssue;
+	if (!issue) return null;
+	const isCritical = issue.severity === "critical";
+	const isWarning = issue.severity === "warning";
+	const containerStyle = isCritical ? "bg-red-50/95 border-red-300 text-red-950" : isWarning ? "bg-amber-50/95 border-amber-300 text-amber-950" : "bg-stone-100/95 border-stone-300 text-stone-900";
+	const badgeStyle = isCritical ? "bg-red-600 text-white" : isWarning ? "bg-amber-600 text-white" : "bg-stone-800 text-white";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		"data-testid": "document-alert-banner",
+		"data-issue-kind": issue.kind,
+		className: `no-print border-b px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 transition-colors shrink-0 ${containerStyle}`,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			onClick: () => focusAuditIssue(issue),
+			"data-testid": "document-alert-focus-btn",
+			title: "Cliquer pour centrer et sélectionner le bloc concerné",
+			className: "flex items-center gap-2.5 text-left group min-w-0 flex-1 cursor-pointer",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: `px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${badgeStyle}`,
+					children: isCritical ? "Alerte" : isWarning ? "Attention" : "Info Studio"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "text-xs font-bold group-hover:underline",
+						children: issue.bannerTitle
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "text-xs opacity-85 truncate",
+						children: issue.message
+					})]
+				}),
+				issue.elementIds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "hidden md:inline-flex items-center gap-1 text-[11px] font-semibold underline opacity-75 group-hover:opacity-100 shrink-0",
+					children: "Voir le bloc →"
+				})
+			]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex flex-wrap items-center gap-1.5 shrink-0",
+			children: [
+				issue.actions.includes("paginate") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					"data-testid": "banner-action-paginate",
+					onClick: () => paginateDocument(),
+					className: "px-2.5 py-1 rounded-md text-[11px] font-bold bg-stone-900 text-white hover:bg-stone-800 transition shadow-xs cursor-pointer",
+					children: "Répartir sur les pages suivantes"
+				}),
+				issue.actions.includes("compact-spacing") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					"data-testid": "banner-action-compact",
+					onClick: () => compactSpacing(issue.pageId),
+					className: "px-2.5 py-1 rounded-md text-[11px] font-semibold bg-white/90 border border-current/20 hover:bg-white transition cursor-pointer",
+					children: "Réduire l’espacement"
+				}),
+				issue.actions.includes("delete-empty-page") && doc.pages.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					"data-testid": "banner-action-delete-page",
+					onClick: () => deletePage(issue.pageId),
+					className: "px-2.5 py-1 rounded-md text-[11px] font-semibold bg-white/90 border border-current/20 hover:bg-white transition cursor-pointer",
+					children: "Supprimer la page vide"
+				}),
+				issue.actions.includes("adjust-studio") && editorMode !== "pro" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					"data-testid": "banner-action-studio",
+					onClick: () => {
+						setEditorMode("pro");
+						focusAuditIssue(issue);
+					},
+					className: "px-2.5 py-1 rounded-md text-[11px] font-semibold bg-white/90 border border-current/20 hover:bg-white transition cursor-pointer",
+					children: "Ajuster manuellement dans le Studio"
+				}),
+				issue.actions.includes("adjust-studio") && editorMode === "pro" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					"data-testid": "banner-action-focus-studio",
+					onClick: () => focusAuditIssue(issue),
+					className: "px-2.5 py-1 rounded-md text-[11px] font-semibold bg-white/90 border border-current/20 hover:bg-white transition cursor-pointer",
+					children: "Ajuster manuellement dans le Studio"
+				}),
+				issue.actions.includes("switch-guided") && editorMode === "pro" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					"data-testid": "banner-action-guided",
+					onClick: () => setEditorMode("guided"),
+					className: "px-2.5 py-1 rounded-md text-[11px] font-semibold bg-white/90 border border-current/20 hover:bg-white transition cursor-pointer",
+					children: "Revenir au Mode Guidé"
+				}),
+				audit.issues.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+					type: "button",
+					"data-testid": "banner-open-readability",
+					onClick: () => setReadabilityModalOpen(true, false),
+					className: "px-2 py-1 rounded-md text-[11px] font-semibold underline opacity-80 hover:opacity-100 cursor-pointer",
+					children: [
+						"Toutes les alertes (",
+						audit.issues.length,
+						")"
+					]
+				})
+			]
+		})]
+	});
+}
 var inputStyle = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600";
 var textareaStyle = "w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none";
 function release() {
 	useStudio.getState().release();
 }
+var GUIDED_STEPS = [
+	{
+		id: "profile",
+		stepNumber: 1,
+		label: "Profil & Contact",
+		shortLabel: "1. Contact",
+		icon: User,
+		whatToFill: "Indiquez votre nom, le titre du poste visé et un moyen de vous joindre directement.",
+		whyUseful: "C'est le premier repère lu par le recruteur et les logiciels ATS pour identifier votre cible professionnelle en 3 secondes.",
+		whatCanBeIgnored: "L'adresse postale complète et le lien LinkedIn/Portfolio sont facultatifs : une ville et un e-mail suffisent."
+	},
+	{
+		id: "summary",
+		stepNumber: 2,
+		label: "Résumé / Bio",
+		shortLabel: "2. Accroche",
+		icon: Sparkles,
+		whatToFill: "Rédigez 2 à 3 phrases résumant votre spécialité, votre niveau d'expérience et votre valeur ajoutée.",
+		whyUseful: "Donne immédiatement le fil conducteur de votre candidature avant même la lecture détaillée des expériences.",
+		whatCanBeIgnored: "Si vos expériences parlent d'elles-mêmes, vous pouvez passer cette étape ou masquer la rubrique sans pénalité.",
+		optionalBadge: "Optionnel"
+	},
+	{
+		id: "experience",
+		stepNumber: 3,
+		label: "Expériences professionnelles",
+		shortLabel: "3. Expériences",
+		icon: Briefcase,
+		whatToFill: "Saisissez vos postes les plus pertinents en privilégiant 2 à 4 réalisations concrètes par poste.",
+		whyUseful: "C'est le cœur de décision du recruteur : les actions concrètes et résultats mesurables prouvent votre impact réel.",
+		whatCanBeIgnored: "Inutile de lister chaque tâche quotidienne ou les jobs très anciens sans rapport avec le poste visé."
+	},
+	{
+		id: "education",
+		stepNumber: 4,
+		label: "Formation & Diplômes",
+		shortLabel: "4. Formation",
+		icon: GraduationCap,
+		whatToFill: "Mentionnez votre diplôme principal ou vos certifications les plus récentes.",
+		whyUseful: "Valide votre socle académique ou vos qualifications réglementaires auprès des RH.",
+		whatCanBeIgnored: "Avec plus de 5 ans d'expérience, inutile de détailler les diplômes secondaires ou les mentions anciennes."
+	},
+	{
+		id: "skills",
+		stepNumber: 5,
+		label: "Compétences",
+		shortLabel: "5. Compétences",
+		icon: Palette,
+		whatToFill: "Listez 6 à 10 compétences clés (outils, méthodes, technologies) séparées par des virgules.",
+		whyUseful: "Permet aux recruteurs et aux filtres ATS de repérer instantanément les mots-clés techniques attendus sur l'offre.",
+		whatCanBeIgnored: "Évitez les listes génériques (« motivé, dynamique ») ou les outils bureautiques évidents."
+	},
+	{
+		id: "languages",
+		stepNumber: 6,
+		label: "Langues",
+		shortLabel: "6. Langues",
+		icon: Compass,
+		whatToFill: "Ajoutez uniquement les langues utiles dans votre contexte professionnel et estimez votre aisance.",
+		whyUseful: "Indispensable pour les postes en environnement international, technique ou au contact de clients étrangers.",
+		whatCanBeIgnored: "Si la maîtrise d'une langue étrangère n'est pas demandée dans votre secteur, vous pouvez masquer cette section.",
+		optionalBadge: "Optionnel"
+	}
+];
 function SimpleEditor() {
 	const doc = useStudio((s) => s.doc);
 	const activePageId = useStudio((s) => s.activePageId);
+	const selectedIds = useStudio((s) => s.selectedIds);
+	const select = useStudio((s) => s.select);
+	const setActive = useStudio((s) => s.setActive);
 	const activeTemplate = useStudio((s) => s.activeTemplate);
 	const layoutCustomized = useStudio((s) => s.layoutCustomized);
+	const paginationBlocked = useStudio((s) => s.paginationBlocked);
 	const saveStatus = useStudio((s) => s.saveStatus);
 	const lastSavedAt = useStudio((s) => s.lastSavedAt);
 	const setEditorMode = useStudio((s) => s.setEditorMode);
 	const setOnboarding = useStudio((s) => s.setOnboarding);
-	const directPdfExport = useStudio((s) => s.directPdfExport);
+	const setExtractorModalOpen = useStudio((s) => s.setExtractorModalOpen);
+	const requestPdfExport = useStudio((s) => s.requestPdfExport);
+	const setReadabilityModalOpen = useStudio((s) => s.setReadabilityModalOpen);
+	const setPlainTextModalOpen = useStudio((s) => s.setPlainTextModalOpen);
 	const setIdentity = useStudio((s) => s.setIdentity);
 	const updateExperience = useStudio((s) => s.updateExperience);
 	const addExperience = useStudio((s) => s.addExperience);
@@ -9863,18 +11698,85 @@ function SimpleEditor() {
 	const removeEducation = useStudio((s) => s.removeEducation);
 	const updateSkills = useStudio((s) => s.updateSkills);
 	const updateLanguages = useStudio((s) => s.updateLanguages);
+	const toggleSectionVisibility = useStudio((s) => s.toggleSectionVisibility);
+	const moveSection = useStudio((s) => s.moveSection);
+	const undo = useStudio((s) => s.undo);
+	const redo = useStudio((s) => s.redo);
+	const past = useStudio((s) => s.past);
+	const future = useStudio((s) => s.future);
 	const requestApplyTemplate = useStudio((s) => s.requestApplyTemplate);
 	const requestResetLayout = useStudio((s) => s.requestResetLayout);
 	const applyPalette = useStudio((s) => s.applyPalette);
 	const applyGlobalFont = useStudio((s) => s.applyGlobalFont);
 	const notify = useStudio((s) => s.notify);
-	const [activeTab, setActiveTab] = (0, import_react.useState)("profile");
+	const [activeSection, setActiveSection] = (0, import_react.useState)("experience");
 	const [showMobilePreview, setShowMobilePreview] = (0, import_react.useState)(false);
-	const [skillsDraft, setSkillsDraft] = (0, import_react.useState)(null);
+	const [showStructureDrawer, setShowStructureDrawer] = (0, import_react.useState)(false);
+	const [showAppearanceBar, setShowAppearanceBar] = (0, import_react.useState)(false);
 	const page = activePage(doc, activePageId);
 	const profile = doc.profile;
-	const studioUnbound = getStudioUnboundElements(page);
+	const studioUnbound = doc.pages.flatMap((p) => getStudioUnboundElements(p));
 	const currentGlobalFont = page.elements.find((el) => el.style?.fontFamily)?.style.fontFamily || "Source Sans 3";
+	const audit = (0, import_react.useMemo)(() => auditDocument(doc, {
+		editorMode: "guided",
+		paginationBlocked
+	}), [doc, paginationBlocked]);
+	const actionableIssueCount = audit.criticalIssues.length + audit.warningIssues.length;
+	(0, import_react.useEffect)(() => {
+		const onFocusIssue = (evt) => {
+			const targetId = evt.detail?.elementIds?.[0];
+			if (!targetId) return;
+			const found = doc.pages.flatMap((p) => p.elements).find((e) => e.id === targetId);
+			if (!found?.bind) return;
+			if ([
+				"name",
+				"role",
+				"contact"
+			].includes(found.bind.kind)) setActiveSection("profile");
+			else if (found.bind.kind === "summary") setActiveSection("summary");
+			else if (found.bind.kind === "experience") setActiveSection("experience");
+			else if (found.bind.kind === "education") setActiveSection("education");
+			else if (found.bind.kind === "skills") setActiveSection("skills");
+			else if (found.bind.kind === "languages") setActiveSection("languages");
+		};
+		window.addEventListener("cv-focus-issue", onFocusIssue);
+		return () => window.removeEventListener("cv-focus-issue", onFocusIssue);
+	}, [doc]);
+	const isSectionVisible = (secId) => {
+		const matches = (el) => {
+			if (!el.bind) return false;
+			if (secId === "profile" && [
+				"name",
+				"role",
+				"contact"
+			].includes(el.bind.kind)) return true;
+			if (secId === "summary" && el.bind.kind === "summary") return true;
+			if (secId === "experience" && el.bind.kind === "experience") return true;
+			if (secId === "education" && el.bind.kind === "education") return true;
+			if (secId === "skills" && el.bind.kind === "skills") return true;
+			if (secId === "languages" && el.bind.kind === "languages") return true;
+			return false;
+		};
+		const sectionEls = doc.pages.flatMap((p) => p.elements).filter(matches);
+		if (!sectionEls.length) return true;
+		return sectionEls.some((el) => !el.hidden);
+	};
+	const isStepCompleted = (secId) => {
+		if (!isSectionVisible(secId)) return false;
+		switch (secId) {
+			case "profile": return Boolean(profile.name.trim() && (profile.role.trim() || profile.email.trim()));
+			case "summary": return Boolean(profile.summary.trim().length > 15);
+			case "experience": return profile.experiences.some((e) => Boolean(e.role.trim() || e.company.trim()));
+			case "education": return profile.educations.some((e) => Boolean(e.degree.trim() || e.school.trim()));
+			case "skills": return profile.skills.length > 0;
+			case "languages": return profile.languages.length > 0;
+		}
+	};
+	const currentStepIndex = GUIDED_STEPS.findIndex((s) => s.id === activeSection);
+	const currentStep = GUIDED_STEPS[currentStepIndex] ?? GUIDED_STEPS[0];
+	const prevStep = currentStepIndex > 0 ? GUIDED_STEPS[currentStepIndex - 1] : null;
+	const nextStep = currentStepIndex < GUIDED_STEPS.length - 1 ? GUIDED_STEPS[currentStepIndex + 1] : null;
+	const completedCount = GUIDED_STEPS.filter((s) => isStepCompleted(s.id)).length;
 	const handleBoostSummary = () => {
 		const phrase = getRandomBoost();
 		const nextSummary = profile.summary ? `${profile.summary} ${phrase}` : phrase;
@@ -9892,736 +11794,1068 @@ function SimpleEditor() {
 			notify("✨ Réalisation chiffrée ajoutée au poste !");
 		}
 	};
+	const handleAddAchievement = (index) => {
+		const exp = profile.experiences[index];
+		if (!exp) return;
+		const curDesc = exp.desc || "";
+		const nextDesc = curDesc ? `${curDesc}\n• Nouvelle réalisation impactante` : `• Nouvelle réalisation impactante`;
+		updateExperience(index, { desc: nextDesc }, false);
+	};
+	const handleSkipCurrentStep = () => {
+		if (nextStep) {
+			setActiveSection(nextStep.id);
+			notify(`Étape « ${currentStep.label} » passée — vous pourrez y revenir à tout moment.`);
+		} else setActiveSection("profile");
+	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "flex h-dvh w-full overflow-hidden bg-paper text-slate-900 select-none flex-col",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-			className: "no-print flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-white px-3 py-2 z-30 shadow-xs sm:px-5",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex items-center gap-2.5",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: () => setOnboarding(true),
-						className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-xs",
-						title: "Revenir au point de départ",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Parcours" })]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "hidden sm:flex items-center gap-2 text-xs text-slate-600 pl-1",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+				className: "no-print flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-white px-3 py-2 z-30 shadow-xs sm:px-5",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center gap-2.5",
 						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-semibold text-slate-800",
-								children: page.name
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								onClick: () => setOnboarding(true),
+								className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-xs",
+								title: "Revenir au point de départ",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Parcours" })]
 							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								"aria-hidden": "true",
-								className: "text-slate-300",
-								children: "·"
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "hidden sm:flex items-center gap-2 text-xs text-slate-600 pl-1",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "font-semibold text-slate-800",
+										"data-testid": "guided-page-count",
+										children: doc.pages.length > 1 ? `${doc.pages.length} pages A4` : page.name
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										"aria-hidden": "true",
+										className: "text-slate-300",
+										children: "·"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "inline-flex items-center gap-1 text-slate-500",
+										title: lastSavedAt ? `Dernière sauvegarde automatique à ${lastSavedAt}` : "Sauvegarde automatique active",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, {
+											size: 13,
+											className: "text-emerald-600 shrink-0"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: saveStatus === "saving" ? "Sauvegarde…" : "Enregistré" })]
+									})
+								]
 							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-								className: "inline-flex items-center gap-1 text-slate-500",
-								title: lastSavedAt ? `Dernière sauvegarde automatique à ${lastSavedAt}` : "Sauvegarde automatique active",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, {
-									size: 13,
-									className: "text-emerald-600 shrink-0"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: saveStatus === "saving" ? "Sauvegarde…" : "Enregistré" })]
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center gap-1 border-l border-slate-300 pl-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									onClick: () => undo(),
+									disabled: !past.length,
+									className: "flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition shadow-xs",
+									title: "Annuler (Ctrl+Z)",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Undo2, { size: 14 })
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									onClick: () => redo(),
+									disabled: !future.length,
+									className: "flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition shadow-xs",
+									title: "Rétablir (Ctrl+Y)",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Redo2, { size: 14 })
+								})]
 							})
 						]
-					})]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					role: "tablist",
-					"aria-label": "Mode d'édition",
-					className: "flex items-center rounded-xl bg-slate-100 p-1 shadow-inner border border-slate-300",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						role: "tab",
-						"aria-selected": true,
-						className: "flex items-center gap-2 rounded-lg bg-signal px-4 py-1.5 text-xs font-bold text-signal-ink shadow-sm transition",
-						title: "Vous pouvez passer à la mise en page libre sans perdre vos changements",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Saisie guidée" })
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						role: "tab",
-						"aria-selected": false,
-						onClick: () => setEditorMode("pro"),
-						className: "flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition",
-						title: "Même CV, mise en page libre dans le Studio",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Studio libre" })
-					})]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex items-center gap-2",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: () => setShowMobilePreview((visible) => !visible),
-						className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition md:hidden",
-						children: [showMobilePreview ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PenLine, { size: 14 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: showMobilePreview ? "Modifier" : "Aperçu" })]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: () => directPdfExport(),
-						className: "flex items-center gap-2 rounded-lg bg-signal px-4 py-2 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-sm",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Télécharger mon CV (PDF)" })]
-					})]
-				})
-			]
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "flex flex-1 min-h-0 flex-col overflow-hidden md:flex-row",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: `${showMobilePreview ? "hidden" : "flex"} w-full min-h-0 min-w-0 flex-1 flex-col bg-white border-r border-slate-200 shadow-sm z-10 md:flex md:w-[45%] md:flex-none md:min-w-[420px]`,
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						className: "grid grid-cols-4 border-b border-slate-200 bg-slate-50 p-2 text-xs font-medium shrink-0 gap-1.5",
-						children: [
-							[
-								"profile",
-								"1. Profil",
-								User
-							],
-							[
-								"experience",
-								"2. Expériences",
-								Briefcase
-							],
-							[
-								"education",
-								"3. Formation",
-								GraduationCap
-							],
-							[
-								"skills-design",
-								"4. Compétences & Design",
-								Palette
-							]
-						].map(([id, label, Icon]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-							type: "button",
-							onClick: () => setActiveTab(id),
-							className: cn("flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 transition text-[11px]", activeTab === id ? "bg-white text-blue-700 font-bold shadow-xs ring-1 ring-slate-950/10" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"),
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { size: 16 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "truncate w-full text-center",
-								children: label
-							})]
-						}, id))
 					}),
-					(layoutCustomized || studioUnbound.length > 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "border-b border-blue-200 bg-blue-50/70 px-5 py-3 text-xs text-slate-800 shrink-0 space-y-2",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex items-start justify-between gap-3",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex items-start gap-2",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Info, {
-									size: 15,
-									className: "mt-0.5 shrink-0 text-blue-600"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "space-y-1",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-										className: "font-semibold text-slate-900",
-										children: "Mise en page personnalisée du Studio conservée"
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "text-[11px] leading-relaxed text-slate-600",
-										children: "Vos déplacements de blocs dans le Studio restent intacts lorsque vous modifiez vos textes en mode Guidé."
-									})]
-								})]
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-								type: "button",
-								onClick: () => requestResetLayout(),
-								className: "shrink-0 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition",
-								title: "Revenir à la disposition par défaut du modèle (avec confirmation)",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCcw, { size: 11 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Réinitialiser la mise en page" })]
-							})]
-						}), studioUnbound.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "rounded-lg border border-blue-200/80 bg-white/90 px-3 py-2 text-[11px] text-slate-700 flex items-center justify-between gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "min-w-0",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-									className: "font-semibold text-slate-900",
-									children: [
-										studioUnbound.length,
-										" construction(s) libre(s) du Studio conservée(s) :",
-										" "
-									]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-									className: "text-slate-600",
-									children: [
-										studioUnbound.slice(0, 3).map((el) => `${TYPE_LABEL[el.type]} (${snippet(el)})`).join(", "),
-										studioUnbound.length > 3 ? "…" : "",
-										". Ces blocs n’ont pas d’équivalent dans ce formulaire mais sont préservés sur le CV."
-									]
-								})]
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => setEditorMode("pro"),
-								className: "shrink-0 rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-slate-800 transition",
-								children: "Éditer dans le Studio"
-							})]
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						role: "tablist",
+						"aria-label": "Mode d'édition",
+						className: "flex items-center rounded-xl bg-slate-100 p-1 shadow-inner border border-slate-300",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							role: "tab",
+							"aria-selected": true,
+							className: "flex items-center gap-2 rounded-lg bg-signal px-4 py-1.5 text-xs font-bold text-signal-ink shadow-sm transition",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Saisie guidée" })
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							role: "tab",
+							"aria-selected": false,
+							onClick: () => setEditorMode("pro"),
+							className: "flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Studio libre" })
 						})]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "min-h-0 flex-1 overflow-y-auto p-6 space-y-6",
+						className: "flex items-center gap-2",
 						children: [
-							activeTab === "profile" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "space-y-4 animate-in fade-in",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "space-y-1",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-										className: "text-xs font-bold uppercase tracking-wider text-slate-500",
-										children: "Profil & Contact"
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "text-[11px] text-slate-500",
-										children: "Ces informations apparaissent en haut de votre CV."
-									})]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "space-y-3",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-											className: "block",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "text-xs font-semibold text-slate-700",
-												children: "Nom & Prénom"
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-												className: cn(inputStyle, "mt-1"),
-												value: profile.name,
-												onChange: (e) => setIdentity("name", e.target.value),
-												onBlur: release,
-												placeholder: "Ex: Alexandra Dubois"
-											})]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-											className: "block",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "text-xs font-semibold text-slate-700",
-												children: "Intitulé du poste recherché"
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-												className: cn(inputStyle, "mt-1"),
-												value: profile.role,
-												onChange: (e) => setIdentity("role", e.target.value),
-												onBlur: release,
-												placeholder: "Ex: Product Designer Senior"
-											})]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "grid grid-cols-2 gap-3",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-												className: "block",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Adresse e-mail"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-													className: cn(inputStyle, "mt-1"),
-													value: profile.email,
-													onChange: (e) => setIdentity("email", e.target.value),
-													onBlur: release,
-													placeholder: "alexandra@email.com"
-												})]
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-												className: "block",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Téléphone"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-													className: cn(inputStyle, "mt-1"),
-													value: profile.phone,
-													onChange: (e) => setIdentity("phone", e.target.value),
-													onBlur: release,
-													placeholder: "+33 6 12 34 56 78"
-												})]
-											})]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "grid grid-cols-2 gap-3",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-												className: "block",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Ville / Localisation"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-													className: cn(inputStyle, "mt-1"),
-													value: profile.location,
-													onChange: (e) => setIdentity("location", e.target.value),
-													onBlur: release,
-													placeholder: "Paris, France"
-												})]
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-												className: "block",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Lien (LinkedIn / Portfolio)"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-													className: cn(inputStyle, "mt-1"),
-													value: profile.link,
-													onChange: (e) => setIdentity("link", e.target.value),
-													onBlur: release,
-													placeholder: "linkedin.com/in/nom"
-												})]
-											})]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-											className: "block pt-2",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "flex items-center justify-between mb-1",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Résumé de profil / Bio"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-													type: "button",
-													onClick: handleBoostSummary,
-													className: "flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 hover:bg-amber-500/25 transition",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { size: 11 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "✨ Formuler comme un pro" })]
-												})]
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-												className: cn(textareaStyle, "h-28"),
-												value: profile.summary,
-												onChange: (e) => setIdentity("summary", e.target.value),
-												onBlur: release,
-												placeholder: "Présentation synthétique de votre parcours..."
-											})]
-										})
-									]
-								})]
-							}),
-							activeTab === "experience" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "space-y-5 animate-in fade-in",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-center justify-between",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-										className: "text-xs font-bold uppercase tracking-wider text-slate-500",
-										children: "Expériences professionnelles"
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "text-[11px] text-slate-500",
-										children: "Modifiez vos postes clés. Le CV se met à jour en direct sans réinitialiser votre mise en page."
-									})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-										type: "button",
-										onClick: () => addExperience(),
-										className: "flex items-center gap-1 rounded-lg bg-signal px-3 py-1.5 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-xs",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "+ Ajouter un poste" })
-									})]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "space-y-4",
-									children: profile.experiences.map((exp, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										"data-testid": `guided-experience-${index}`,
-										className: "rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 relative group",
-										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "flex items-center justify-between",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-													className: "text-xs font-bold text-slate-800",
-													children: ["Poste #", index + 1]
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-													type: "button",
-													onClick: () => removeExperience(index),
-													className: "text-xs text-red-500 hover:text-red-700 font-semibold",
-													children: "Supprimer"
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "grid grid-cols-2 gap-2.5",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-													className: "block space-y-1",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-														className: "text-[11px] font-semibold text-slate-700",
-														children: "Intitulé du poste"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-														className: inputStyle,
-														value: exp.role,
-														onChange: (e) => updateExperience(index, { role: e.target.value }),
-														onBlur: release,
-														placeholder: "Intitulé du poste"
-													})]
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-													className: "block space-y-1",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-														className: "text-[11px] font-semibold text-slate-700",
-														children: "Entreprise — Ville"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-														className: inputStyle,
-														value: exp.company,
-														onChange: (e) => updateExperience(index, { company: e.target.value }),
-														onBlur: release,
-														placeholder: "Entreprise — Ville"
-													})]
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-												className: "block space-y-1",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-[11px] font-semibold text-slate-700",
-													children: "Période"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-													className: inputStyle,
-													value: exp.date,
-													onChange: (e) => updateExperience(index, { date: e.target.value }),
-													onBlur: release,
-													placeholder: "Ex: 2021 — Présent"
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "space-y-1",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "flex items-center justify-between",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-														htmlFor: `exp-desc-${index}`,
-														className: "text-[11px] font-semibold text-slate-700",
-														children: "Missions & Réalisations"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-														type: "button",
-														onClick: () => handleBoostExp(index),
-														className: "flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 hover:bg-amber-500/25 transition",
-														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { size: 11 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "✨ Formuler comme un pro" })]
-													})]
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-													id: `exp-desc-${index}`,
-													className: cn(textareaStyle, "h-28"),
-													value: exp.desc,
-													onChange: (e) => updateExperience(index, { desc: e.target.value }),
-													onBlur: release,
-													placeholder: "Décrivez vos missions et impacts..."
-												})]
-											})
-										]
-									}, index))
-								})]
-							}),
-							activeTab === "education" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "space-y-5 animate-in fade-in",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-center justify-between",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-										className: "text-xs font-bold uppercase tracking-wider text-slate-500",
-										children: "Formation & Diplômes"
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "text-[11px] text-slate-500",
-										children: "Ajoutez vos cursus académiques."
-									})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-										type: "button",
-										onClick: () => addEducation(),
-										className: "flex items-center gap-1 rounded-lg bg-signal px-3 py-1.5 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-xs",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "+ Ajouter une formation" })
-									})]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "space-y-4",
-									children: profile.educations.map((edu, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3",
-										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "flex items-center justify-between",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-													className: "text-xs font-bold text-slate-800",
-													children: ["Formation #", index + 1]
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-													type: "button",
-													onClick: () => removeEducation(index),
-													className: "text-xs text-red-500 hover:text-red-700 font-semibold",
-													children: "Supprimer"
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-												className: "block space-y-1",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-[11px] font-semibold text-slate-700",
-													children: "Diplôme"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-													className: inputStyle,
-													value: edu.degree,
-													onChange: (e) => updateEducation(index, { degree: e.target.value }),
-													onBlur: release,
-													placeholder: "Diplôme (ex: Master Informatique)"
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "grid grid-cols-2 gap-2.5",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-													className: "block space-y-1",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-														className: "text-[11px] font-semibold text-slate-700",
-														children: "École / Université"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-														className: inputStyle,
-														value: edu.school,
-														onChange: (e) => updateEducation(index, { school: e.target.value }),
-														onBlur: release,
-														placeholder: "École / Université"
-													})]
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-													className: "block space-y-1",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-														className: "text-[11px] font-semibold text-slate-700",
-														children: "Années"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-														className: inputStyle,
-														value: edu.date,
-														onChange: (e) => updateEducation(index, { date: e.target.value }),
-														onBlur: release,
-														placeholder: "2020 — 2023"
-													})]
-												})]
-											})
-										]
-									}, index))
-								})]
-							}),
-							activeTab === "skills-design" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "space-y-6 animate-in fade-in",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "guided-import-cv-btn",
+								onClick: () => setExtractorModalOpen(true),
+								className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs",
+								title: "Importer un CV (PDF, Word, TXT ou LinkedIn)",
 								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "space-y-1",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-											className: "text-xs font-bold uppercase tracking-wider text-slate-500",
-											children: "Compétences clés"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-											className: "text-[11px] text-slate-500",
-											children: "Saisissez une compétence par ligne."
-										})]
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Upload, { size: 14 }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "hidden xl:inline",
+										children: "Importer mon CV"
 									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-										className: cn(textareaStyle, "h-28"),
-										value: skillsDraft ?? profile.skills.join("\n"),
-										onChange: (e) => {
-											const raw = e.target.value;
-											setSkillsDraft(raw);
-											const skills = raw.split("\n").map((s) => s.trim()).filter(Boolean);
-											updateSkills(skills, true);
-										},
-										onBlur: () => {
-											setSkillsDraft(null);
-											release();
-										},
-										placeholder: "Figma\nReact / TypeScript\nGestion de projet"
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "space-y-3 pt-3 border-t border-slate-200",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "flex items-center justify-between",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-												className: "text-xs font-bold uppercase tracking-wider text-slate-500",
-												children: "Langues & Niveaux"
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-												type: "button",
-												onClick: () => {
-													const languages = [...profile.languages, {
-														label: "Nouvelle langue",
-														value: 80
-													}];
-													updateLanguages(languages, false);
-												},
-												className: "text-xs font-bold text-blue-700 hover:underline",
-												children: "+ Ajouter une langue"
-											})]
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "space-y-3",
-											children: profile.languages.map((lang, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200",
-												children: [
-													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-														className: cn(inputStyle, "flex-1 h-9"),
-														value: lang.label,
-														onChange: (e) => {
-															const languages = profile.languages.map((l, i) => i === index ? {
-																...l,
-																label: e.target.value
-															} : l);
-															updateLanguages(languages, true);
-														},
-														onBlur: release,
-														placeholder: "Langue"
-													}),
-													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-														className: "flex items-center gap-2 w-36",
-														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-															type: "range",
-															min: 20,
-															max: 100,
-															step: 10,
-															value: lang.value,
-															onChange: (e) => {
-																const languages = profile.languages.map((l, i) => i === index ? {
-																	...l,
-																	value: Number(e.target.value)
-																} : l);
-																updateLanguages(languages, true);
-															},
-															onPointerUp: release,
-															className: "w-full accent-blue-600"
-														}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-															className: "font-mono text-xs w-8 text-right",
-															children: [lang.value, "%"]
-														})]
-													}),
-													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-														type: "button",
-														onClick: () => {
-															const languages = profile.languages.filter((_, i) => i !== index);
-															updateLanguages(languages, false);
-														},
-														className: "text-xs text-red-500 hover:text-red-700 font-bold px-1",
-														children: "✕"
-													})
-												]
-											}, index))
-										})]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "space-y-4 pt-4 border-t border-slate-200",
-										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "flex items-center justify-between",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "space-y-1",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-														className: "text-xs font-bold uppercase tracking-wider text-slate-500",
-														children: "Modèle de design & Style"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-														className: "text-[11px] text-slate-500",
-														children: "Choisissez l'apparence globale de votre CV sans perdre vos textes."
-													})]
-												}), layoutCustomized && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-													type: "button",
-													onClick: () => requestResetLayout(),
-													className: "inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCcw, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Réinitialiser la mise en page" })]
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "space-y-2",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Modèle de mise en page"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "grid grid-cols-3 gap-2",
-													children: TEMPLATES.map((tpl) => {
-														const isCurrent = activeTemplate === tpl.id;
-														return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-															type: "button",
-															onClick: () => requestApplyTemplate(tpl.id),
-															className: cn("rounded-xl border p-3 text-left transition group flex items-start justify-between gap-1", isCurrent ? "border-signal bg-blue-50/40 ring-1 ring-signal" : "border-slate-200 bg-slate-50 hover:border-blue-600 hover:bg-paper/80"),
-															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-																className: "min-w-0",
-																children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-																	className: "text-xs font-bold text-slate-800 group-hover:text-blue-700",
-																	children: tpl.name
-																}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-																	className: "text-[10px] text-slate-500 truncate mt-0.5",
-																	children: tpl.note
-																})]
-															}), isCurrent && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-																className: "flex size-4 shrink-0 items-center justify-center rounded-full bg-signal text-white",
-																children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, {
-																	size: 10,
-																	strokeWidth: 3
-																})
-															})]
-														}, tpl.id);
-													})
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "space-y-2 pt-2",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Harmonie de couleurs"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "grid grid-cols-3 gap-2",
-													children: COLOR_PALETTES.map((pal) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-														type: "button",
-														onClick: () => applyPalette(pal.id),
-														className: "flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-left hover:border-blue-600 transition",
-														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-															className: "size-5 rounded-full border border-slate-300 shrink-0",
-															style: { backgroundColor: pal.primary }
-														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-															className: "text-[11px] font-semibold text-slate-800 truncate",
-															children: pal.name.split("/")[0]
-														})]
-													}, pal.id))
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "space-y-2 pt-2",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs font-semibold text-slate-700",
-													children: "Police typographique globale"
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
-													className: inputStyle,
-													value: currentGlobalFont,
-													onChange: (e) => applyGlobalFont(e.target.value),
-													children: FONTS.map((font) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-														value: font,
-														style: { fontFamily: font },
-														children: font
-													}, font))
-												})]
-											})
-										]
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "xl:hidden",
+										children: "Importer"
 									})
 								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "open-plain-text-btn",
+								onClick: () => setPlainTextModalOpen(true),
+								className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs",
+								title: "Voir ce qu'un ATS lira réellement (Aperçu texte brut)",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, { size: 14 }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "hidden lg:inline",
+										children: "Aperçu texte brut"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "lg:hidden",
+										children: "Texte brut"
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "open-readability-btn",
+								onClick: () => setReadabilityModalOpen(true, false),
+								className: cn("flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition shadow-xs", actionableIssueCount > 0 ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"),
+								title: "Contrôle de lisibilité et de mise en page avant export",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShieldCheck, { size: 14 }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Contrôle" }),
+									actionableIssueCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "ml-0.5 rounded-full bg-amber-600 px-1.5 py-0.2 text-[10px] font-bold text-white",
+										children: actionableIssueCount
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								onClick: () => setShowMobilePreview((visible) => !visible),
+								className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition md:hidden",
+								children: [showMobilePreview ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PenLine, { size: 14 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: showMobilePreview ? "Modifier" : "Aperçu" })]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "export-pdf-btn",
+								onClick: () => requestPdfExport(),
+								className: "flex items-center gap-2 rounded-lg bg-signal px-4 py-2 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-sm",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Télécharger mon CV (PDF)" })]
 							})
 						]
 					})
 				]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: `${showMobilePreview ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 flex-col bg-[#E2E8F0] md:flex`,
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex h-12 shrink-0 items-center justify-between border-b border-slate-300 bg-white/90 px-3 sm:px-6",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex items-center gap-2 text-xs font-semibold text-slate-600",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Aperçu du CV · A4" }),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-								className: "rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700",
-								children: ["Modèle ", TEMPLATES.find((t) => t.id === activeTemplate)?.name ?? activeTemplate]
-							}),
-							layoutCustomized && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700",
-								children: "Disposition personnalisée"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DocumentAlertBanner, {}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-1 min-h-0 flex-col overflow-hidden md:flex-row",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+					"data-testid": "guided-sections-sidebar",
+					"aria-label": "Parcours guidé étape par étape",
+					className: cn(showMobilePreview ? "hidden" : "flex", "w-full min-h-0 min-w-0 flex-1 flex-col bg-white border-r border-slate-200 shadow-sm z-10 md:flex md:w-[500px] lg:w-[560px] xl:w-[600px] md:flex-none"),
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "border-b border-slate-200 bg-slate-50/90 px-4 py-3 shrink-0 space-y-2.5",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center justify-between gap-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center gap-2",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+												"data-testid": "guided-step-indicator",
+												className: "inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs",
+												children: [
+													"Étape ",
+													currentStep.stepNumber,
+													" sur ",
+													GUIDED_STEPS.length
+												]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-xs font-bold text-slate-800",
+												children: currentStep.label
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+												className: "text-[11px] text-slate-500 hidden sm:inline",
+												children: [
+													"(",
+													completedCount,
+													"/",
+													GUIDED_STEPS.length,
+													" rubriques complétées)"
+												]
+											})
+										]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "flex items-center gap-1.5",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											"data-testid": "toggle-structure-drawer-btn",
+											onClick: () => setShowStructureDrawer((v) => !v),
+											className: cn("inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition", showStructureDrawer ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"),
+											title: "Organiser l'ordre ou masquer des rubriques du CV",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Layers, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Gérer les sections" })]
+										})
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									role: "navigation",
+									"aria-label": "Étapes du parcours guidé",
+									className: "grid grid-cols-2 sm:grid-cols-3 gap-1.5",
+									children: GUIDED_STEPS.map((sec, index) => {
+										const visible = isSectionVisible(sec.id);
+										const completed = isStepCompleted(sec.id);
+										const isSelected = activeSection === sec.id;
+										return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											"data-testid": `guided-step-tab-${sec.id}`,
+											onClick: () => setActiveSection(sec.id),
+											className: cn("group flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer", isSelected ? "border-blue-600 bg-white text-blue-700 shadow-2xs ring-1 ring-blue-600/20" : visible ? "border-slate-200 bg-white/80 text-slate-700 hover:bg-white hover:border-slate-300" : "border-dashed border-slate-200 bg-slate-100/60 text-slate-400 hover:bg-white"),
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-1.5 min-w-0",
+												children: [!visible ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, {
+													size: 12,
+													className: "text-amber-600 shrink-0"
+												}) : completed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, {
+													size: 13,
+													className: "text-emerald-600 shrink-0"
+												}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Circle, {
+													size: 12,
+													className: isSelected ? "text-blue-600 shrink-0" : "text-slate-300 shrink-0"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "truncate text-[11px]",
+													title: sec.label,
+													children: sec.label
+												})]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: cn("flex items-center gap-0.5 shrink-0", showStructureDrawer ? "opacity-100" : "opacity-75 group-hover:opacity-100"),
+												onClick: (e) => e.stopPropagation(),
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+														type: "button",
+														onClick: () => toggleSectionVisibility(sec.id),
+														className: cn("flex size-5 items-center justify-center rounded transition", visible ? "text-slate-400 hover:bg-slate-100 hover:text-slate-700" : "text-amber-600 bg-amber-50 hover:bg-amber-100"),
+														title: visible ? "Masquer la section sur le CV" : "Afficher la section sur le CV",
+														children: visible ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { size: 11 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, { size: 11 })
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+														type: "button",
+														onClick: () => moveSection(sec.id, "up"),
+														disabled: index === 0,
+														className: "flex size-5 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20 transition",
+														title: "Monter la section",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronUp, { size: 11 })
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+														type: "button",
+														onClick: () => moveSection(sec.id, "down"),
+														disabled: index === GUIDED_STEPS.length - 1,
+														className: "flex size-5 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20 transition",
+														title: "Descendre la section",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronDown, { size: 11 })
+													})
+												]
+											})]
+										}, sec.id);
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center justify-between gap-2 pt-0.5",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center gap-1.5",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => {
+												setActiveSection("experience");
+												addExperience();
+											},
+											className: "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ajouter une expérience" })]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => {
+												setActiveSection("education");
+												addEducation();
+											},
+											className: "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ajouter une formation" })]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-[11px] text-slate-400 hidden sm:inline",
+										children: "Parcours libre et non bloquant"
+									})]
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "min-h-0 flex-1 overflow-y-auto p-5 space-y-5",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									"data-testid": "guided-step-coaching",
+									className: "rounded-2xl border border-blue-200/80 bg-gradient-to-br from-blue-50/90 via-white to-slate-50 p-4 shadow-2xs space-y-3",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-start justify-between gap-3",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "space-y-1",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-2",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-[11px] font-bold uppercase tracking-wider text-blue-700",
+														children: "Quoi remplir maintenant"
+													}),
+													currentStep.optionalBadge && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-semibold text-slate-700",
+														children: currentStep.optionalBadge
+													}),
+													!isSectionVisible(currentStep.id) && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800",
+														children: "Section masquée sur le CV"
+													})
+												]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-sm font-semibold text-slate-900 leading-snug",
+												children: currentStep.whatToFill
+											})]
+										}), !isSectionVisible(currentStep.id) ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => toggleSectionVisibility(currentStep.id),
+											className: "shrink-0 inline-flex items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700 transition",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Réafficher sur le CV" })]
+										}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => toggleSectionVisibility(currentStep.id),
+											className: "shrink-0 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition",
+											title: "Masquer cette rubrique sans perdre vos textes",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Masquer cette rubrique" })]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-blue-100/80 text-xs",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "rounded-xl bg-white/90 border border-slate-200/70 p-2.5 space-y-0.5",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-1.5 font-bold text-slate-700 text-[11px]",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleHelp, {
+													size: 12,
+													className: "text-blue-600 shrink-0"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Pourquoi c'est utile" })]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-[11px] text-slate-600 leading-relaxed",
+												children: currentStep.whyUseful
+											})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "rounded-xl bg-white/90 border border-slate-200/70 p-2.5 space-y-0.5",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-1.5 font-bold text-slate-700 text-[11px]",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SkipForward, {
+													size: 12,
+													className: "text-slate-500 shrink-0"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ce que vous pouvez ignorer" })]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-[11px] text-slate-600 leading-relaxed",
+												children: currentStep.whatCanBeIgnored
+											})]
+										})]
+									})]
+								}),
+								activeSection === "profile" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "space-y-4 animate-in fade-in",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "space-y-3",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "block",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex items-center justify-between",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-xs font-semibold text-slate-700",
+														children: "Nom & Prénom"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-[11px] text-blue-600 font-medium",
+														children: "Essentiel"
+													})]
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													className: cn(inputStyle, "mt-1"),
+													value: profile.name,
+													onChange: (e) => setIdentity("name", e.target.value),
+													onBlur: release,
+													placeholder: "Ex: Alexandra Dubois"
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "block",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex items-center justify-between",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-xs font-semibold text-slate-700",
+														children: "Intitulé du poste recherché"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-[11px] text-blue-600 font-medium",
+														children: "Recommandé"
+													})]
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													className: cn(inputStyle, "mt-1"),
+													value: profile.role,
+													onChange: (e) => setIdentity("role", e.target.value),
+													onBlur: release,
+													placeholder: "Ex: Product Designer Senior"
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "grid grid-cols-1 sm:grid-cols-2 gap-3",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "block",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-xs font-semibold text-slate-700",
+														children: "Adresse e-mail"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: cn(inputStyle, "mt-1"),
+														value: profile.email,
+														onChange: (e) => setIdentity("email", e.target.value),
+														onBlur: release,
+														placeholder: "alexandra@email.com"
+													})]
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "block",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-xs font-semibold text-slate-700",
+														children: "Téléphone"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: cn(inputStyle, "mt-1"),
+														value: profile.phone,
+														onChange: (e) => setIdentity("phone", e.target.value),
+														onBlur: release,
+														placeholder: "+33 6 12 34 56 78"
+													})]
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "grid grid-cols-1 sm:grid-cols-2 gap-3",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "block",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex items-center justify-between",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-xs font-semibold text-slate-700",
+															children: "Ville / Localisation"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-[10px] text-slate-400",
+															children: "Optionnel"
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: cn(inputStyle, "mt-1"),
+														value: profile.location,
+														onChange: (e) => setIdentity("location", e.target.value),
+														onBlur: release,
+														placeholder: "Paris, France"
+													})]
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "block",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex items-center justify-between",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-xs font-semibold text-slate-700",
+															children: "Lien (LinkedIn / Portfolio)"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-[10px] text-slate-400",
+															children: "Optionnel"
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: cn(inputStyle, "mt-1"),
+														value: profile.link,
+														onChange: (e) => setIdentity("link", e.target.value),
+														onBlur: release,
+														placeholder: "linkedin.com/in/nom"
+													})]
+												})]
+											})
+										]
+									})
+								}),
+								activeSection === "summary" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-4 animate-in fade-in",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+											className: "text-xs font-bold uppercase tracking-wider text-slate-600",
+											children: "Votre accroche en quelques lignes"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-[11px] text-slate-500",
+											children: "2 à 3 phrases suffisent. Vous pouvez aussi laisser vide ou utiliser une formulation type."
+										})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: handleBoostSummary,
+											className: "flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-500/25 transition shrink-0",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "✨ Formuler comme un pro" })]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+										className: cn(textareaStyle, "h-40"),
+										value: profile.summary,
+										onChange: (e) => setIdentity("summary", e.target.value),
+										onBlur: release,
+										placeholder: "Présentation synthétique de votre parcours..."
+									})]
+								}),
+								activeSection === "experience" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-4 animate-in fade-in",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+											className: "text-xs font-bold uppercase tracking-wider text-slate-600",
+											children: [
+												"Vos expériences (",
+												profile.experiences.length,
+												")"
+											]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-[11px] text-slate-500",
+											children: "Commencez par le poste le plus récent. Privilégiez les résultats concrets."
+										})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => addExperience(),
+											className: "flex items-center gap-1 rounded-lg bg-signal px-3 py-1.5 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-xs",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "+ Ajouter un poste" })]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "space-y-4",
+										children: profile.experiences.map((exp, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											"data-testid": `guided-experience-${index}`,
+											className: "rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 relative group",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex items-center justify-between",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex items-center gap-2",
+														children: [
+															/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "inline-flex size-5 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-800",
+																children: index + 1
+															}),
+															/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-xs font-bold text-slate-800",
+																children: exp.role?.trim() ? exp.role : `Poste #${index + 1}`
+															}),
+															exp.company?.trim() && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+																className: "text-xs text-slate-500 truncate max-w-[180px]",
+																children: ["· ", exp.company]
+															})
+														]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+														type: "button",
+														onClick: () => removeExperience(index),
+														className: "flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trash2, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Supprimer" })]
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "grid grid-cols-1 sm:grid-cols-2 gap-2.5",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+														className: "block space-y-1",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-[11px] font-semibold text-slate-700",
+															children: "Intitulé du poste"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+															className: inputStyle,
+															value: exp.role,
+															onChange: (e) => updateExperience(index, { role: e.target.value }),
+															onBlur: release,
+															placeholder: "Intitulé du poste"
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+														className: "block space-y-1",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-[11px] font-semibold text-slate-700",
+															children: "Entreprise — Ville"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+															className: inputStyle,
+															value: exp.company,
+															onChange: (e) => updateExperience(index, { company: e.target.value }),
+															onBlur: release,
+															placeholder: "Entreprise — Ville"
+														})]
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "block space-y-1",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-[11px] font-semibold text-slate-700",
+														children: "Période (dates)"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: inputStyle,
+														value: exp.date,
+														onChange: (e) => updateExperience(index, { date: e.target.value }),
+														onBlur: release,
+														placeholder: "Ex: 2021 — Présent"
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "space-y-2",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex items-center justify-between flex-wrap gap-1",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+															htmlFor: `exp-desc-${index}`,
+															className: "text-[11px] font-semibold text-slate-700",
+															children: "Missions & Réalisations (1 réalisation par ligne)"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+															className: "flex items-center gap-1.5",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+																type: "button",
+																onClick: () => handleAddAchievement(index),
+																className: "flex items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-800 hover:bg-blue-500/25 transition",
+																children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 11 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ajouter une réalisation" })]
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+																type: "button",
+																onClick: () => handleBoostExp(index),
+																className: "flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-800 hover:bg-amber-500/25 transition",
+																children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { size: 11 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "✨ Pro" })]
+															})]
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+														id: `exp-desc-${index}`,
+														className: cn(textareaStyle, "h-32"),
+														value: exp.desc,
+														onChange: (e) => updateExperience(index, { desc: e.target.value }),
+														onBlur: release,
+														placeholder: "• Réalisation 1\n• Réalisation 2..."
+													})]
+												})
+											]
+										}, index))
+									})]
+								}),
+								activeSection === "education" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-4 animate-in fade-in",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+											className: "text-xs font-bold uppercase tracking-wider text-slate-600",
+											children: [
+												"Formations & Diplômes (",
+												profile.educations.length,
+												")"
+											]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-[11px] text-slate-500",
+											children: "Indiquez vos diplômes principaux ou certifications professionnelles."
+										})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => addEducation(),
+											className: "flex items-center gap-1 rounded-lg bg-signal px-3 py-1.5 text-xs font-bold text-signal-ink hover:bg-signal/90 transition shadow-xs",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "+ Ajouter une formation" })]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "space-y-4",
+										children: profile.educations.map((edu, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											"data-testid": `guided-education-${index}`,
+											className: "rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex items-center justify-between",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-xs font-bold text-slate-800",
+														children: edu.degree?.trim() ? edu.degree : `Formation #${index + 1}`
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+														type: "button",
+														onClick: () => removeEducation(index),
+														className: "flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-semibold",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trash2, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Supprimer" })]
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "block space-y-1",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "text-[11px] font-semibold text-slate-700",
+														children: "Diplôme"
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: inputStyle,
+														value: edu.degree,
+														onChange: (e) => updateEducation(index, { degree: e.target.value }),
+														onBlur: release,
+														placeholder: "Diplôme (ex: Master Informatique)"
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "grid grid-cols-1 sm:grid-cols-2 gap-2.5",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+														className: "block space-y-1",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-[11px] font-semibold text-slate-700",
+															children: "École / Université"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+															className: inputStyle,
+															value: edu.school,
+															onChange: (e) => updateEducation(index, { school: e.target.value }),
+															onBlur: release,
+															placeholder: "École / Université"
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+														className: "block space-y-1",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "text-[11px] font-semibold text-slate-700",
+															children: "Période / Année"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+															className: inputStyle,
+															value: edu.date,
+															onChange: (e) => updateEducation(index, { date: e.target.value }),
+															onBlur: release,
+															placeholder: "Ex: 2020 — 2023"
+														})]
+													})]
+												})
+											]
+										}, index))
+									})]
+								}),
+								activeSection === "skills" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-4 animate-in fade-in",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "space-y-1",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+												className: "text-xs font-bold uppercase tracking-wider text-slate-600",
+												children: [
+													"Compétences clés (",
+													profile.skills.length,
+													")"
+												]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-[11px] text-slate-500",
+												children: "Séparez vos compétences par des virgules ou des retours à la ligne."
+											})]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+											className: cn(textareaStyle, "h-36"),
+											value: profile.skills.join(", "),
+											onChange: (e) => {
+												const items = e.target.value.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+												updateSkills(items, false);
+											},
+											onBlur: release,
+											placeholder: "Figma, Design system, React, TypeScript..."
+										}),
+										profile.skills.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "flex flex-wrap gap-1.5 pt-1",
+											children: profile.skills.map((skill, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700",
+												children: skill
+											}, idx))
+										})
+									]
+								}),
+								activeSection === "languages" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-4 animate-in fade-in",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+											className: "text-xs font-bold uppercase tracking-wider text-slate-600",
+											children: "Langues & Niveaux (%)"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-[11px] text-slate-500",
+											children: "100 % = Bilingue / Maternel · 80 % = Courant · 60 % = Opérationnel"
+										})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => {
+												updateLanguages([...profile.languages, {
+													label: "Nouvelle langue",
+													value: 75
+												}], false);
+											},
+											className: "flex items-center gap-1 rounded-md bg-signal/15 px-2.5 py-1 text-xs font-bold text-signal hover:bg-signal/25 transition",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ajouter une langue" })]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "space-y-3",
+										children: profile.languages.map((lang, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													className: cn(inputStyle, "flex-1 h-9"),
+													value: lang.label,
+													onChange: (e) => {
+														const next = [...profile.languages];
+														next[index] = {
+															...lang,
+															label: e.target.value
+														};
+														updateLanguages(next, false);
+													},
+													onBlur: release,
+													placeholder: "Langue"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													type: "number",
+													min: "0",
+													max: "100",
+													className: cn(inputStyle, "w-20 h-9 text-center"),
+													value: lang.value,
+													onChange: (e) => {
+														const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+														const next = [...profile.languages];
+														next[index] = {
+															...lang,
+															value: val
+														};
+														updateLanguages(next, false);
+													},
+													onBlur: release
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-xs text-slate-500",
+													children: "%"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+													type: "button",
+													onClick: () => {
+														const next = profile.languages.filter((_, i) => i !== index);
+														updateLanguages(next, false);
+													},
+													className: "text-slate-400 hover:text-red-600 p-1 transition",
+													title: "Supprimer",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trash2, { size: 14 })
+												})
+											]
+										}, index))
+									})]
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							"data-testid": "guided-step-footer",
+							className: "border-t border-slate-200 bg-slate-50 px-5 py-3.5 shrink-0 space-y-2.5",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center justify-between gap-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									type: "button",
+									"data-testid": "guided-prev-step-btn",
+									disabled: !prevStep,
+									onClick: () => prevStep && setActiveSection(prevStep.id),
+									className: "inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition shadow-2xs",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: prevStep ? prevStep.shortLabel : "Début" })]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center gap-2",
+									children: [nextStep && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										"data-testid": "guided-skip-step-btn",
+										onClick: handleSkipCurrentStep,
+										className: "inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition",
+										title: "Passer cette étape sans bloquer la suite",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Passer cette étape" })
+									}), nextStep ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+										type: "button",
+										"data-testid": "guided-next-step-btn",
+										onClick: () => setActiveSection(nextStep.id),
+										className: "inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition shadow-xs",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Étape suivante : ", nextStep.label] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { size: 13 })]
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+										type: "button",
+										"data-testid": "guided-finish-export-btn",
+										onClick: () => requestPdfExport(),
+										className: "inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-xs",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Terminer & Exporter le PDF" })]
+									})]
+								})]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/70",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: nextStep ? `Prochaine étape : ${nextStep.label}` : "Parcours terminé — votre CV est prêt à être téléchargé ou personnalisé." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									"data-testid": "guided-footer-studio-link",
+									onClick: () => setEditorMode("pro"),
+									className: "font-semibold text-blue-700 hover:underline",
+									children: "Personnaliser librement dans le Studio →"
+								})]
+							})]
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: cn(showMobilePreview ? "flex" : "hidden", "md:flex min-h-0 flex-1 flex-col bg-slate-200/70 overflow-hidden relative"),
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "no-print border-b border-slate-300/80 bg-white/90 backdrop-blur-xs px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0 z-20",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center gap-2 text-xs text-slate-600",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "font-semibold text-slate-800",
+										children: "Aperçu A4 en direct"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-slate-300",
+										children: "·"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-[11px] text-slate-500",
+										children: "Cliquez sur n'importe quelle section du CV pour l'éditer à gauche"
+									})
+								]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "flex items-center gap-2",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									type: "button",
+									"data-testid": "toggle-appearance-bar-btn",
+									onClick: () => setShowAppearanceBar((v) => !v),
+									className: cn("inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition", showAppearanceBar ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Palette, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Modèle & Couleurs" })]
+								})
+							})]
+						}),
+						showAppearanceBar && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							"data-testid": "guided-appearance-bar",
+							className: "no-print border-b border-slate-300 bg-slate-50 px-4 py-3 flex flex-wrap items-center gap-4 shrink-0 z-20 animate-in fade-in",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center gap-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-[11px] font-bold uppercase text-slate-500",
+										children: "Modèle :"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "flex flex-wrap items-center gap-1",
+										children: TEMPLATES.map((tpl) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => requestApplyTemplate(tpl.id),
+											className: cn("rounded-lg border px-2.5 py-1 text-xs font-semibold transition", activeTemplate === tpl.id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"),
+											children: tpl.name
+										}, tpl.id))
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center gap-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-[11px] font-bold uppercase text-slate-500",
+										children: "Palette :"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "flex items-center gap-1.5",
+										children: COLOR_PALETTES.map((pal) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => applyPalette(pal.id),
+											title: pal.name,
+											className: "size-5 rounded-full border border-slate-300 shadow-2xs transition hover:scale-110",
+											style: { background: pal.primary }
+										}, pal.id))
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center gap-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-[11px] font-bold uppercase text-slate-500",
+										children: "Police :"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
+										value: currentGlobalFont,
+										onChange: (e) => applyGlobalFont(e.target.value),
+										className: "rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-800",
+										children: FONTS.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: f,
+											children: f
+										}, f))
+									})]
+								})
+							]
+						}),
+						(layoutCustomized || studioUnbound.length > 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "px-4 pt-3 z-20 shrink-0 no-print",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "rounded-xl border border-blue-200 bg-blue-50/95 px-4 py-2 text-xs text-blue-900 shadow-xs flex items-center justify-between gap-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center gap-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Info, {
+										size: 15,
+										className: "shrink-0 text-blue-600"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: studioUnbound.length > 0 ? `${studioUnbound.length} élément(s) libre(s) créé(s) dans le Studio sont conservés sur votre CV.` : "Mise en page personnalisée du Studio active. Les textes modifiés ici se mettent à jour en direct." })]
+								}), layoutCustomized && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									type: "button",
+									onClick: () => requestResetLayout(),
+									className: "shrink-0 inline-flex items-center gap-1 rounded-md border border-blue-300 bg-white px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 transition",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCcw, { size: 11 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Réinitialiser" })]
+								})]
 							})
-						]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex items-center gap-2",
-						children: [layoutCustomized && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-							type: "button",
-							onClick: () => requestResetLayout(),
-							className: "hidden lg:inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition",
-							title: "Réinitialiser la mise en page du modèle (avec confirmation)",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCcw, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Réinitialiser la mise en page" })]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "button",
-							onClick: () => setEditorMode("pro"),
-							className: "flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-slate-50 transition shadow-xs",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Modifier la mise en page" })
-						})]
-					})]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "flex-1 overflow-y-auto overflow-x-hidden p-6 flex justify-center items-start",
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						style: {
-							width: 571.68,
-							height: PAGE_H * .72
-						},
-						className: "simple-preview-frame shrink-0",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-							className: "simple-preview-sheet relative overflow-hidden rounded-sm bg-white shadow-2xl",
-							style: {
-								width: 794,
-								height: PAGE_H,
-								transform: "scale(0.72)",
-								transformOrigin: "top left"
-							},
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageSheet, {
-								page,
-								interactive: false,
-								selectedIds: [],
-								editingId: null,
-								showGrid: false,
-								showMargins: false,
-								guides: {
-									x: [],
-									y: []
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "min-h-0 flex-1 overflow-auto p-6 md:p-8 flex flex-col items-center",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "simple-preview-sheet flex flex-col items-center gap-8 transition-all origin-top scale-[0.68] sm:scale-[0.76] md:scale-[0.78] lg:scale-[0.86] xl:scale-[0.92]",
+								style: {
+									width: 794,
+									transformOrigin: "top center"
 								},
-								marquee: null
+								children: doc.pages.map((p, pageIdx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									"data-testid": `guided-page-${pageIdx + 1}`,
+									className: "flex flex-col items-center gap-2",
+									children: [doc.pages.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "w-full flex items-center justify-between px-1 text-xs font-bold text-slate-600",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+											"Page ",
+											pageIdx + 1,
+											" sur ",
+											doc.pages.length,
+											" — Format A4 (1123 px)"
+										] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "text-[11px] font-medium text-slate-500",
+											children: p.name
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "simple-preview-frame bg-white shadow-2xl rounded-sm relative cursor-pointer",
+										style: {
+											width: 794,
+											height: PAGE_H
+										},
+										onClick: (e) => {
+											const elId = (e.target?.closest?.("[data-element]"))?.getAttribute("data-element");
+											setActive(p.id);
+											if (!elId) return;
+											select([elId]);
+											const clickedEl = p.elements.find((item) => item.id === elId);
+											if (!clickedEl) return;
+											if (clickedEl.bind) {
+												if ([
+													"name",
+													"role",
+													"contact"
+												].includes(clickedEl.bind.kind)) setActiveSection("profile");
+												else if (clickedEl.bind.kind === "summary") setActiveSection("summary");
+												else if (clickedEl.bind.kind === "experience") setActiveSection("experience");
+												else if (clickedEl.bind.kind === "education") setActiveSection("education");
+												else if (clickedEl.bind.kind === "skills") setActiveSection("skills");
+												else if (clickedEl.bind.kind === "languages") setActiveSection("languages");
+												return;
+											}
+											const rawHeading = (clickedEl.content?.text || "").trim();
+											if (/formation|éducation|études|diplôme/i.test(rawHeading)) setActiveSection("education");
+											else if (/expérience|parcours/i.test(rawHeading)) setActiveSection("experience");
+											else if (/compétence|expertise|outil/i.test(rawHeading)) setActiveSection("skills");
+											else if (/langue/i.test(rawHeading)) setActiveSection("languages");
+											else if (/profil|résumé|propos/i.test(rawHeading)) setActiveSection("summary");
+											else if (/contact|coordonnées/i.test(rawHeading)) setActiveSection("profile");
+										},
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageSheet, {
+											page: p,
+											interactive: false,
+											selectedIds,
+											editingId: null,
+											showGrid: false,
+											showMargins: false,
+											guides: {
+												x: [],
+												y: []
+											},
+											marquee: null
+										})
+									})]
+								}, p.id))
 							})
 						})
-					})
+					]
 				})]
-			})]
-		})]
+			})
+		]
 	});
 }
 function CloudSyncModal({ isOpen, onClose }) {
@@ -11277,489 +13511,1402 @@ function MobileTouchEditor({ onSwitchToCanvas }) {
 		]
 	});
 }
-var SAMPLE_RAW_TEXT = `Jean-Baptiste Vasseur
-Consultant Senior Data & IA
-Paris, France • +33 6 42 18 90 12 • jb.vasseur@data-consulting.fr • linkedin.com/in/jb-vasseur
-
-À PROPOS
-Consultant avec 7 ans d'expérience dans le conseil stratégique en gouvernance de données et architecture cloud pour des clients CAC 40. Pilotage de programmes d'IA générative et de modernisation des entrepôts de données.
-
-EXPÉRIENCE PROFESSIONNELLE
-Senior Manager Data & Analytics
-Atos Consulting — Paris
-2021 — Aujourd'hui
-• Direction d'un pôle de 12 consultants sur 4 missions d'accélération Data Cloud (Snowflake, AWS).
-• Accroissement de 35% de la vélocité des livrables de reporting financier pour un groupe d'assurance.
-• Animation de comités de direction et cadrage d'appels d'offres stratégiques (budget 1,2 M€).
-
-Consultant Big Data & Business Intelligence
-Wavestone — Paris
-2018 — 2021
-• Conception de pipelines ETL en Python/Airflow traitant plus de 500k transactions par jour.
-• Modélisation de tableaux de bord Power BI utilisés quotidiennement par 150 décideurs.
-• Réduction de 40% des incidents de qualité de données grâce à des tests automatisés.
-
-FORMATION
-Master 2 Big Data & Systèmes Décisionnels
-Université Paris-Dauphine
-2016 — 2018
-
-Licence Mathématiques & Informatique
-Sorbonne Université
-2013 — 2016
-
-COMPÉTENCES
-Python, SQL Avancé, Snowflake, AWS, Databricks, Power BI, Dbt, Airflow, Docker, Conduite du changement
-
-LANGUES
-Français : Langue maternelle
-Anglais : Courant C1 (Score TOEIC 945)
-Espagnol : Intermédiaire B1`;
+var inputClass = "h-9 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs text-slate-900 outline-none focus:border-slate-900";
+var textareaClass = "w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs text-slate-900 outline-none focus:border-slate-900 resize-y";
 function CvExtractorModal() {
-	const open = useStudio((s) => s.extractorModalOpen);
+	const isOpen = useStudio((s) => s.extractorModalOpen);
 	const setOpen = useStudio((s) => s.setExtractorModalOpen);
+	const onboarding = useStudio((s) => s.onboarding);
+	const setOnboarding = useStudio((s) => s.setOnboarding);
 	const importExtractedProfile = useStudio((s) => s.importExtractedProfile);
-	const currentProfile = useStudio((s) => s.doc.profile);
-	const [activeTab, setActiveTab] = (0, import_react.useState)("file");
-	const [dragOver, setDragOver] = (0, import_react.useState)(false);
-	const [selectedFile, setSelectedFile] = (0, import_react.useState)(null);
+	const [step, setStep] = (0, import_react.useState)("upload");
+	const [inputTab, setInputTab] = (0, import_react.useState)("file");
 	const [rawText, setRawText] = (0, import_react.useState)("");
-	const [isProcessing, setIsProcessing] = (0, import_react.useState)(false);
-	const [result, setResult] = (0, import_react.useState)(null);
-	const [errorMsg, setErrorMsg] = (0, import_react.useState)(null);
-	const [selectedTemplate, setSelectedTemplate] = (0, import_react.useState)("modern");
-	const [showDetails, setShowDetails] = (0, import_react.useState)(false);
+	const [isLoading, setIsLoading] = (0, import_react.useState)(false);
+	const [errorState, setErrorState] = (0, import_react.useState)(null);
+	const [draft, setDraft] = (0, import_react.useState)(null);
+	const [editingProfile, setEditingProfile] = (0, import_react.useState)(false);
+	const [editingExpId, setEditingExpId] = (0, import_react.useState)(null);
+	const [editingEduId, setEditingEduId] = (0, import_react.useState)(null);
+	const [editingSkills, setEditingSkills] = (0, import_react.useState)(false);
+	const [editingLanguages, setEditingLanguages] = (0, import_react.useState)(false);
+	const [assigningBlockId, setAssigningBlockId] = (0, import_react.useState)(null);
+	const [templateFilter, setTemplateFilter] = (0, import_react.useState)("all");
+	const [showAllTemplates, setShowAllTemplates] = (0, import_react.useState)(false);
+	const [selectedTemplateId, setSelectedTemplateId] = (0, import_react.useState)("executive");
 	const fileInputRef = (0, import_react.useRef)(null);
-	(0, import_react.useEffect)(() => {
-		if (!open) setErrorMsg(null);
-	}, [open]);
-	if (!open) return null;
-	const handleProcessFile = async (file) => {
-		setSelectedFile(file);
-		setErrorMsg(null);
-		setIsProcessing(true);
-		try {
-			const res = await extractFromFile(file, currentProfile);
-			setResult(res);
-			setShowDetails(true);
-		} catch (err) {
-			console.error("Extraction error:", err);
-			const msg = err instanceof Error ? err.message : "Impossible de lire le fichier";
-			setErrorMsg(msg);
-			setResult(null);
-		} finally {
-			setIsProcessing(false);
-		}
+	const resetWizard = () => {
+		setStep("upload");
+		setInputTab("file");
+		setRawText("");
+		setIsLoading(false);
+		setErrorState(null);
+		setDraft(null);
+		setEditingProfile(false);
+		setEditingExpId(null);
+		setEditingEduId(null);
+		setEditingSkills(false);
+		setEditingLanguages(false);
+		setAssigningBlockId(null);
+		setTemplateFilter("all");
+		setShowAllTemplates(false);
 	};
-	const handleProcessText = (text) => {
-		setRawText(text);
-		setErrorMsg(null);
-		if (!text.trim()) {
-			setResult(null);
-			return;
-		}
-		setIsProcessing(true);
-		try {
-			const res = extractFromText(text, currentProfile);
-			setResult(res);
-			setShowDetails(true);
-		} catch (err) {
-			console.error("Text extraction error:", err);
-			const msg = err instanceof Error ? err.message : "Erreur lors de l'analyse du texte";
-			setErrorMsg(msg);
-			setResult(null);
-		} finally {
-			setIsProcessing(false);
-		}
-	};
-	const applyExtracted = (asNewPage = false) => {
-		if (!result) return;
-		importExtractedProfile(result.profile, selectedTemplate, asNewPage);
+	const handleClose = () => {
+		resetWizard();
 		setOpen(false);
 	};
+	const handleCreateWithAI = () => {
+		resetWizard();
+		setOpen(false);
+		setOnboarding(true);
+	};
+	const handleFileChange = async (file) => {
+		setIsLoading(true);
+		setErrorState(null);
+		try {
+			const res = await extractCVFromFile(file);
+			setDraft(res.draft);
+			setSelectedTemplateId(res.recommendedTemplate);
+			setStep("verify");
+		} catch (err) {
+			if (err instanceof CvImportError) setErrorState({
+				code: err.code,
+				message: err.message
+			});
+			else setErrorState({
+				code: "TECHNICAL_ERROR",
+				message: IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR
+			});
+		} finally {
+			setIsLoading(false);
+			if (fileInputRef.current) fileInputRef.current.value = "";
+		}
+	};
+	const handleAnalyzePastedText = async () => {
+		if (!rawText.trim()) {
+			setErrorState({
+				code: "NO_SECTION_DETECTED",
+				message: IMPORT_ERROR_MESSAGES.NO_SECTION_DETECTED
+			});
+			return;
+		}
+		setIsLoading(true);
+		setErrorState(null);
+		try {
+			const isLinkedIn = /linkedin|coordonnées|principales compétences|infos\n/i.test(rawText);
+			const res = await extractCVFromText(rawText, isLinkedIn ? "Profil LinkedIn (texte collé)" : "Texte collé");
+			setDraft(res.draft);
+			setSelectedTemplateId(res.recommendedTemplate);
+			setStep("verify");
+		} catch (err) {
+			if (err instanceof CvImportError) setErrorState({
+				code: err.code,
+				message: err.message
+			});
+			else setErrorState({
+				code: "TECHNICAL_ERROR",
+				message: IMPORT_ERROR_MESSAGES.TECHNICAL_ERROR
+			});
+		} finally {
+			setIsLoading(false);
+		}
+	};
+	const mappedProfile = (0, import_react.useMemo)(() => draft ? draftToProfile(draft) : null, [draft]);
+	const recommendedTemplates = (0, import_react.useMemo)(() => draft ? getRecommendedTemplates(draft) : [], [draft]);
+	const filteredAllTemplates = (0, import_react.useMemo)(() => filterTemplatesForImport(templateFilter), [templateFilter]);
+	const handleSelectTemplateToUse = (tplId) => {
+		setSelectedTemplateId(tplId);
+		if (!onboarding) setStep("confirm-replace");
+		else finalizeImport(tplId);
+	};
+	const finalizeImport = (tplId) => {
+		if (!mappedProfile) return;
+		importExtractedProfile(mappedProfile, tplId, false);
+		resetWizard();
+	};
+	if (!isOpen) return null;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "no-print fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-5 backdrop-blur-xs",
+		className: "no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-5 backdrop-blur-xs animate-in fade-in",
+		onClick: handleClose,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "relative flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl border border-line bg-sheet text-ink shadow-2xl overflow-hidden",
+			role: "dialog",
+			"aria-modal": "true",
+			"aria-label": "Importer mon CV",
+			"data-testid": "cv-import-modal",
+			className: "flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl",
+			onClick: (e) => e.stopPropagation(),
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex items-center justify-between border-b border-line bg-paper px-5 py-4",
+					className: "flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3.5",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "flex items-center gap-3",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "flex size-9 items-center justify-center rounded-xl bg-signal font-bold text-signal-ink shadow-xs",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { size: 18 })
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex items-center gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-								className: "font-display text-base font-bold tracking-tight",
-								children: "Importateur & Extracteur de CV"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-700",
-								children: "CV_extractor 2026"
-							})]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "text-xs text-mute",
-							children: "Importez votre CV existant : extraction automatique des expériences, formations, compétences et coordonnées."
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex size-9 items-center justify-center rounded-xl bg-slate-900 text-white",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileUp, { size: 18 })
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h2", {
+							className: "font-display text-base font-bold text-slate-900",
+							children: [
+								step === "upload" && "Importer mon CV",
+								step === "verify" && "Vérifie les informations détectées",
+								step === "template" && "Choisis un point de départ",
+								step === "confirm-replace" && "Remplacer le CV actuel ?"
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-xs text-slate-500",
+							children: [
+								step === "upload" && "Importe un fichier PDF, Word (.docx) ou TXT (jusqu'à 10 Mo), ou colle ton texte / profil LinkedIn.",
+								step === "verify" && "Vérifie et corrige les sections extraites avant de générer ton CV éditable.",
+								step === "template" && "Ton contenu importé est conservé quel que soit le modèle choisi.",
+								step === "confirm-replace" && "Confirmation requise avant de remplacer le document ouvert."
+							]
 						})] })]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						type: "button",
-						onClick: () => setOpen(false),
+						onClick: handleClose,
 						"aria-label": "Fermer",
-						className: "flex size-8 items-center justify-center rounded-lg border border-line bg-sheet text-mute hover:bg-line/40 hover:text-ink transition",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { size: 16 })
+						className: "rounded-lg p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { size: 18 })
 					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex flex-wrap items-center gap-1.5 border-b border-line bg-cream/50 px-5 py-2 text-[11px] text-mute",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "font-semibold text-ink",
-						children: "Formats reconnus :"
-					}), [
-						"PDF (texte)",
-						"Word .DOCX",
-						"OpenDocument .ODT",
-						"RTF",
-						"HTML",
-						"TXT brut"
-					].map((fmt) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "rounded-md border border-line/70 bg-sheet px-1.5 py-0.5 font-mono text-[10px] text-ink",
-						children: fmt
-					}, fmt))]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex border-b border-line bg-paper text-xs font-semibold",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: () => setActiveTab("file"),
-						className: cn("flex flex-1 items-center justify-center gap-2 border-b-2 py-3 transition", activeTab === "file" ? "border-blue-600 bg-sheet text-blue-700" : "border-transparent text-mute hover:text-ink"),
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Upload, { size: 14 }), "Fichier (PDF, Word, ODT, TXT)"]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: () => setActiveTab("text"),
-						className: cn("flex flex-1 items-center justify-center gap-2 border-b-2 py-3 transition", activeTab === "text" ? "border-blue-600 bg-sheet text-blue-700" : "border-transparent text-mute hover:text-ink"),
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, { size: 14 }), "Copier-Coller le texte brut"]
-					})]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex-1 overflow-y-auto p-5 space-y-4",
+					className: "flex-1 overflow-y-auto p-5 sm:p-6",
 					children: [
-						activeTab === "file" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "space-y-3",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								onDragOver: (e) => {
-									e.preventDefault();
-									setDragOver(true);
-								},
-								onDragLeave: () => setDragOver(false),
-								onDrop: (e) => {
-									e.preventDefault();
-									setDragOver(false);
-									const file = e.dataTransfer.files?.[0];
-									if (file) handleProcessFile(file);
-								},
-								onClick: () => fileInputRef.current?.click(),
-								className: cn("flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all", dragOver ? "border-blue-600 bg-signal/5 scale-[0.99]" : "border-line bg-sheet hover:border-blue-600/50 hover:bg-cream/40"),
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-										ref: fileInputRef,
-										type: "file",
-										accept: ".pdf,.docx,.odt,.rtf,.html,.htm,.txt",
-										className: "hidden",
-										onChange: (e) => {
-											const f = e.target.files?.[0];
-											if (f) handleProcessFile(f);
-											e.target.value = "";
-										}
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "flex size-12 items-center justify-center rounded-2xl bg-signal/10 text-blue-700 mb-2",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Upload, { size: 24 })
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-										className: "text-sm font-bold text-ink",
-										children: ["Glissez-déposez votre CV ici, ou ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "text-blue-700 underline",
-											children: "cliquez pour parcourir"
-										})]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "mt-1 text-xs text-mute",
-										children: "Sélectionnez un document PDF, DOCX, ODT ou TXT (jusqu'à 12 Mo)."
-									})
-								]
-							}), selectedFile && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex items-center justify-between rounded-xl border border-line bg-paper px-3.5 py-2 text-xs",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-center gap-2 min-w-0",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileType, {
-											size: 16,
-											className: "text-blue-700 shrink-0"
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "font-semibold text-ink truncate",
-											children: selectedFile.name
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-											className: "text-[10px] text-mute font-mono",
-											children: [
-												"(",
-												(selectedFile.size / 1024).toFixed(1),
-												" Ko)"
-											]
-										})
-									]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: (e) => {
-										e.stopPropagation();
-										handleProcessFile(selectedFile);
-									},
-									disabled: isProcessing,
-									className: "flex items-center gap-1 font-semibold text-blue-700 hover:underline disabled:opacity-50",
-									children: "Ré-analyser"
-								})]
-							})]
-						}),
-						activeTab === "text" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "space-y-3",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex items-center justify-between",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-									className: "text-xs font-semibold text-ink",
-									children: "Texte brut de votre CV ou profil LinkedIn :"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: () => handleProcessText(SAMPLE_RAW_TEXT),
-									className: "text-xs font-semibold text-blue-700 hover:underline",
-									children: "Charger un exemple type →"
-								})]
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-								value: rawText,
-								onChange: (e) => handleProcessText(e.target.value),
-								rows: 7,
-								placeholder: "Collez ici le texte brut de votre CV ou résumé LinkedIn...",
-								className: "w-full resize-none rounded-xl border border-line bg-sheet p-3 font-mono text-xs leading-relaxed text-ink outline-none focus:border-blue-600"
-							})]
-						}),
-						isProcessing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex items-center justify-center gap-3 rounded-xl border border-blue-600/20 bg-signal/5 p-4 text-xs font-semibold text-blue-700",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, {
-								size: 16,
-								className: "animate-spin"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Extraction intelligente des entités en cours..." })]
-						}),
-						errorMsg && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-700",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, {
-								size: 16,
-								className: "shrink-0 mt-0.5 text-red-600"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "font-bold",
-								children: "Erreur de lecture"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: errorMsg })] })]
-						}),
-						result && !isProcessing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "space-y-4 rounded-xl border border-line bg-paper p-4",
+						step === "upload" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mx-auto max-w-2xl space-y-5",
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-center justify-between",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "flex items-center gap-2",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, {
-											size: 18,
-											className: "text-emerald-600"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "font-display text-sm font-bold text-ink",
-											children: "Données extraites avec succès"
-										})]
+									className: "flex rounded-xl border border-slate-200 bg-slate-100 p-1",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+										type: "button",
+										"data-testid": "import-tab-file",
+										onClick: () => {
+											setInputTab("file");
+											setErrorState(null);
+										},
+										className: cn("flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition", inputTab === "file" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"),
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileUp, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Fichier PDF, DOCX ou TXT" })]
 									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "button",
-										onClick: () => setShowDetails(!showDetails),
-										className: "flex items-center gap-1 text-xs font-semibold text-mute hover:text-ink",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: showDetails ? "Masquer détails" : "Voir détails" }), showDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronUp, { size: 14 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronDown, { size: 14 })]
+										"data-testid": "import-tab-paste",
+										onClick: () => {
+											setInputTab("paste");
+											setErrorState(null);
+										},
+										className: cn("flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition", inputTab === "paste" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"),
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ClipboardPaste, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Coller mon texte / LinkedIn" })]
+									})]
+								}),
+								errorState && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									role: "alert",
+									"data-testid": "import-error-banner",
+									className: "rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 space-y-3",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-start gap-2.5",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, {
+											size: 18,
+											className: "mt-0.5 shrink-0 text-amber-600"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "space-y-1 text-xs",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "font-bold text-sm",
+												"data-testid": "import-error-message",
+												children: errorState.message
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-amber-800",
+												children: "Aucune donnée n’a été inventée ni écrasée. Choisis l’une des options ci-dessous pour continuer :"
+											})]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex flex-wrap items-center gap-2 pl-7",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+												type: "button",
+												"data-testid": "error-action-paste",
+												onClick: () => {
+													setErrorState(null);
+													setInputTab("paste");
+												},
+												className: "rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition",
+												children: "Coller mon texte"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+												type: "button",
+												"data-testid": "error-action-ai",
+												onClick: handleCreateWithAI,
+												className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-slate-100 transition",
+												children: "Créer avec l’IA"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+												type: "button",
+												"data-testid": "error-action-other-file",
+												onClick: () => {
+													setErrorState(null);
+													setInputTab("file");
+													fileInputRef.current?.click();
+												},
+												className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition",
+												children: "Choisir un autre fichier"
+											})
+										]
+									})]
+								}),
+								inputTab === "file" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									onDragOver: (e) => e.preventDefault(),
+									onDrop: (e) => {
+										e.preventDefault();
+										const file = e.dataTransfer.files?.[0];
+										if (file) handleFileChange(file);
+									},
+									onClick: () => !isLoading && fileInputRef.current?.click(),
+									"data-testid": "import-dropzone",
+									className: cn("flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition", isLoading ? "border-slate-300 bg-slate-50 cursor-wait" : "border-slate-300 bg-slate-50/70 hover:border-slate-900 hover:bg-slate-50"),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+										ref: fileInputRef,
+										type: "file",
+										"data-testid": "import-file-input",
+										accept: ".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain",
+										className: "hidden",
+										onChange: (e) => {
+											const file = e.target.files?.[0];
+											if (file) handleFileChange(file);
+										}
+									}), isLoading ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex flex-col items-center gap-3 py-4",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, {
+												size: 32,
+												className: "animate-spin text-slate-900"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-sm font-bold text-slate-900",
+												children: "Extraction et détection des sections en cours…"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-xs text-slate-500",
+												children: "Analyse locale du document sans inventer de contenu"
+											})
+										]
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "mb-3 flex size-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileUp, { size: 24 })
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-sm font-bold text-slate-900",
+											children: "Clique pour choisir un fichier ou glisse ton CV ici"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+											className: "mt-1 text-xs text-slate-500",
+											children: [
+												"Formats acceptés : ",
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "PDF" }),
+												" (texte sélectionnable ou export LinkedIn),",
+												" ",
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Word (.docx)" }),
+												", ",
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "TXT" }),
+												" · Max ",
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "10 Mo" })
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "mt-4 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white",
+											children: "Sélectionner mon fichier"
+										})
+									] })]
+								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-3",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center justify-between",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+												htmlFor: "cv-paste-textarea",
+												className: "text-xs font-bold text-slate-700",
+												children: "Colle le texte de ton CV ou de ton profil LinkedIn :"
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-[11px] text-slate-500",
+												children: "Sections FR / EN détectées automatiquement"
+											})]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+											id: "cv-paste-textarea",
+											"data-testid": "import-paste-textarea",
+											value: rawText,
+											onChange: (e) => setRawText(e.target.value),
+											placeholder: `Exemple :\nCamille Laurent\nProduct Manager\ncamille.laurent@email.fr | +33 6 12 34 56 78 | Paris\n\nProfil\nProduct Manager avec 6 ans d'expérience...\n\nExpériences professionnelles\nSenior Product Manager — Doctolib\n2022 - Présent | Paris\n• Pilotage de la roadmap patient...`,
+											className: "h-60 w-full rounded-xl border border-slate-300 bg-slate-50 p-3.5 font-mono text-xs text-slate-900 outline-none focus:border-slate-900 focus:bg-white"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "flex justify-end",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+												type: "button",
+												"data-testid": "import-analyze-text-btn",
+												disabled: isLoading,
+												onClick: handleAnalyzePastedText,
+												className: "inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 transition",
+												children: [isLoading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, {
+													size: 14,
+													className: "animate-spin"
+												}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Détecter les sections" })]
+											})
+										})
+									]
+								})
+							]
+						}),
+						step === "verify" && draft && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "space-y-5",
+							"data-testid": "mapping-verification-screen",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center gap-2.5",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, {
+											size: 16,
+											className: "text-slate-700"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "text-xs font-bold text-slate-900",
+											"data-testid": "imported-filename",
+											children: ["Fichier importé : ", draft.filename]
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "flex flex-wrap items-center gap-1.5",
+										children: draft.detectedSections.map((sec) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-900",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, { size: 11 }),
+												" ",
+												sec
+											]
+										}, sec))
+									})]
+								}),
+								draft.partialDetection && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									role: "status",
+									"data-testid": "partial-extraction-banner",
+									className: "flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-950",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, {
+										size: 16,
+										className: "mt-0.5 shrink-0 text-amber-600"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "font-bold",
+										children: IMPORT_ERROR_MESSAGES.PARTIAL_EXTRACTION
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-0.5 text-amber-800",
+										children: "Les champs non trouvés ont été laissés vides sans inventer d’information."
+									})] })]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3",
+									"data-testid": "mapping-section-profile",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center gap-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(User, {
+												size: 15,
+												className: "text-slate-700"
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+												className: "text-xs font-bold uppercase tracking-wider text-slate-800",
+												children: "Profil"
+											})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											"data-testid": "profile-edit-toggle",
+											onClick: () => setEditingProfile((v) => !v),
+											className: "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pencil, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: editingProfile ? "Terminer" : "Modifier" })]
+										})]
+									}), editingProfile ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "grid grid-cols-1 gap-2.5 sm:grid-cols-2",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Nom complet"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													"data-testid": "mapping-profile-name-input",
+													className: inputClass,
+													value: draft.profile.name,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															name: e.target.value
+														}
+													}),
+													placeholder: "Nom et prénom"
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Titre / Poste"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													"data-testid": "mapping-profile-role-input",
+													className: inputClass,
+													value: draft.profile.role,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															role: e.target.value
+														}
+													}),
+													placeholder: "Intitulé de poste"
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Email"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													"data-testid": "mapping-profile-email-input",
+													className: inputClass,
+													value: draft.profile.email,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															email: e.target.value
+														}
+													}),
+													placeholder: "email@domaine.com"
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Téléphone"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													"data-testid": "mapping-profile-phone-input",
+													className: inputClass,
+													value: draft.profile.phone,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															phone: e.target.value
+														}
+													}),
+													placeholder: "+33 6 ..."
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Localisation"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													className: inputClass,
+													value: draft.profile.location,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															location: e.target.value
+														}
+													}),
+													placeholder: "Ville, Pays"
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Lien / Portfolio / LinkedIn"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+													className: inputClass,
+													value: draft.profile.link,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															link: e.target.value
+														}
+													}),
+													placeholder: "linkedin.com/in/..."
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+												className: "space-y-1 sm:col-span-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-600",
+													children: "Résumé / Accroche"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+													rows: 3,
+													"data-testid": "mapping-profile-summary-input",
+													className: textareaClass,
+													value: draft.profile.summary,
+													onChange: (e) => setDraft({
+														...draft,
+														profile: {
+															...draft.profile,
+															summary: e.target.value
+														}
+													}),
+													placeholder: "Résumé professionnel..."
+												})]
+											})
+										]
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "grid grid-cols-1 gap-2 text-xs sm:grid-cols-2",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-slate-500",
+												children: "Nom : "
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
+												className: "text-slate-900",
+												"data-testid": "mapping-profile-name",
+												children: draft.profile.name || /* @__PURE__ */ (0, import_jsx_runtime.jsx)("em", {
+													className: "text-amber-700 font-normal",
+													children: "Non détecté (vide)"
+												})
+											})] }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-slate-500",
+												children: "Titre : "
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
+												className: "text-slate-900",
+												"data-testid": "mapping-profile-role",
+												children: draft.profile.role || /* @__PURE__ */ (0, import_jsx_runtime.jsx)("em", {
+													className: "text-amber-700 font-normal",
+													children: "Non détecté (vide)"
+												})
+											})] }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-slate-500",
+												children: "Email : "
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-slate-900",
+												children: draft.profile.email || "—"
+											})] }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-slate-500",
+												children: "Téléphone : "
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "text-slate-900",
+												children: draft.profile.phone || "—"
+											})] }),
+											draft.profile.summary && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												className: "sm:col-span-2 text-slate-600 line-clamp-2 border-t border-slate-100 pt-1.5",
+												children: draft.profile.summary
+											})
+										]
 									})]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "rounded-xl border border-line bg-sheet p-3 space-y-2",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "flex flex-wrap items-baseline justify-between gap-1",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h4", {
-												className: "font-display text-base font-bold text-ink",
-												children: result.profile.name
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-												className: "text-xs font-semibold text-blue-700",
-												children: result.profile.role
-											})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "flex flex-wrap gap-1 text-[11px] text-mute",
-												children: [
-													result.profile.email && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["✉ ", result.profile.email] }),
-													result.profile.phone && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["• ☎ ", result.profile.phone] }),
-													result.profile.location && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["• 📍 ", result.profile.location] })
-												]
-											})]
-										}),
-										result.profile.summary && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-											className: "text-xs text-mute line-clamp-2 italic",
-											children: [
-												"\"",
-												result.profile.summary,
-												"\""
-											]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-line/60",
-											children: [
-												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "flex items-center gap-2 rounded-lg bg-paper p-2 text-xs",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Briefcase, {
-														size: 14,
-														className: "text-blue-700"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "font-bold text-ink",
-														children: result.stats.experiencesCount
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "text-[10px] text-mute",
-														children: "Expériences"
-													})] })]
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "flex items-center gap-2 rounded-lg bg-paper p-2 text-xs",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GraduationCap, {
-														size: 14,
-														className: "text-blue-700"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "font-bold text-ink",
-														children: result.stats.educationsCount
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "text-[10px] text-mute",
-														children: "Formations"
-													})] })]
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "flex items-center gap-2 rounded-lg bg-paper p-2 text-xs",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tags, {
-														size: 14,
-														className: "text-blue-700"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "font-bold text-ink",
-														children: result.stats.skillsCount
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "text-[10px] text-mute",
-														children: "Compétences"
-													})] })]
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "flex items-center gap-2 rounded-lg bg-paper p-2 text-xs",
-													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Languages, {
-														size: 14,
-														className: "text-blue-700"
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "font-bold text-ink",
-														children: result.stats.languagesCount
-													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "text-[10px] text-mute",
-														children: "Langues"
-													})] })]
-												})
-											]
-										})
-									]
-								}),
-								showDetails && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "space-y-3 pt-2 text-xs",
-									children: [
-										result.profile.experiences.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "font-bold text-ink mb-1",
-											children: "Expériences détectées :"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "space-y-1.5 max-h-36 overflow-y-auto pr-1",
-											children: result.profile.experiences.map((exp, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "rounded-lg border border-line bg-sheet p-2",
-												children: [
-													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-														className: "flex justify-between font-semibold text-ink",
-														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: exp.role }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-															className: "text-[10px] text-mute font-mono",
-															children: exp.date
-														})]
-													}),
-													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "text-[11px] text-mute",
-														children: exp.company
-													}),
-													exp.desc && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-														className: "text-[10px] text-mute/80 line-clamp-2 mt-0.5",
-														children: exp.desc
-													})
-												]
-											}, i))
-										})] }),
-										result.profile.educations.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "font-bold text-ink mb-1",
-											children: "Formations & Diplômes :"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "space-y-1.5 max-h-28 overflow-y-auto pr-1",
-											children: result.profile.educations.map((edu, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "rounded-lg border border-line bg-sheet p-2 flex justify-between",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "font-semibold text-ink",
-													children: edu.degree
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "text-[10px] text-mute",
-													children: edu.school
-												})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-[10px] text-mute font-mono",
-													children: edu.date
-												})]
-											}, i))
-										})] }),
-										result.profile.skills.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "font-bold text-ink mb-1",
-											children: "Compétences extraites :"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "flex flex-wrap gap-1",
-											children: result.profile.skills.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "rounded-md border border-line bg-sheet px-2 py-0.5 text-[11px] font-medium text-ink",
-												children: s
-											}, i))
-										})] }),
-										result.warnings.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "rounded-lg border border-amber-500/20 bg-amber-500/5 p-2 text-[11px] text-amber-800 space-y-1",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-												className: "font-bold flex items-center gap-1",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, { size: 12 }), "Observations :"]
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-												className: "list-disc pl-4 space-y-0.5",
-												children: result.warnings.map((w, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: w }, idx))
-											})]
-										})
-									]
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "pt-2 border-t border-line space-y-2",
+									className: "rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3",
+									"data-testid": "mapping-section-experiences",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 										className: "flex items-center justify-between",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "text-xs font-bold text-ink",
-											children: "Choisir la mise en page de destination :"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "text-[11px] text-mute",
-											children: "Format A4 Haute Définition"
-										})]
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-										className: "grid grid-cols-3 sm:grid-cols-6 gap-1.5",
-										children: TEMPLATES.map((tpl) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center gap-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Briefcase, {
+												size: 15,
+												className: "text-slate-700"
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+												className: "text-xs font-bold uppercase tracking-wider text-slate-800",
+												children: ["Expériences détectées : ", draft.experiences.length]
+											})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 											type: "button",
-											onClick: () => setSelectedTemplate(tpl.id),
-											className: cn("rounded-xl border p-2 text-center transition", selectedTemplate === tpl.id ? "border-blue-600 bg-signal/10 font-bold text-blue-700 shadow-xs" : "border-line bg-sheet text-mute hover:border-ink hover:text-ink"),
-											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-												className: "text-xs font-semibold leading-tight",
-												children: tpl.name
-											})
-										}, tpl.id))
+											onClick: () => {
+												const newId = `exp-manual-${Date.now()}`;
+												setDraft({
+													...draft,
+													experiences: [...draft.experiences, {
+														id: newId,
+														role: "",
+														company: "",
+														date: "",
+														location: "",
+														desc: "",
+														needsReview: true,
+														dateNeedsReview: true,
+														reviewReason: "ajout manuel"
+													}]
+												});
+												setEditingExpId(newId);
+											},
+											className: "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ajouter" })]
+										})]
+									}), draft.experiences.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "text-xs italic text-slate-500",
+										children: "Aucune expérience détectée. Tu peux en ajouter une ou attribuer un bloc ci-dessous."
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "space-y-2.5",
+										children: draft.experiences.map((exp, idx) => {
+											const isEditing = editingExpId === exp.id;
+											return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												"data-testid": `mapping-exp-item-${idx}`,
+												className: "rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex flex-wrap items-start justify-between gap-2",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "space-y-0.5",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+															className: "flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-900",
+															children: [
+																/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+																	idx + 1,
+																	". ",
+																	exp.role || "Poste non précisé",
+																	exp.company ? ` — ${exp.company}` : "",
+																	exp.date ? ` (${exp.date})` : ""
+																] }),
+																exp.needsReview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																	className: "rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900",
+																	children: "À vérifier"
+																}),
+																exp.dateNeedsReview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																	className: "rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800",
+																	children: "Dates à vérifier"
+																})
+															]
+														}), exp.desc && !isEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+															className: "text-[11px] text-slate-600 line-clamp-2 whitespace-pre-line",
+															children: exp.desc
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex items-center gap-1.5",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															"data-testid": `mapping-exp-edit-${idx}`,
+															onClick: () => setEditingExpId(isEditing ? null : exp.id),
+															className: "rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100",
+															children: isEditing ? "Terminer" : "Modifier"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															"data-testid": `mapping-exp-delete-${idx}`,
+															onClick: () => setDraft({
+																...draft,
+																experiences: draft.experiences.filter((e) => e.id !== exp.id)
+															}),
+															className: "rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50",
+															children: "Supprimer"
+														})]
+													})]
+												}), isEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "grid grid-cols-1 gap-2 pt-2 border-t border-slate-200 sm:grid-cols-2",
+													children: [
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Poste / Rôle"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																"data-testid": `mapping-exp-role-input-${idx}`,
+																className: inputClass,
+																value: exp.role,
+																onChange: (e) => {
+																	const next = [...draft.experiences];
+																	next[idx] = {
+																		...exp,
+																		role: e.target.value,
+																		needsReview: !e.target.value.trim() || !exp.company.trim()
+																	};
+																	setDraft({
+																		...draft,
+																		experiences: next
+																	});
+																}
+															})]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Entreprise"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																"data-testid": `mapping-exp-company-input-${idx}`,
+																className: inputClass,
+																value: exp.company,
+																onChange: (e) => {
+																	const next = [...draft.experiences];
+																	next[idx] = {
+																		...exp,
+																		company: e.target.value,
+																		needsReview: !exp.role.trim() || !e.target.value.trim()
+																	};
+																	setDraft({
+																		...draft,
+																		experiences: next
+																	});
+																}
+															})]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Dates"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																"data-testid": `mapping-exp-date-input-${idx}`,
+																className: inputClass,
+																value: exp.date,
+																onChange: (e) => {
+																	const next = [...draft.experiences];
+																	next[idx] = {
+																		...exp,
+																		date: e.target.value,
+																		dateNeedsReview: !e.target.value.trim()
+																	};
+																	setDraft({
+																		...draft,
+																		experiences: next
+																	});
+																}
+															})]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Lieu"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																className: inputClass,
+																value: exp.location,
+																onChange: (e) => {
+																	const next = [...draft.experiences];
+																	next[idx] = {
+																		...exp,
+																		location: e.target.value
+																	};
+																	setDraft({
+																		...draft,
+																		experiences: next
+																	});
+																}
+															})]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1 sm:col-span-2",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Description / Réalisations"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+																rows: 3,
+																"data-testid": `mapping-exp-desc-input-${idx}`,
+																className: textareaClass,
+																value: exp.desc,
+																onChange: (e) => {
+																	const next = [...draft.experiences];
+																	next[idx] = {
+																		...exp,
+																		desc: e.target.value
+																	};
+																	setDraft({
+																		...draft,
+																		experiences: next
+																	});
+																}
+															})]
+														})
+													]
+												})]
+											}, exp.id);
+										})
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3",
+									"data-testid": "mapping-section-educations",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-center justify-between",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center gap-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GraduationCap, {
+												size: 15,
+												className: "text-slate-700"
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+												className: "text-xs font-bold uppercase tracking-wider text-slate-800",
+												children: ["Formations détectées : ", draft.educations.length]
+											})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											onClick: () => {
+												const newId = `edu-manual-${Date.now()}`;
+												setDraft({
+													...draft,
+													educations: [...draft.educations, {
+														id: newId,
+														degree: "",
+														school: "",
+														date: "",
+														location: "",
+														needsReview: true,
+														dateNeedsReview: true
+													}]
+												});
+												setEditingEduId(newId);
+											},
+											className: "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Ajouter" })]
+										})]
+									}), draft.educations.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "text-xs italic text-slate-500",
+										children: "Aucune formation détectée."
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "space-y-2",
+										children: draft.educations.map((edu, idx) => {
+											const isEditing = editingEduId === edu.id;
+											return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												"data-testid": `mapping-edu-item-${idx}`,
+												className: "rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex flex-wrap items-center justify-between gap-2",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-900",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+															idx + 1,
+															". ",
+															edu.degree || "Diplôme à préciser",
+															edu.school ? ` — ${edu.school}` : "",
+															edu.date ? ` (${edu.date})` : ""
+														] }), edu.needsReview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900",
+															children: "À vérifier"
+														})]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex items-center gap-1.5",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															"data-testid": `mapping-edu-edit-${idx}`,
+															onClick: () => setEditingEduId(isEditing ? null : edu.id),
+															className: "rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100",
+															children: isEditing ? "Terminer" : "Modifier"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															"data-testid": `mapping-edu-delete-${idx}`,
+															onClick: () => setDraft({
+																...draft,
+																educations: draft.educations.filter((e) => e.id !== edu.id)
+															}),
+															className: "rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50",
+															children: "Supprimer"
+														})]
+													})]
+												}), isEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "grid grid-cols-1 gap-2 pt-2 border-t border-slate-200 sm:grid-cols-3",
+													children: [
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Diplôme"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																"data-testid": `mapping-edu-degree-input-${idx}`,
+																className: inputClass,
+																value: edu.degree,
+																onChange: (e) => {
+																	const next = [...draft.educations];
+																	next[idx] = {
+																		...edu,
+																		degree: e.target.value,
+																		needsReview: false
+																	};
+																	setDraft({
+																		...draft,
+																		educations: next
+																	});
+																}
+															})]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Établissement"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																"data-testid": `mapping-edu-school-input-${idx}`,
+																className: inputClass,
+																value: edu.school,
+																onChange: (e) => {
+																	const next = [...draft.educations];
+																	next[idx] = {
+																		...edu,
+																		school: e.target.value,
+																		needsReview: false
+																	};
+																	setDraft({
+																		...draft,
+																		educations: next
+																	});
+																}
+															})]
+														}),
+														/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+															className: "space-y-1",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																className: "text-[11px] font-semibold text-slate-600",
+																children: "Dates"
+															}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+																className: inputClass,
+																value: edu.date,
+																onChange: (e) => {
+																	const next = [...draft.educations];
+																	next[idx] = {
+																		...edu,
+																		date: e.target.value,
+																		dateNeedsReview: false
+																	};
+																	setDraft({
+																		...draft,
+																		educations: next
+																	});
+																}
+															})]
+														})
+													]
+												})]
+											}, edu.id);
+										})
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "grid grid-cols-1 gap-4 sm:grid-cols-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3",
+										"data-testid": "mapping-section-skills",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center justify-between",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Wrench, {
+													size: 15,
+													className: "text-slate-700"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+													className: "text-xs font-bold uppercase tracking-wider text-slate-800",
+													children: ["Compétences détectées : ", draft.skills.length]
+												})]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+												type: "button",
+												"data-testid": "skills-edit-toggle",
+												onClick: () => setEditingSkills((v) => !v),
+												className: "rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+												children: editingSkills ? "Terminer" : "Modifier"
+											})]
+										}), editingSkills ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+											rows: 3,
+											"data-testid": "mapping-skills-textarea",
+											className: textareaClass,
+											value: draft.skills.join(", "),
+											onChange: (e) => setDraft({
+												...draft,
+												skills: e.target.value.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean)
+											}),
+											placeholder: "Sépare les compétences par une virgule..."
+										}) : draft.skills.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-xs italic text-slate-500",
+											children: "Aucune compétence détectée."
+										}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "flex flex-wrap gap-1.5",
+											children: draft.skills.map((skill, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800",
+												children: skill
+											}, `${skill}-${idx}`))
+										})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3",
+										"data-testid": "mapping-section-languages",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center justify-between",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Languages, {
+													size: 15,
+													className: "text-slate-700"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+													className: "text-xs font-bold uppercase tracking-wider text-slate-800",
+													children: ["Langues détectées : ", draft.languages.length]
+												})]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+												type: "button",
+												"data-testid": "languages-edit-toggle",
+												onClick: () => setEditingLanguages((v) => !v),
+												className: "rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+												children: editingLanguages ? "Terminer" : "Modifier"
+											})]
+										}), editingLanguages ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "space-y-2",
+											children: [draft.languages.map((lang, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-2",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: inputClass,
+														value: lang.name,
+														onChange: (e) => {
+															const next = [...draft.languages];
+															next[idx] = {
+																...lang,
+																name: e.target.value
+															};
+															setDraft({
+																...draft,
+																languages: next
+															});
+														},
+														placeholder: "Langue"
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														className: inputClass,
+														value: lang.level,
+														onChange: (e) => {
+															const next = [...draft.languages];
+															next[idx] = {
+																...lang,
+																level: e.target.value
+															};
+															setDraft({
+																...draft,
+																languages: next
+															});
+														},
+														placeholder: "Niveau"
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+														type: "button",
+														onClick: () => setDraft({
+															...draft,
+															languages: draft.languages.filter((l) => l.id !== lang.id)
+														}),
+														className: "p-1 text-red-600 hover:bg-red-50 rounded",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trash2, { size: 13 })
+													})
+												]
+											}, lang.id)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+												type: "button",
+												onClick: () => setDraft({
+													...draft,
+													languages: [...draft.languages, {
+														id: `lang-${Date.now()}`,
+														name: "Nouvelle langue",
+														level: "Courant",
+														pct: 80
+													}]
+												}),
+												className: "text-xs font-semibold text-slate-700 underline",
+												children: "+ Ajouter une langue"
+											})]
+										}) : draft.languages.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "text-xs italic text-slate-500",
+											children: "Aucune langue détectée."
+										}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "flex flex-wrap gap-1.5",
+											children: draft.languages.map((lang) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+												className: "rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800",
+												children: [
+													lang.name,
+													" (",
+													lang.level,
+													")"
+												]
+											}, lang.id))
+										})]
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3",
+									"data-testid": "mapping-section-unrecognized",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "flex items-center justify-between",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center gap-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleHelp, {
+												size: 15,
+												className: "text-amber-700"
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+												className: "text-xs font-bold uppercase tracking-wider text-amber-950",
+												children: [
+													"Contenu non reconnu : ",
+													draft.unrecognizedBlocks.length,
+													" bloc(s)"
+												]
+											})]
+										})
+									}), draft.unrecognizedBlocks.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "text-xs text-slate-600",
+										children: "Aucun bloc non reconnu — tout le texte a été associé à une section."
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "space-y-2.5",
+										children: draft.unrecognizedBlocks.map((block, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											"data-testid": `unrecognized-block-${idx}`,
+											className: "rounded-lg border border-amber-200 bg-white p-3 space-y-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex flex-wrap items-start justify-between gap-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-xs font-bold text-slate-900",
+													children: block.heading
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+													className: "mt-1 text-xs text-slate-700 whitespace-pre-line",
+													children: block.text
+												})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex flex-wrap items-center gap-1.5",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+														type: "button",
+														"data-testid": `unrecognized-assign-btn-${idx}`,
+														onClick: () => setAssigningBlockId(assigningBlockId === block.id ? null : block.id),
+														className: "inline-flex items-center gap-1 rounded-md border border-slate-300 bg-slate-900 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-slate-800",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FolderPlus, { size: 12 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Attribuer à une section" })]
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+														type: "button",
+														"data-testid": `unrecognized-ignore-btn-${idx}`,
+														onClick: () => setDraft(ignoreUnrecognizedBlock(draft, block.id)),
+														className: "rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-200",
+														children: "Ignorer"
+													})]
+												})]
+											}), assigningBlockId === block.id && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												"data-testid": `unrecognized-assign-targets-${idx}`,
+												className: "flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] font-semibold text-slate-500",
+													children: "Choisir la section cible :"
+												}), [
+													{
+														id: "profile",
+														label: "Profil"
+													},
+													{
+														id: "experience",
+														label: "Expériences"
+													},
+													{
+														id: "education",
+														label: "Formations"
+													},
+													{
+														id: "skills",
+														label: "Compétences"
+													},
+													{
+														id: "languages",
+														label: "Langues"
+													}
+												].map((target) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+													type: "button",
+													"data-testid": `assign-target-${target.id}-${idx}`,
+													onClick: () => {
+														setDraft(assignUnrecognizedBlock(draft, block.id, target.id));
+														setAssigningBlockId(null);
+													},
+													className: "rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-900 hover:text-white transition",
+													children: target.label
+												}, target.id))]
+											})]
+										}, block.id))
+									})]
+								})
+							]
+						}),
+						step === "template" && draft && mappedProfile && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "space-y-5",
+							"data-testid": "import-template-step",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex flex-wrap items-center justify-between gap-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "flex flex-wrap items-center gap-1.5",
+									role: "group",
+									"aria-label": "Filtres de modèles",
+									children: [
+										{
+											id: "all",
+											label: "Recommandés"
+										},
+										{
+											id: "ats",
+											label: "ATS-safe"
+										},
+										{
+											id: "onepage",
+											label: "1 page"
+										},
+										{
+											id: "moderne",
+											label: "Moderne"
+										},
+										{
+											id: "creatif",
+											label: "Créatif"
+										}
+									].map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										"data-testid": `import-filter-${f.id}`,
+										onClick: () => {
+											setTemplateFilter(f.id);
+											if (f.id !== "all") setShowAllTemplates(true);
+										},
+										className: cn("rounded-lg px-3 py-1.5 text-xs font-bold transition", templateFilter === f.id ? "bg-slate-900 text-white" : "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"),
+										children: f.label
+									}, f.id))
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									"data-testid": "import-toggle-all-templates",
+									onClick: () => setShowAllTemplates((v) => !v),
+									className: "text-xs font-bold text-slate-700 underline hover:text-slate-900",
+									children: showAllTemplates ? "Voir les 3 recommandés" : `Voir tous les modèles (${TEMPLATES.length})`
+								})]
+							}), !showAllTemplates && templateFilter === "all" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "grid grid-cols-1 gap-4 md:grid-cols-3",
+								children: recommendedTemplates.map((rec, idx) => {
+									const previewDoc = buildPaginatedDocFromProfile(mappedProfile, rec.template.id, `rec-prev-${rec.template.id}`);
+									const firstPage = previewDoc.pages[0];
+									return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										"data-testid": `recommended-template-card-${idx}`,
+										className: cn("flex flex-col justify-between rounded-2xl border p-3.5 transition", selectedTemplateId === rec.template.id ? "border-slate-900 bg-slate-50 shadow-md" : "border-slate-200 bg-white hover:border-slate-400"),
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "space-y-2.5",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+													className: "flex items-center justify-between gap-2",
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														className: "rounded-md bg-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white",
+														children: rec.badge
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+														className: "text-[11px] font-medium text-slate-500",
+														children: [
+															previewDoc.pages.length,
+															" page",
+															previewDoc.pages.length > 1 ? "s" : "",
+															" A4"
+														]
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+													onClick: () => setSelectedTemplateId(rec.template.id),
+													className: "relative mx-auto flex h-56 w-full cursor-pointer items-start justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 p-2",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														style: {
+															transform: "scale(0.24)",
+															transformOrigin: "top center",
+															width: 794,
+															height: 1123
+														},
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageSheet, {
+															page: firstPage,
+															interactive: false,
+															selectedIds: [],
+															editingId: null,
+															showGrid: false,
+															showMargins: false,
+															guides: {
+																x: [],
+																y: []
+															},
+															marquee: null
+														})
+													})
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h4", {
+													className: "font-display text-sm font-bold text-slate-900",
+													children: rec.template.name
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+													className: "text-[11px] text-slate-600",
+													children: rec.reason
+												})] })
+											]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											"data-testid": `use-template-btn-${rec.template.id}`,
+											onClick: () => handleSelectTemplateToUse(rec.template.id),
+											className: "mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Utiliser" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { size: 13 })]
+										})]
+									}, rec.template.id);
+								})
+							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3",
+								children: filteredAllTemplates.map((tpl) => {
+									const firstPage = buildPaginatedDocFromProfile(mappedProfile, tpl.id, `all-prev-${tpl.id}`).pages[0];
+									return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										"data-testid": `all-template-card-${tpl.id}`,
+										className: cn("flex flex-col justify-between rounded-2xl border p-3.5 transition", selectedTemplateId === tpl.id ? "border-slate-900 bg-slate-50 shadow-md" : "border-slate-200 bg-white hover:border-slate-400"),
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "space-y-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center justify-between",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "font-display text-sm font-bold text-slate-900",
+													children: tpl.name
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-[11px] text-slate-500",
+													children: tpl.note
+												})]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												onClick: () => setSelectedTemplateId(tpl.id),
+												className: "relative mx-auto flex h-48 w-full cursor-pointer items-start justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 p-2",
+												children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+													style: {
+														transform: "scale(0.21)",
+														transformOrigin: "top center",
+														width: 794,
+														height: 1123
+													},
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageSheet, {
+														page: firstPage,
+														interactive: false,
+														selectedIds: [],
+														editingId: null,
+														showGrid: false,
+														showMargins: false,
+														guides: {
+															x: [],
+															y: []
+														},
+														marquee: null
+													})
+												})
+											})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											type: "button",
+											"data-testid": `use-template-btn-${tpl.id}`,
+											onClick: () => handleSelectTemplateToUse(tpl.id),
+											className: "mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-2 text-xs font-bold text-white hover:bg-slate-800 transition",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Utiliser" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { size: 13 })]
+										})]
+									}, tpl.id);
+								})
+							})]
+						}),
+						step === "confirm-replace" && draft && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mx-auto max-w-md rounded-2xl border border-amber-200 bg-amber-50/70 p-6 text-center space-y-4",
+							"data-testid": "confirm-replace-cv-step",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "mx-auto flex size-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, { size: 24 })
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "space-y-1.5",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+										className: "font-display text-base font-bold text-slate-900",
+										children: "Remplacer le CV actuel ?"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "text-xs text-slate-700",
+										children: "Le CV actuellement ouvert sera remplacé par le CV importé."
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center justify-center gap-3 pt-2",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										"data-testid": "cancel-replace-cv-btn",
+										onClick: () => setStep("template"),
+										className: "rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition",
+										children: "Annuler"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										"data-testid": "confirm-replace-cv-btn",
+										onClick: () => finalizeImport(selectedTemplateId),
+										className: "rounded-xl bg-slate-900 px-5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition",
+										children: "Remplacer"
 									})]
 								})
 							]
@@ -11767,28 +14914,26 @@ function CvExtractorModal() {
 					]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex flex-wrap items-center justify-between gap-2 border-t border-line bg-paper p-4",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					className: "flex shrink-0 items-center justify-between border-t border-slate-200 bg-slate-50 px-5 py-3.5",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [step === "verify" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 						type: "button",
-						onClick: () => setOpen(false),
-						className: "rounded-xl border border-line bg-sheet px-4 py-2 text-xs font-semibold text-mute hover:text-ink transition",
-						children: "Annuler"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex gap-2",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						onClick: () => setStep("upload"),
+						className: "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Changer de fichier" })]
+					}), step === "template" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setStep("verify"),
+						className: "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { size: 13 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Retour à la vérification" })]
+					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "flex items-center gap-2.5",
+						children: step === "verify" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 							type: "button",
-							disabled: !result || isProcessing,
-							onClick: () => applyExtracted(true),
-							className: "flex items-center gap-1.5 rounded-xl border border-line bg-sheet px-4 py-2.5 text-xs font-semibold text-ink hover:bg-cream disabled:opacity-40 transition",
-							title: "Ajoute une nouvelle page avec ce profil sans toucher à la page actuelle",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Layers, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Créer une nouvelle page" })]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-							type: "button",
-							disabled: !result || isProcessing,
-							onClick: () => applyExtracted(false),
-							className: "flex items-center gap-1.5 rounded-xl bg-signal px-5 py-2.5 text-xs font-bold text-signal-ink shadow-sm hover:bg-signal/90 disabled:opacity-40 transition",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileCheck, { size: 14 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Appliquer sur le CV (1 clic)" })]
-						})]
+							"data-testid": "mapping-create-cv-btn",
+							onClick: () => setStep("template"),
+							className: "inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { size: 15 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Créer mon CV" })]
+						})
 					})]
 				})
 			]
@@ -11831,9 +14976,6 @@ function OnboardingFlow() {
 	});
 	const launchEditor = () => {
 		if (startMode === "import") {
-			if (selectedTemplate !== activeTemplate) applyTemplate(selectedTemplate);
-			setEditorMode("guided");
-			setOnboarding(false);
 			setExtractorModalOpen(true);
 			return;
 		}
@@ -11873,11 +15015,20 @@ function OnboardingFlow() {
 					className: "cv-brand-progress",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "cv-progress-dot" }), " Votre CV · brouillon"]
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-					type: "button",
-					onClick: launchEditor,
-					className: "cv-header-action",
-					children: ["Ouvrir le studio ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { size: 15 })]
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex items-center gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						"data-testid": "onboarding-import-cv-btn",
+						onClick: () => setExtractorModalOpen(true),
+						className: "cv-header-action",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileUp, { size: 15 }), " Importer mon CV"]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: launchEditor,
+						className: "cv-header-action",
+						children: ["Ouvrir le studio ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { size: 15 })]
+					})]
 				})
 			]
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
@@ -11915,11 +15066,14 @@ function OnboardingFlow() {
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "button",
 										"aria-pressed": startMode === "import",
-										onClick: () => setStartMode("import"),
+										onClick: () => {
+											setStartMode("import");
+											setExtractorModalOpen(true);
+										},
 										className: `cv-start-option ${startMode === "import" ? "is-selected" : ""}`,
 										children: [
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileUp, { size: 18 }),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Un CV à refaire" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "Importer ou coller son contenu" })] }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: "Importer mon CV" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("small", { children: "PDF, Word (.docx), TXT ou LinkedIn" })] }),
 											startMode === "import" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, { size: 16 })
 										]
 									}),
@@ -12089,6 +15243,301 @@ function OnboardingFlow() {
 		})]
 	});
 }
+function ReadabilityModal() {
+	const open = useStudio((s) => s.readabilityModalOpen);
+	const pendingExportConfirm = useStudio((s) => s.pendingExportConfirm);
+	const doc = useStudio((s) => s.doc);
+	const editorMode = useStudio((s) => s.editorMode);
+	const paginationBlocked = useStudio((s) => s.paginationBlocked);
+	const setReadabilityModalOpen = useStudio((s) => s.setReadabilityModalOpen);
+	const focusAuditIssue = useStudio((s) => s.focusAuditIssue);
+	const paginateDocument = useStudio((s) => s.paginateDocument);
+	const compactSpacing = useStudio((s) => s.compactSpacing);
+	const setEditorMode = useStudio((s) => s.setEditorMode);
+	const deletePage = useStudio((s) => s.deletePage);
+	const directPdfExport = useStudio((s) => s.directPdfExport);
+	const audit = (0, import_react.useMemo)(() => auditDocument(doc, {
+		editorMode,
+		paginationBlocked
+	}), [
+		doc,
+		editorMode,
+		paginationBlocked
+	]);
+	if (!open) return null;
+	const actionableIssues = audit.issues.filter((i) => i.severity === "critical" || i.severity === "warning");
+	const infoIssues = audit.issues.filter((i) => i.severity === "info");
+	const handleViewBlock = (issue) => {
+		setReadabilityModalOpen(false);
+		focusAuditIssue(issue);
+	};
+	const handleAdjustInStudio = (issue) => {
+		setReadabilityModalOpen(false);
+		setEditorMode("pro");
+		focusAuditIssue(issue);
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		"data-testid": "readability-modal",
+		className: "fixed inset-0 z-[190] bg-black/55 backdrop-blur-xs flex items-center justify-center p-4 no-print",
+		onClick: () => setReadabilityModalOpen(false),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "w-full max-w-2xl bg-[#fbf8f2] border border-stone-300 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[86vh]",
+			onClick: (e) => e.stopPropagation(),
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "px-6 py-4 bg-stone-900 text-[#f6f3ec] flex items-center justify-between shrink-0",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-[#ff4f1f]" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "text-base font-bold tracking-tight",
+							children: "Contrôle avant export"
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-stone-300 mt-0.5",
+						children: pendingExportConfirm ? "Des alertes de mise en page ont été détectées avant la génération du PDF." : "Vérification de la pagination A4, des débordements et de la lisibilité de votre CV."
+					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setReadabilityModalOpen(false),
+						className: "w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center text-sm font-bold cursor-pointer",
+						title: "Fermer",
+						children: "✕"
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "p-6 overflow-y-auto space-y-4 flex-1",
+					children: [actionableIssues.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						"data-testid": "readability-clean-state",
+						className: "p-5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-start gap-3.5",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shrink-0",
+							children: "✓"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+							className: "text-sm font-bold",
+							children: "Aucun problème de débordement ni de lisibilité détecté"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs text-emerald-800 mt-1 leading-relaxed",
+							children: "Toutes vos pages respectent le format A4 (1123 px), aucun texte n’est coupé ou en chevauchement, et les tailles de police ainsi que les contrastes sont conformes."
+						})] })]
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "text-xs font-semibold text-stone-700",
+						children: actionableIssues.length === 1 ? "1 alerte détectée :" : `${actionableIssues.length} alertes détectées :`
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "space-y-3",
+						children: actionableIssues.map((issue) => {
+							const isCrit = issue.severity === "critical";
+							return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								"data-testid": `readability-issue-${issue.kind}`,
+								className: `p-4 rounded-xl border ${isCrit ? "bg-red-50/75 border-red-200 text-red-950" : "bg-amber-50/75 border-amber-200 text-amber-950"}`,
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "flex items-start justify-between gap-3",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "space-y-1",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex items-center gap-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: `px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${isCrit ? "bg-red-600 text-white" : "bg-amber-600 text-white"}`,
+													children: isCrit ? "Critique" : "Lisibilité"
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+													className: "text-[11px] font-semibold opacity-75",
+													children: ["Page ", issue.pageNumber]
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+												className: "text-sm font-bold leading-snug",
+												children: ["• ", issue.message]
+											}),
+											issue.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "text-xs opacity-80 leading-relaxed",
+												children: issue.detail
+											})
+										]
+									})
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "mt-3 pt-2.5 border-t border-current/10 flex flex-wrap items-center gap-2",
+									children: [
+										issue.elementIds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											"data-testid": "readability-view-block-btn",
+											onClick: () => handleViewBlock(issue),
+											className: "px-2.5 py-1 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 transition cursor-pointer",
+											children: issue.elementIds.length > 1 ? "Voir les blocs" : "Voir le bloc"
+										}),
+										issue.actions.includes("paginate") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											"data-testid": "readability-paginate-btn",
+											onClick: () => paginateDocument(),
+											className: "px-2.5 py-1 rounded-md text-xs font-bold bg-stone-900 text-white hover:bg-stone-800 transition cursor-pointer",
+											children: "Répartir sur les pages suivantes"
+										}),
+										issue.actions.includes("compact-spacing") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											"data-testid": "readability-compact-btn",
+											onClick: () => compactSpacing(issue.pageId),
+											className: "px-2.5 py-1 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 transition cursor-pointer",
+											children: "Réduire l’espacement"
+										}),
+										issue.actions.includes("delete-empty-page") && doc.pages.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => deletePage(issue.pageId),
+											className: "px-2.5 py-1 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 transition cursor-pointer",
+											children: "Supprimer la page vide"
+										}),
+										issue.actions.includes("adjust-studio") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											"data-testid": "readability-adjust-studio-btn",
+											onClick: () => handleAdjustInStudio(issue),
+											className: "px-2.5 py-1 rounded-md text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 transition cursor-pointer",
+											children: issue.kind === "overlap" ? "Ajuster dans le Studio" : "Ajuster manuellement"
+										})
+									]
+								})]
+							}, issue.id);
+						})
+					})] }), infoIssues.map((info) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "p-3.5 rounded-xl bg-stone-100 border border-stone-300 text-stone-800 text-xs flex flex-wrap items-center justify-between gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: info.message }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => handleAdjustInStudio(info),
+							className: "px-2.5 py-1 rounded-md font-semibold bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer",
+							children: "Ouvrir le Studio"
+						})]
+					}, info.id))]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "px-6 py-4 bg-stone-100 border-t border-stone-200 flex flex-wrap items-center justify-between gap-3 shrink-0",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						"data-testid": "readability-fix-before-export-btn",
+						onClick: () => {
+							setReadabilityModalOpen(false);
+							if (actionableIssues[0]) focusAuditIssue(actionableIssues[0]);
+						},
+						className: "px-4 py-2 rounded-lg text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-50 transition cursor-pointer",
+						children: "Corriger avant l’export"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						"data-testid": "readability-export-anyway-btn",
+						onClick: () => {
+							setReadabilityModalOpen(false);
+							directPdfExport();
+						},
+						className: "px-4 py-2 rounded-lg text-xs font-bold bg-[#ff4f1f] text-white hover:bg-[#e54215] transition shadow-xs cursor-pointer",
+						children: actionableIssues.length > 0 ? "Exporter quand même" : "Exporter en PDF"
+					})]
+				})
+			]
+		})
+	});
+}
+function PlainTextModal() {
+	const open = useStudio((s) => s.plainTextModalOpen);
+	const doc = useStudio((s) => s.doc);
+	const setPlainTextModalOpen = useStudio((s) => s.setPlainTextModalOpen);
+	const notify = useStudio((s) => s.notify);
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	const preview = (0, import_react.useMemo)(() => generatePlainTextPreview(doc), [doc]);
+	if (!open) return null;
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(preview.text);
+			setCopied(true);
+			notify("✓ Texte brut copié dans le presse-papiers");
+			window.setTimeout(() => setCopied(false), 2e3);
+		} catch {
+			const textarea = document.getElementById("plain-text-ats-area");
+			if (textarea) {
+				textarea.select();
+				document.execCommand("copy");
+				setCopied(true);
+				notify("✓ Texte brut copié");
+				window.setTimeout(() => setCopied(false), 2e3);
+			}
+		}
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		"data-testid": "plain-text-modal",
+		className: "fixed inset-0 z-[190] bg-black/55 backdrop-blur-xs flex items-center justify-center p-4 no-print",
+		onClick: () => setPlainTextModalOpen(false),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "w-full max-w-2xl bg-[#fbf8f2] border border-stone-300 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[86vh]",
+			onClick: (e) => e.stopPropagation(),
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "px-6 py-4 bg-stone-900 text-[#f6f3ec] flex items-center justify-between shrink-0",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-2.5 h-2.5 rounded-full bg-emerald-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "text-base font-bold tracking-tight",
+							children: "Aperçu texte brut (lecture ATS)"
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-stone-300 mt-0.5",
+						children: "Texte extrait dans l’ordre de lecture visuel réel, tel qu’un logiciel de tri (ATS) l’analysera."
+					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setPlainTextModalOpen(false),
+						className: "w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center text-sm font-bold cursor-pointer",
+						title: "Fermer",
+						children: "✕"
+					})]
+				}),
+				preview.readingOrderWarnings.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					"data-testid": "plain-text-order-warning",
+					className: "px-6 py-3 bg-amber-50 border-b border-amber-200 text-amber-950 text-xs space-y-1 shrink-0",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "font-bold",
+						children: "⚠️ Attention à l’ordre de lecture visuel :"
+					}), preview.readingOrderWarnings.map((w, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "leading-relaxed",
+						children: ["• ", w]
+					}, idx))]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "p-6 flex-1 flex flex-col min-h-0",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center justify-between mb-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							className: "text-[11px] font-semibold uppercase tracking-wider text-stone-500",
+							children: [
+								"Flux linéaire (",
+								doc.pages.length,
+								" ",
+								doc.pages.length > 1 ? "pages" : "page",
+								")"
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-[11px] text-stone-500",
+							children: "Formes décoratives ignorées • Blocs liés et blocs libres textuels inclus"
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+						id: "plain-text-ats-area",
+						"data-testid": "plain-text-content",
+						readOnly: true,
+						value: preview.text,
+						rows: 16,
+						className: "w-full flex-1 min-h-[300px] p-4 rounded-xl bg-white border border-stone-300 font-mono text-xs text-stone-900 leading-relaxed focus:outline-none focus:border-stone-500 resize-none"
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "px-6 py-4 bg-stone-100 border-t border-stone-200 flex items-center justify-between gap-3 shrink-0",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setPlainTextModalOpen(false),
+						className: "px-4 py-2 rounded-lg text-xs font-semibold bg-white border border-stone-300 text-stone-800 hover:bg-stone-50 transition cursor-pointer",
+						children: "Fermer"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						"data-testid": "copy-plain-text-btn",
+						onClick: handleCopy,
+						className: "px-4 py-2 rounded-lg text-xs font-bold bg-stone-900 text-white hover:bg-stone-800 transition shadow-xs cursor-pointer",
+						children: copied ? "✓ Texte copié !" : "Copier le texte"
+					})]
+				})
+			]
+		})
+	});
+}
 function computeCVHealth(doc, activePageId) {
 	const page = doc.pages.find((p) => p.id === activePageId) ?? doc.pages[0];
 	const elements = page ? page.elements.filter((e) => !e.hidden) : [];
@@ -12214,7 +15663,10 @@ function Studio() {
 	const cloudModalOpen = useStudio((s) => s.cloudModalOpen);
 	const setCloudModalOpen = useStudio((s) => s.setCloudModalOpen);
 	const setExtractorModalOpen = useStudio((s) => s.setExtractorModalOpen);
-	const directPdfExport = useStudio((s) => s.directPdfExport);
+	useStudio((s) => s.directPdfExport);
+	const requestPdfExport = useStudio((s) => s.requestPdfExport);
+	const setReadabilityModalOpen = useStudio((s) => s.setReadabilityModalOpen);
+	const setPlainTextModalOpen = useStudio((s) => s.setPlainTextModalOpen);
 	const addSectionPack = useStudio((s) => s.addSectionPack);
 	const boostElementText = useStudio((s) => s.boostElementText);
 	const mobileTouchMode = useStudio((s) => s.mobileTouchMode);
@@ -12432,6 +15884,8 @@ function Studio() {
 			className: "no-print pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-xl",
 			children: notice
 		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ReadabilityModal, {}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PlainTextModal, {}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 			className: "print-root",
 			children: doc.pages.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -12493,8 +15947,12 @@ function Studio() {
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "flex items-center gap-3 min-w-0 shrink-0",
 						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex items-center gap-2.5",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "open-onboarding-btn",
+								onClick: () => setOnboarding(true),
+								className: "flex items-center gap-2.5 rounded-lg p-1 text-left hover:bg-slate-100 transition",
+								title: "Ouvrir l'accueil / parcours de création",
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 									className: "flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 font-display text-xs font-bold tracking-tight text-white",
 									children: "CV"
@@ -12505,7 +15963,7 @@ function Studio() {
 										children: "Atelier CV"
 									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 										className: "mt-0.5 text-[11px] font-medium text-slate-500 leading-none",
-										children: "Studio d’édition A4"
+										children: "Accueil · Studio A4"
 									})]
 								})]
 							}),
@@ -12688,13 +16146,46 @@ function Studio() {
 						children: [
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 								type: "button",
+								"data-testid": "open-plain-text-btn",
+								onClick: () => setPlainTextModalOpen(true),
+								className: "hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap",
+								title: "Aperçu texte brut (lecture ATS)",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, {
+										size: 13,
+										className: "text-slate-500 shrink-0"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "hidden lg:inline",
+										children: "Aperçu texte brut"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "lg:hidden",
+										children: "Texte brut"
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "open-readability-btn",
+								onClick: () => setReadabilityModalOpen(true, false),
+								className: "hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap",
+								title: "Contrôle de lisibilité et de mise en page avant export",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, {
+									size: 13,
+									className: "text-slate-500 shrink-0"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Contrôle" })]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								"data-testid": "studio-import-cv-btn",
 								onClick: () => setExtractorModalOpen(true),
-								className: "hidden md:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap",
+								className: "hidden md:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap",
 								title: "Importer un CV existant (PDF, Word ou texte)",
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Upload, {
 									size: 13,
 									className: "text-slate-500 shrink-0"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Importer" })]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Importer mon CV" })]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 								type: "button",
@@ -12715,7 +16206,8 @@ function Studio() {
 									className: "flex items-center rounded-lg bg-signal text-white shadow-2xs hover:bg-blue-700 transition",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "button",
-										onClick: () => directPdfExport(),
+										"data-testid": "export-pdf-btn",
+										onClick: () => requestPdfExport(),
 										className: "flex h-8 items-center gap-1.5 px-3.5 text-xs font-semibold whitespace-nowrap",
 										title: "Exporter le CV au format PDF A4 haute définition",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, {
@@ -12740,7 +16232,7 @@ function Studio() {
 											type: "button",
 											onClick: () => {
 												setExportOpen(false);
-												directPdfExport();
+												requestPdfExport();
 											},
 											className: "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition",
 											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, {
@@ -12879,6 +16371,7 @@ function Studio() {
 					})
 				]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DocumentAlertBanner, {}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-1 min-h-0 overflow-hidden",
 				children: [
