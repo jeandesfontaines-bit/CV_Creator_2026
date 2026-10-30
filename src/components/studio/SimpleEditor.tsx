@@ -133,29 +133,26 @@ export function SimpleEditor() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <details className="relative">
-          <summary className={`${button} cursor-pointer list-none`}>Plus</summary>
-          <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
-            <button className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40" disabled={!s.past.length} onClick={s.undo}>Annuler</button>
-            <button className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40" disabled={!s.future.length} onClick={s.redo}>Rétablir</button>
-            <button className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50" onClick={() => s.setOnboarding(true)}>Accueil</button>
-          </div>
-        </details>
-        <button className={button} data-testid="guided-import-cv-btn" onClick={() => s.setExtractorModalOpen(true)}>Importer</button>
-        <button className={`${button} hidden sm:inline-flex`} onClick={() => { release(); s.setEditorMode("pro"); }}>Studio libre</button>
         <button className={`${button} md:hidden`} onClick={() => setMobilePreview((v) => !v)}>{mobilePreview ? "Saisie" : "Aperçu"}</button>
-        <button className={primary} data-testid="export-pdf-btn" onClick={() => void s.requestPdfExport()}>Télécharger le PDF</button>
+        {step === "finish" && <button className={primary} data-testid="export-pdf-btn" onClick={() => void s.requestPdfExport()}>Télécharger le PDF</button>}
       </div>
     </header>
     <DocumentAlertBanner />
     <main className="flex min-h-0 flex-1">
       <section aria-label="Saisie accompagnée" className={`${mobilePreview ? "hidden" : "flex"} min-h-0 w-full flex-col border-r border-slate-200 bg-white md:flex md:w-[44%] md:max-w-[600px] md:min-w-[360px]`}>
         <div ref={workspace} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-          <div className="mb-6">
-            <p data-testid="guided-step-indicator" className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600">Étape {index + 1} sur {STEPS.length} — {current.label}</p>
-            <h1 className="text-2xl font-semibold tracking-tight">{current.title}</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-500">{current.help}</p>
+          <div className="mb-6 flex items-start justify-between gap-3">
+            <div>
+              <p data-testid="guided-step-indicator" className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600">Étape {index + 1} sur {STEPS.length} — {current.label}</p>
+              <h1 className="text-2xl font-semibold tracking-tight">{current.title}</h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">{current.help}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-3 pt-1">
+              <button className="text-xs text-slate-500 underline disabled:opacity-40" disabled={!s.past.length} onClick={s.undo}>Annuler</button>
+              <button className="text-xs text-slate-500 underline disabled:opacity-40" disabled={!s.future.length} onClick={s.redo}>Rétablir</button>
+            </div>
           </div>
+          {step === "profile" && <button className="mb-5 block text-sm text-slate-600 underline" data-testid="guided-import-cv-btn" onClick={() => s.setExtractorModalOpen(true)}>Importer un CV existant</button>}
           {s.layoutCustomized || freeCount > 0 ? <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Votre mise en page personnalisée est conservée. Les blocs libres restent modifiables dans le Studio. <button className="underline" onClick={() => s.setEditorMode("pro")}>Ouvrir le Studio</button></div> : null}
           {step !== "finish" && step !== "abilities" && !visible(step) && <div className="mb-5 rounded-lg bg-slate-100 p-3 text-sm">Cette rubrique est masquée dans le CV. Vos informations sont conservées. <button className="underline" onClick={() => s.toggleSectionVisibility(step)}>Réafficher</button></div>}
           {step === "profile" && <div className="space-y-4">
@@ -225,7 +222,7 @@ export function SimpleEditor() {
         </div>
         <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-white p-4">
           <button className={button} disabled={index === 0} onClick={() => go(STEPS[index - 1].id)}>← Retour</button>
-          {step !== "finish" ? <div className="flex items-center gap-2"><button className="px-2 py-2 text-sm text-slate-500 underline" onClick={() => go(STEPS[index + 1].id)}>Passer</button><button className={primary} onClick={() => go(STEPS[index + 1].id)}>Continuer →</button></div> : <p className="text-sm text-slate-500">Votre CV est prêt. Utilisez « Télécharger le PDF ».</p>}
+          {step !== "finish" && <div className="flex items-center gap-2"><button className="px-2 py-2 text-sm text-slate-500 underline" onClick={() => go(STEPS[index + 1].id)}>Passer</button><button className={primary} onClick={() => go(STEPS[index + 1].id)}>Continuer →</button></div>}
         </footer>
       </section>
       <section ref={preview} aria-label="Aperçu du CV" className={`${mobilePreview ? "block" : "hidden"} min-w-0 flex-1 overflow-auto bg-slate-100 md:block`}>
