@@ -1,6 +1,7 @@
 import type { Bind, Content, CVElement, Doc, Education, Experience, IdentityField, Meter, Page, Profile } from "@/cv/types";
 import { baseStyle, INK, PAGE_H } from "@/cv/types";
 import { uid } from "@/cv/geometry";
+import { buildTemplate, TEMPLATES } from "@/cv/templates";
 
 export const SAMPLE: Profile = {
   name: "Alexandra Dubois",
@@ -116,6 +117,48 @@ function isFreeStudioEl(el: CVElement): boolean {
   if (el.type === "photo" && Boolean(el.content.src)) return true;
   if (!el.bind && !TEMPLATE_ID_RE.test(el.id)) return true;
   return false;
+}
+
+function firstEntrySlot(doc: Doc, kind: "experience" | "education", activePageId: string) {
+  const titleMatches = (el: CVElement) => {
+    if (el.type !== "heading" || el.bind || isFreeStudioEl(el)) return false;
+    const text = (el.content.text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    return kind === "experience" ? /^(experiences?|work experience|parcours professionnel)$/.test(text) : /^(formations?|education|diplomes?)$/.test(text);
+  };
+  const host = doc.pages.find((page) => page.elements.some(titleMatches))
+    ?? doc.pages.find((page) => page.id === activePageId) ?? doc.pages[0];
+  const heading = host.elements.find(titleMatches);
+  const allElements = [ ...(heading ? [heading] : []), ...host.elements, ...doc.pages.flatMap((page) => page.elements) ];
+  const template = TEMPLATES.find((item) => allElements.some((el) => el.id.startsWith(`${item.id}-`)))?.id ?? "modern";
+  const empty: Profile = {
+    name: "", role: "", email: "", phone: "", location: "", link: "", summary: "",
+    experiences: [{ role: "", company: "", date: "", desc: "" }],
+    educations: [{ degree: "", school: "", date: "" }], skills: [], languages: [],
+  };
+  const reference = buildTemplate(template, empty, `${template}-entry-reference`);
+  const slot = reference.find((el) => el.bind?.kind === kind)!;
+  const referenceHeading = reference.find(titleMatches);
+  return {
+    pageId: host.id,
+    x: heading && referenceHeading ? slot.x + heading.x - referenceHeading.x : slot.x,
+    y: heading && referenceHeading ? heading.y + slot.y - referenceHeading.y : slot.y,
+    w: slot.w,
+    style: { ...slot.style },
+    hidden: heading?.hidden ?? false,
+  };
+}
+
+function makeRoomForFirstEntry(page: Page, entry: CVElement, gap: number): CVElement[] {
+  const follows = (el: CVElement) => {
+    if (el.hidden || isFreeStudioEl(el) || ["rect", "ellipse", "rule", "photo"].includes(el.type)) return false;
+    const overlapX = Math.min(entry.x + entry.w, el.x + el.w) - Math.max(entry.x, el.x);
+    return overlapX > 32 && el.y >= entry.y;
+  };
+  const candidates = page.elements.filter(follows);
+  const firstY = candidates.length ? Math.min(...candidates.map((el) => el.y)) : Infinity;
+  const delta = Math.max(0, entry.y + entry.h + gap - firstY);
+  if (!delta || entry.hidden) return page.elements;
+  return page.elements.map((el) => follows(el) ? { ...el, y: el.y + delta } : el);
 }
 
 export function resizeElementWithFlow(page: Page, elId: string, nextH: number): Page {
@@ -264,12 +307,7 @@ export function applyExperienceUpdate(doc: Doc, index: number, patch: Partial<Ex
 }
 
 export function applyExperienceAdd(doc: Doc, activePageId: string, entry?: Experience): Doc {
-  const newExp: Experience = entry ?? {
-    role: "Nouveau poste",
-    company: "Entreprise — Ville",
-    date: "2024 — Présent",
-    desc: "Principales réalisations et résultats obtenus.",
-  };
+  const newExp: Experience = entry ?? { role: "", company: "", date: "", desc: "" };
   const newIndex = doc.profile.experiences.length;
   const profile: Profile = {
     ...doc.profile,
@@ -287,21 +325,21 @@ export function applyExperienceAdd(doc: Doc, activePageId: string, entry?: Exper
       }
     }
   }
+  const firstSlot = bestExpIdx < 0 ? firstEntrySlot(doc, "experience", activePageId) : null;
+  if (firstSlot) hostPageId = firstSlot.pageId;
 
   const pages = doc.pages.map((page) => {
     if (page.id !== hostPageId) return page;
-    const expElements = page.elements.filter((el) => el.type === "experience");
+    const expElements = page.elements.filter((el) => el.bind?.kind === "experience");
     const lastExp = expElements.length
       ? expElements.reduce((a, b) => (a.y + a.h >= b.y + b.h ? a : b))
       : null;
 
-    const x = lastExp ? lastExp.x : 40;
-    const w = lastExp ? lastExp.w : 714;
-    const style = lastExp ? { ...lastExp.style } : baseStyle({ fontSize: 13, color: INK, lineHeight: 1.4 });
+    const x = lastExp ? lastExp.x : firstSlot!.x;
+    const w = lastExp ? lastExp.w : firstSlot!.w;
+    const style = lastExp ? { ...lastExp.style } : { ...firstSlot!.style };
     const gap = 12;
-    const y = lastExp
-      ? lastExp.y + lastExp.h + gap
-      : Math.min(PAGE_H - 120, page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48) + 16);
+    const y = lastExp ? lastExp.y + lastExp.h + gap : firstSlot!.y;
     const maxZ = Math.max(1, ...page.elements.map((e) => e.z)) + 1;
 
     const draftEl: CVElement = {
@@ -314,7 +352,7 @@ export function applyExperienceAdd(doc: Doc, activePageId: string, entry?: Exper
       rotation: 0,
       z: maxZ,
       locked: false,
-      hidden: false,
+      hidden: lastExp?.hidden ?? firstSlot?.hidden ?? false,
       bind: { kind: "experience", index: newIndex },
       content: { ...newExp },
       style,
@@ -333,7 +371,7 @@ export function applyExperienceAdd(doc: Doc, activePageId: string, entry?: Exper
           }
           return el;
         })
-      : page.elements;
+      : makeRoomForFirstEntry(page, newEl, gap);
 
     return {
       ...page,
@@ -413,11 +451,7 @@ export function applyEducationUpdate(doc: Doc, index: number, patch: Partial<Edu
 }
 
 export function applyEducationAdd(doc: Doc, activePageId: string, entry?: Education): Doc {
-  const newEdu: Education = entry ?? {
-    degree: "Diplôme",
-    school: "École / Université",
-    date: "2020 — 2023",
-  };
+  const newEdu: Education = entry ?? { degree: "", school: "", date: "" };
   const newIndex = doc.profile.educations.length;
   const profile: Profile = {
     ...doc.profile,
@@ -434,23 +468,23 @@ export function applyEducationAdd(doc: Doc, activePageId: string, entry?: Educat
       }
     }
   }
+  const firstSlot = bestEduIdx < 0 ? firstEntrySlot(doc, "education", activePageId) : null;
+  if (firstSlot) hostPageId = firstSlot.pageId;
 
   const pages = doc.pages.map((page) => {
     if (page.id !== hostPageId) return page;
-    const eduElements = page.elements.filter((el) => el.type === "education");
+    const eduElements = page.elements.filter((el) => el.bind?.kind === "education");
     const lastEdu = eduElements.length
       ? eduElements.reduce((a, b) => (a.y + a.h >= b.y + b.h ? a : b))
       : null;
 
-    const x = lastEdu ? lastEdu.x : 40;
-    const w = lastEdu ? lastEdu.w : 714;
+    const x = lastEdu ? lastEdu.x : firstSlot!.x;
+    const w = lastEdu ? lastEdu.w : firstSlot!.w;
     const h = 44;
     const gap = 8;
-    const y = lastEdu
-      ? lastEdu.y + lastEdu.h + gap
-      : Math.min(PAGE_H - 80, page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48) + 16);
+    const y = lastEdu ? lastEdu.y + lastEdu.h + gap : firstSlot!.y;
     const maxZ = Math.max(1, ...page.elements.map((e) => e.z)) + 1;
-    const style = lastEdu ? { ...lastEdu.style } : baseStyle({ fontSize: 13, color: INK });
+    const style = lastEdu ? { ...lastEdu.style } : { ...firstSlot!.style };
 
     const newEl: CVElement = {
       id: uid(),
@@ -462,7 +496,7 @@ export function applyEducationAdd(doc: Doc, activePageId: string, entry?: Educat
       rotation: 0,
       z: maxZ,
       locked: false,
-      hidden: false,
+      hidden: lastEdu?.hidden ?? firstSlot?.hidden ?? false,
       bind: { kind: "education", index: newIndex },
       content: { ...newEdu },
       style,
@@ -479,7 +513,7 @@ export function applyEducationAdd(doc: Doc, activePageId: string, entry?: Educat
           }
           return el;
         })
-      : page.elements;
+      : makeRoomForFirstEntry(page, newEl, gap);
 
     return {
       ...page,
