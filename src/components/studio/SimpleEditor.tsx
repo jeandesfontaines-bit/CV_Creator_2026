@@ -126,20 +126,23 @@ export function SimpleEditor() {
   };
 
   return <div className="flex h-dvh flex-col overflow-hidden bg-slate-100 text-slate-900">
-    <header className="no-print flex shrink-0 items-center justify-between gap-3 overflow-x-auto border-b border-slate-200 bg-white px-4 py-2.5">
-      <nav aria-label="Étapes du CV" className="flex min-w-0 shrink-0 items-center gap-1">
-        {STEPS.map((item, i) => <button key={item.id} type="button" data-testid={`guided-step-tab-${item.id}`} aria-current={step === item.id ? "step" : undefined}
-          className={`shrink-0 rounded-lg px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 ${step === item.id ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
-          onClick={() => go(item.id)}>{i + 1}. {item.label}</button>)}
-      </nav>
+    <header className="no-print flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="shrink-0 text-sm font-semibold tracking-tight">CV Creator</span>
+        <span className="hidden text-xs text-slate-500 lg:inline" role="status">{s.saveStatus === "saving" ? "Enregistrement…" : s.saveStatus === "unsaved" ? "Non enregistré" : "Enregistré"}</span>
+      </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <span className="hidden text-xs text-slate-500 lg:inline" role="status">{s.saveStatus === "saving" ? "Enregistrement…" : s.saveStatus === "unsaved" ? "Non enregistré" : "Enregistré"}</span>
-        <button className={`${button} hidden sm:inline-flex`} aria-label="Annuler" disabled={!s.past.length} onClick={s.undo}>↶</button>
-        <button className={`${button} hidden sm:inline-flex`} aria-label="Rétablir" disabled={!s.future.length} onClick={s.redo}>↷</button>
+        <details className="relative">
+          <summary className={`${button} cursor-pointer list-none`}>Plus</summary>
+          <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+            <button className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40" disabled={!s.past.length} onClick={s.undo}>Annuler</button>
+            <button className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40" disabled={!s.future.length} onClick={s.redo}>Rétablir</button>
+            <button className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50" onClick={() => s.setOnboarding(true)}>Accueil</button>
+          </div>
+        </details>
         <button className={button} data-testid="guided-import-cv-btn" onClick={() => s.setExtractorModalOpen(true)}>Importer</button>
-        <button className={button} onClick={() => { release(); s.setEditorMode("pro"); }}>Studio libre ↗</button>
-        <button className={`${button} hidden sm:inline-flex`} onClick={() => s.setOnboarding(true)} title="Revenir à l’accueil">Accueil</button>
+        <button className={`${button} hidden sm:inline-flex`} onClick={() => { release(); s.setEditorMode("pro"); }}>Studio libre</button>
         <button className={`${button} md:hidden`} onClick={() => setMobilePreview((v) => !v)}>{mobilePreview ? "Saisie" : "Aperçu"}</button>
         <button className={primary} data-testid="export-pdf-btn" onClick={() => void s.requestPdfExport()}>Télécharger le PDF</button>
       </div>
@@ -149,7 +152,7 @@ export function SimpleEditor() {
       <section aria-label="Saisie accompagnée" className={`${mobilePreview ? "hidden" : "flex"} min-h-0 w-full flex-col border-r border-slate-200 bg-white md:flex md:w-[44%] md:max-w-[600px] md:min-w-[360px]`}>
         <div ref={workspace} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
           <div className="mb-6">
-            <p data-testid="guided-step-indicator" className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600">Étape {index + 1} sur {STEPS.length}</p>
+            <p data-testid="guided-step-indicator" className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600">Étape {index + 1} sur {STEPS.length} — {current.label}</p>
             <h1 className="text-2xl font-semibold tracking-tight">{current.title}</h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">{current.help}</p>
           </div>
@@ -217,12 +220,12 @@ export function SimpleEditor() {
               {organize && <div className="space-y-2">{orderedSections.map((section, i) => <div key={section.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-3"><span className="text-sm font-medium">{section.label}</span><div className="flex gap-1"><button className={button} onClick={() => s.toggleSectionVisibility(section.id)}>{visible(section.id) ? "Masquer" : "Afficher"}</button><button className={button} aria-label={`Monter ${section.label}`} disabled={i === 0} onClick={() => s.moveSection(section.id, "up")}>↑</button><button className={button} aria-label={`Descendre ${section.label}`} disabled={i === orderedSections.length - 1} onClick={() => s.moveSection(section.id, "down")}>↓</button></div></div>)}</div>}
             </section>
             <section className="space-y-3 border-t border-slate-200 pt-5"><h2 className="text-lg font-semibold">Vérification</h2><p className="text-sm text-slate-500">{doc.pages.length} page{doc.pages.length > 1 ? "s" : ""} A4. Relisez vos informations avant de les envoyer.</p><div className="flex flex-wrap gap-2"><button className={button} data-testid="open-readability-btn" onClick={() => s.setReadabilityModalOpen(true, false)}>Contrôle du document</button><button className={button} data-testid="open-plain-text-btn" onClick={() => s.setPlainTextModalOpen(true)}>Aperçu texte brut</button></div><p className="text-xs leading-relaxed text-slate-500">L’aperçu texte représente le contenu du document. Il ne certifie pas l’extraction du PDF par un logiciel de recrutement.</p></section>
-            <button className={button} onClick={() => s.setEditorMode("pro")}>Tout personnaliser dans le Studio ↗</button>
+            <button className={button} onClick={() => s.setEditorMode("pro")}>Tout personnaliser dans le Studio</button>
           </div>}
         </div>
         <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-white p-4">
           <button className={button} disabled={index === 0} onClick={() => go(STEPS[index - 1].id)}>← Retour</button>
-          {step !== "finish" ? <div className="flex items-center gap-2"><button className="px-2 py-2 text-sm text-slate-500 underline" onClick={() => go(STEPS[index + 1].id)}>Passer</button><button className={primary} onClick={() => go(STEPS[index + 1].id)}>Continuer →</button></div> : <button className={primary} onClick={() => void s.requestPdfExport()}>Télécharger le PDF</button>}
+          {step !== "finish" ? <div className="flex items-center gap-2"><button className="px-2 py-2 text-sm text-slate-500 underline" onClick={() => go(STEPS[index + 1].id)}>Passer</button><button className={primary} onClick={() => go(STEPS[index + 1].id)}>Continuer →</button></div> : <p className="text-sm text-slate-500">Votre CV est prêt. Utilisez « Télécharger le PDF ».</p>}
         </footer>
       </section>
       <section ref={preview} aria-label="Aperçu du CV" className={`${mobilePreview ? "block" : "hidden"} min-w-0 flex-1 overflow-auto bg-slate-100 md:block`}>
