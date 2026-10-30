@@ -197,7 +197,7 @@ export function paginateDocFlow(
   options?: { force?: boolean },
 ): { doc: Doc; blockedByFreeElement: boolean } {
   const force = Boolean(options?.force);
-  let workingDoc = ensureAutoHeightsOnPages(inputDoc);
+  const workingDoc = ensureAutoHeightsOnPages(inputDoc);
   let blockedByFreeElement = false;
 
   const pages: Page[] = workingDoc.pages.map((p) => ({

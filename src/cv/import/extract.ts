@@ -60,6 +60,7 @@ export function normalizeExtractedText(raw: string): string {
 
   const cleanedLines = raw
     .replace(/\r\n?/g, "\n")
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u200B-\u200D\uFEFF\u00AD\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
     .split("\n")
     .map((line) => {

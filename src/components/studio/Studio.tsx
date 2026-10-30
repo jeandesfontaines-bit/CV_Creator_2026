@@ -72,7 +72,6 @@ export function Studio() {
   const cloudModalOpen = useStudio((s) => s.cloudModalOpen);
   const setCloudModalOpen = useStudio((s) => s.setCloudModalOpen);
   const setExtractorModalOpen = useStudio((s) => s.setExtractorModalOpen);
-  const directPdfExport = useStudio((s) => s.directPdfExport);
   const requestPdfExport = useStudio((s) => s.requestPdfExport);
   const setReadabilityModalOpen = useStudio((s) => s.setReadabilityModalOpen);
   const setPlainTextModalOpen = useStudio((s) => s.setPlainTextModalOpen);

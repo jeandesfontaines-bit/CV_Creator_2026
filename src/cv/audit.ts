@@ -1,5 +1,5 @@
 import { computeElementAutoHeight } from "@/cv/profile";
-import { boxesOverlap, horizontalOverlap, isDecorativeElement, isStudioFreeElement } from "@/cv/pagination";
+import { boxesOverlap, isDecorativeElement, isStudioFreeElement } from "@/cv/pagination";
 import type { CVElement, Doc, Page } from "@/cv/types";
 import { PAGE_H, PAGE_W, snippet, TYPE_LABEL } from "@/cv/types";
 
@@ -173,8 +173,6 @@ export function auditDocument(
     }
 
     // 2. Per-element checks: bottom overflow, width overflow, truncated text, font size, contrast, margins, density
-    let pageTotalChars = 0;
-
     for (const el of visibleContentEls) {
       const label = getElementLabel(el);
 
@@ -293,16 +291,6 @@ export function auditDocument(
       }
 
       // Readability: excessive density
-      const textLen =
-        (el.content.text?.length ?? 0) +
-        (el.content.role?.length ?? 0) +
-        (el.content.company?.length ?? 0) +
-        (el.content.desc?.length ?? 0) +
-        (el.content.degree?.length ?? 0) +
-        (el.content.school?.length ?? 0) +
-        (el.content.items?.join(", ").length ?? 0);
-      pageTotalChars += textLen;
-
       if (el.type === "experience" && (el.content.desc?.length ?? 0) > 680) {
         issues.push({
           id: `high-density-${page.id}-${el.id}`,

@@ -1,5 +1,4 @@
 import type { Bind, Content, CVElement, Doc, Education, Experience, IdentityField, Meter, Page, Profile } from "@/cv/types";
-import { baseStyle, INK, PAGE_H } from "@/cv/types";
 import { uid } from "@/cv/geometry";
 import { buildTemplate, TEMPLATES } from "@/cv/templates";
 
@@ -212,7 +211,7 @@ export function syncProfile(profile: Profile, bind: Bind | undefined, content: C
 export function applyIdentity(doc: Doc, field: IdentityField, value: string): Doc {
   const profile = { ...doc.profile, [field]: value };
   const pages = doc.pages.map((page) => {
-    let resizedIds: { id: string; nextH: number }[] = [];
+    const resizedIds: { id: string; nextH: number }[] = [];
     const elements = page.elements.map((el) => {
       const bind = el.bind;
       if (!bind) return el;

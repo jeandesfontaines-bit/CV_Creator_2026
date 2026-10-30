@@ -177,7 +177,6 @@ type State = {
 };
 
 let noticeTimer = 0;
-let persistTimer = 0;
 
 function formatTime(d = new Date()) {
   const h = String(d.getHours()).padStart(2, "0");
@@ -1094,7 +1093,6 @@ export const useStudio = create<State>((set, get) => {
 
           const topU = Math.min(...upper.map((e) => e.y));
           const bottomU = Math.max(...upper.map((e) => e.y + e.h));
-          const hU = bottomU - topU;
 
           const topL = Math.min(...lower.map((e) => e.y));
           const bottomL = Math.max(...lower.map((e) => e.y + e.h));
@@ -1348,7 +1346,7 @@ export const useStudio = create<State>((set, get) => {
 
       set({ layoutCustomized: true });
       commit((doc) => {
-        let profile = {
+        const profile = {
           ...doc.profile,
           experiences: [...doc.profile.experiences],
           educations: [...doc.profile.educations],
