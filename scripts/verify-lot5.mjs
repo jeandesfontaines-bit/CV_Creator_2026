@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-const URL = process.env.CV_TEST_URL || "http://127.0.0.1:8080/";
+const BASE_URL = process.env.CV_TEST_URL || "http://127.0.0.1:8080/";
 const DIR = process.env.CV_SCREENSHOT_DIR || path.resolve("screenshots");
 fs.mkdirSync(DIR, { recursive: true });
 const DOC_KEY = "libre-cv-doc-v1";
@@ -29,7 +29,7 @@ async function suite(viewport) {
   const ok = (name) => { passed++; console.log(`[${label}] PASS ${name}`); };
   try {
     // Fresh isolated context: only seed navigation preferences, never overwrite a user's stored CV.
-    await page.goto(URL, { waitUntil: "networkidle" });
+    await page.goto(BASE_URL, { waitUntil: "networkidle" });
     await page.evaluate(({ meta }) => {
       localStorage.setItem("cv_onboarding_done", "true");
       localStorage.setItem(meta, JSON.stringify({ editorMode: "guided", activeTemplate: "modern", layoutCustomized: false }));
