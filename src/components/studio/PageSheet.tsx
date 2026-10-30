@@ -6,6 +6,7 @@ import { PAGE_H, PAGE_W } from "@/cv/types";
 type Props = {
   page: Page;
   interactive: boolean;
+  exportSheetId?: string;
   selectedIds: string[];
   editingId: string | null;
   showGrid: boolean;
@@ -24,6 +25,7 @@ type Props = {
 export function PageSheet({
   page,
   interactive,
+  exportSheetId,
   selectedIds,
   editingId,
   showGrid,
@@ -44,7 +46,8 @@ export function PageSheet({
   return (
     <div
       className="bg-white shadow-2xl ring-1 ring-slate-900/10 relative overflow-hidden"
-      data-sheet={interactive ? page.id : undefined}
+      data-sheet={exportSheetId ? undefined : page.id}
+      data-export-sheet={exportSheetId}
       style={{ width: PAGE_W, height: PAGE_H, backgroundColor: sheetBg }}
       onPointerDown={interactive ? onSheetPointerDown : undefined}
     >

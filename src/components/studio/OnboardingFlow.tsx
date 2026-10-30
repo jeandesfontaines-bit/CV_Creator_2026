@@ -14,20 +14,26 @@ export function OnboardingFlow() {
   const setExtractorModalOpen = useStudio((s) => s.setExtractorModalOpen);
   const loadDocument = useStudio((s) => s.loadDocument);
   const applyTemplate = useStudio((s) => s.applyTemplate);
+  const setIdentity = useStudio((s) => s.setIdentity);
+  const activeTemplate = useStudio((s) => s.activeTemplate);
   const doc = useStudio((s) => s.doc);
 
   const [startMode, setStartMode] = useState<StartMode>("guided");
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern");
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>(activeTemplate);
   const [selectedPresetId, setSelectedPresetId] = useState("designer");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState("");
   const selectedPreset = JOB_PRESETS.find((preset) => preset.id === selectedPresetId) ?? JOB_PRESETS[0];
-  const previewProfile = useMemo(() => ({
-    ...(startMode === "example" ? selectedPreset.profile : doc.profile),
-    name: startMode === "example" ? selectedPreset.profile.name : `${firstName} ${lastName}`.trim() || "Votre nom",
-    role: startMode === "example" ? selectedPreset.profile.role : role || "Votre métier",
-  }), [doc.profile, firstName, lastName, role, selectedPreset.profile, startMode]);
+  const typedName = `${firstName} ${lastName}`.trim();
+  const previewProfile = useMemo(
+    () => ({
+      ...(startMode === "example" ? selectedPreset.profile : doc.profile),
+      name: startMode === "example" ? selectedPreset.profile.name : typedName || doc.profile.name || "Votre nom",
+      role: startMode === "example" ? selectedPreset.profile.role : role.trim() || doc.profile.role || "Votre métier",
+    }),
+    [doc.profile, role, selectedPreset.profile, startMode, typedName],
+  );
 
   const pageFor = (templateId: TemplateId, prefix: string): Page => ({
     id: prefix,
@@ -38,32 +44,25 @@ export function OnboardingFlow() {
 
   const launchEditor = () => {
     if (startMode === "import") {
-      applyTemplate(selectedTemplate);
-      setEditorMode("guided");
-      setOnboarding(false);
       setExtractorModalOpen(true);
       return;
     }
 
-    const profile = startMode === "example"
-      ? structuredClone(selectedPreset.profile)
-      : {
-          ...doc.profile,
-          name: `${firstName} ${lastName}`.trim() || "Votre nom",
-          role: role || "Votre métier",
-          email: "Votre adresse e-mail",
-          phone: "Votre téléphone",
-          location: "Votre ville",
-          link: "Votre lien professionnel",
-          summary: "Présentez votre parcours, vos points forts et le poste recherché.",
-          experiences: [{ role: "Votre poste", company: "Entreprise · Ville", date: "Dates", desc: "Décrivez vos missions et vos résultats." }],
-          educations: [{ degree: "Votre diplôme", school: "Établissement", date: "Années" }],
-          skills: ["Compétence 1", "Compétence 2", "Compétence 3"],
-          languages: [{ label: "Votre langue", value: 70 }],
-        };
+    if (startMode === "example") {
+      const profile = structuredClone(selectedPreset.profile);
+      loadDocument({ ...doc, profile });
+      applyTemplate(selectedTemplate);
+      setOnboarding(false);
+      setEditorMode("guided");
+      return;
+    }
 
-    loadDocument({ ...doc, profile });
-    applyTemplate(selectedTemplate);
+    // Mode guidé : conserver toutes les informations existantes du candidat
+    if (typedName) setIdentity("name", typedName);
+    if (role.trim()) setIdentity("role", role.trim());
+    if (selectedTemplate !== activeTemplate) {
+      applyTemplate(selectedTemplate);
+    }
     setOnboarding(false);
     setEditorMode("guided");
   };
@@ -73,7 +72,17 @@ export function OnboardingFlow() {
       <header className="cv-brandbar">
         <div className="cv-wordmark"><span className="cv-wordmark-mark">L.</span><span>LIBRE <span className="cv-brand-suffix">CV STUDIO</span></span></div>
         <div className="cv-brand-progress"><span className="cv-progress-dot" /> Votre CV · brouillon</div>
-        <button type="button" onClick={launchEditor} className="cv-header-action">Ouvrir le studio <ArrowRight size={15} /></button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="onboarding-import-cv-btn"
+            onClick={() => setExtractorModalOpen(true)}
+            className="cv-header-action"
+          >
+            <FileUp size={15} /> Importer mon CV
+          </button>
+          <button type="button" onClick={launchEditor} className="cv-header-action">Ouvrir le studio <ArrowRight size={15} /></button>
+        </div>
       </header>
 
       <main className="cv-workbench">
@@ -87,8 +96,16 @@ export function OnboardingFlow() {
           <section className="cv-start-panel" aria-labelledby="start-heading">
             <div className="cv-section-title"><span>01</span><div><h2 id="start-heading">Qu’avez-vous déjà ?</h2><p>Vous pourrez changer de méthode dans l’éditeur.</p></div></div>
             <div className="cv-start-options" role="group" aria-label="Point de départ">
-              <button type="button" aria-pressed={startMode === "import"} onClick={() => setStartMode("import")} className={`cv-start-option ${startMode === "import" ? "is-selected" : ""}`}>
-                <FileUp size={18} /><span><b>Un CV à refaire</b><small>Importer ou coller son contenu</small></span>{startMode === "import" && <Check size={16} />}
+              <button
+                type="button"
+                aria-pressed={startMode === "import"}
+                onClick={() => {
+                  setStartMode("import");
+                  setExtractorModalOpen(true);
+                }}
+                className={`cv-start-option ${startMode === "import" ? "is-selected" : ""}`}
+              >
+                <FileUp size={18} /><span><b>Importer mon CV</b><small>PDF, Word (.docx), TXT ou LinkedIn</small></span>{startMode === "import" && <Check size={16} />}
               </button>
               <button type="button" aria-pressed={startMode === "guided"} onClick={() => setStartMode("guided")} className={`cv-start-option ${startMode === "guided" ? "is-selected" : ""}`}>
                 <ArrowDownToLine size={18} /><span><b>Quelques infos</b><small>Être guidé pour le construire</small></span>{startMode === "guided" && <Check size={16} />}

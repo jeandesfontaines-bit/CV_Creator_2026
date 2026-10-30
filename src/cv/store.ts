@@ -1,6 +1,22 @@
 import { create } from "zustand";
 import { uid } from "@/cv/geometry";
-import { applyIdentity, parseProfile, SAMPLE, syncProfile } from "@/cv/profile";
+import {
+  applyEducationAdd,
+  applyEducationRemove,
+  applyEducationUpdate,
+  applyExperienceAdd,
+  applyExperienceRemove,
+  applyExperienceUpdate,
+  applyIdentity,
+  applyLanguagesUpdate,
+  applySkillsUpdate,
+  computeElementAutoHeight,
+  parseProfile,
+  resizeElementWithFlow,
+  SAMPLE,
+  syncBoundElementsFromProfile,
+  syncProfile,
+} from "@/cv/profile";
 import { buildTemplate } from "@/cv/templates";
 import { JOB_PRESETS, getRandomBoost } from "@/cv/presets";
 import { COLOR_PALETTES, applyPaletteToElements } from "@/cv/palettes";
@@ -8,15 +24,20 @@ import { SECTION_PACKS } from "@/cv/packs";
 import { saveCvToCloud, loadCvFromCloud } from "@/lib/cloud-cv";
 import { downloadDirectPDF } from "@/cv/pdf";
 import { extractFromText } from "@/cv/extractor";
+import { compactPageSpacing, isStudioFreeElement, paginateDocFlow } from "@/cv/pagination";
+import { auditDocument, type AuditIssue } from "@/cv/audit";
 import type {
   Bind,
   ContactIcon,
   Content,
   CVElement,
   Doc,
+  Education,
   ElStyle,
   ElType,
+  Experience,
   IdentityField,
+  Meter,
   Page,
   Profile,
   TemplateId,
@@ -24,6 +45,7 @@ import type {
 import { baseStyle, INK, PAGE_H, SHEET, SIGNAL } from "@/cv/types";
 
 const KEY = "libre-cv-doc-v1";
+const META_KEY = "libre-cv-meta-v1";
 
 export type ElementPatch = Partial<Pick<CVElement, "x" | "y" | "w" | "h" | "rotation" | "locked" | "hidden">> & {
   style?: Partial<ElStyle>;
@@ -34,6 +56,21 @@ type Flags = "showGrid" | "snap" | "guides" | "margins";
 
 export type SaveStatus = "saved" | "saving" | "unsaved";
 export type EditorMode = "guided" | "pro";
+
+export type ConfirmRequest = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  variant?: "danger" | "warning";
+  onConfirm: () => void;
+};
+
+type StoredMeta = {
+  editorMode?: EditorMode;
+  activeTemplate?: TemplateId;
+  activePageId?: string;
+  layoutCustomized?: boolean;
+};
 
 type State = {
   doc: Doc;
@@ -46,6 +83,12 @@ type State = {
   zoom: number;
   editorMode: EditorMode;
   activeTemplate: TemplateId;
+  layoutCustomized: boolean;
+  paginationBlocked: boolean;
+  readabilityModalOpen: boolean;
+  plainTextModalOpen: boolean;
+  pendingExportConfirm: boolean;
+  confirmModal: ConfirmRequest | null;
   showGrid: boolean;
   snap: boolean;
   guides: boolean;
@@ -61,6 +104,13 @@ type State = {
   mobileTouchMode: boolean;
   onboarding: boolean;
   setEditorMode: (mode: EditorMode) => void;
+  setConfirmModal: (req: ConfirmRequest | null) => void;
+  setReadabilityModalOpen: (open: boolean, pendingExport?: boolean) => void;
+  setPlainTextModalOpen: (open: boolean) => void;
+  paginateDocument: () => void;
+  compactSpacing: (pageId?: string) => void;
+  focusAuditIssue: (issue: AuditIssue) => void;
+  requestPdfExport: () => Promise<void>;
   applyGlobalFont: (font: string) => void;
   setCloudModalOpen: (open: boolean) => void;
   setExtractorModalOpen: (open: boolean) => void;
@@ -85,6 +135,14 @@ type State = {
   patchElement: (pageId: string, id: string, patch: ElementPatch, live?: boolean) => void;
   patchSelectedStyle: (patch: Partial<ElStyle>, live?: boolean) => void;
   setIdentity: (field: IdentityField, value: string) => void;
+  updateExperience: (index: number, patch: Partial<Experience>, live?: boolean) => void;
+  addExperience: () => void;
+  removeExperience: (index: number) => void;
+  updateEducation: (index: number, patch: Partial<Education>, live?: boolean) => void;
+  addEducation: () => void;
+  removeEducation: (index: number) => void;
+  updateSkills: (skills: string[], live?: boolean) => void;
+  updateLanguages: (languages: Meter[], live?: boolean) => void;
   deleteSelected: () => void;
   duplicateSelected: () => void;
   copy: () => void;
@@ -94,9 +152,15 @@ type State = {
   order: (dir: "front" | "back" | "forward" | "backward") => void;
   lockSelected: (locked: boolean) => void;
   toggleHidden: (pageId: string, id: string) => void;
+  toggleSectionVisibility: (sectionId: string) => void;
+  moveSection: (sectionId: string, direction: "up" | "down") => void;
   addElement: (type: ElType) => void;
   applyTemplate: (id: TemplateId) => void;
+  requestApplyTemplate: (id: TemplateId) => void;
+  resetLayout: () => void;
+  requestResetLayout: () => void;
   applyJobPreset: (id: string) => void;
+  requestApplyJobPreset: (id: string) => void;
   applyPalette: (paletteId: string) => void;
   addSectionPack: (packId: string) => void;
   boostElementText: (id: string, phrase?: string) => void;
@@ -107,6 +171,7 @@ type State = {
   setPageBackground: (color: string, live?: boolean) => void;
   importExtractedProfile: (profile: Profile, template?: TemplateId, asNewPage?: boolean) => void;
   newDocument: () => void;
+  requestNewDocument: () => void;
   loadDocument: (doc: Doc) => void;
   importText: (raw: string, template: TemplateId) => void;
 };
@@ -119,6 +184,18 @@ function formatTime(d = new Date()) {
   const m = String(d.getMinutes()).padStart(2, "0");
   const s = String(d.getSeconds()).padStart(2, "0");
   return `${h}:${m}:${s}`;
+}
+
+const TEMPLATE_ID_RE =
+  /^(seed|modern|editorial|minimal|executive|creative|tech|swiss|timeline|split|monogram|preset|extracted|imported|page)-\d+$|^(seed|modern|editorial|minimal|executive|creative|tech|swiss|timeline|split|monogram|preset|extracted|imported|page)-/;
+
+export function getStudioUnboundElements(page: Page): CVElement[] {
+  return page.elements.filter((el) => {
+    if (el.hidden) return false;
+    if (el.type === "photo" && Boolean(el.content.src)) return true;
+    if (!el.bind && !TEMPLATE_ID_RE.test(el.id)) return true;
+    return false;
+  });
 }
 
 function freshDoc(): Doc {
@@ -136,6 +213,42 @@ function freshDoc(): Doc {
   };
 }
 
+export function buildPaginatedDocFromProfile(
+  profile: Profile,
+  template: TemplateId,
+  firstPageId = "page-1",
+): Doc {
+  const cleanProfile = structuredClone(profile);
+  const baseProfile: Profile = {
+    ...cleanProfile,
+    experiences: cleanProfile.experiences.slice(0, 3),
+    educations: cleanProfile.educations.slice(0, 2),
+  };
+
+  let nextDoc: Doc = {
+    profile: baseProfile,
+    pages: [
+      {
+        id: firstPageId,
+        name: "Page 1",
+        background: SHEET,
+        elements: buildTemplate(template, baseProfile, `${template}-${uid()}`),
+      },
+    ],
+  };
+
+  for (let i = 3; i < cleanProfile.experiences.length; i++) {
+    nextDoc = applyExperienceAdd(nextDoc, firstPageId, cleanProfile.experiences[i]);
+  }
+  for (let i = 2; i < cleanProfile.educations.length; i++) {
+    nextDoc = applyEducationAdd(nextDoc, firstPageId, cleanProfile.educations[i]);
+  }
+
+  nextDoc = syncBoundElementsFromProfile({ ...nextDoc, profile: cleanProfile });
+  const paginated = paginateDocFlow(nextDoc);
+  return paginated.doc;
+}
+
 function flushSave(doc: Doc) {
   if (typeof window === "undefined") return;
   try {
@@ -146,13 +259,43 @@ function flushSave(doc: Doc) {
   }
 }
 
+function saveMeta(patch?: Partial<StoredMeta>) {
+  if (typeof window === "undefined") return;
+  try {
+    const s = useStudio.getState();
+    const meta: StoredMeta = {
+      editorMode: patch?.editorMode ?? s.editorMode,
+      activeTemplate: patch?.activeTemplate ?? s.activeTemplate,
+      activePageId: patch?.activePageId ?? s.activePageId,
+      layoutCustomized: patch?.layoutCustomized ?? s.layoutCustomized,
+    };
+    localStorage.setItem(META_KEY, JSON.stringify(meta));
+  } catch {
+    // ignore
+  }
+}
+
+function readMeta(): StoredMeta | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredMeta;
+  } catch {
+    return null;
+  }
+}
+
 function persist(doc: Doc) {
   if (typeof window === "undefined") return;
-  useStudio.setState({ saveStatus: "saving" });
+  try {
+    localStorage.setItem(KEY, JSON.stringify(doc));
+  } catch {
+    // ignore
+  }
+  saveMeta();
   window.clearTimeout(persistTimer);
-  persistTimer = window.setTimeout(() => {
-    flushSave(doc);
-  }, 250);
+  useStudio.setState({ saveStatus: "saved", lastSavedAt: formatTime() });
 }
 
 if (typeof window !== "undefined") {
@@ -160,6 +303,7 @@ if (typeof window !== "undefined") {
     try {
       const doc = useStudio.getState().doc;
       if (doc) localStorage.setItem(KEY, JSON.stringify(doc));
+      saveMeta();
     } catch {
       // ignore
     }
@@ -206,8 +350,9 @@ export const useStudio = create<State>((set, get) => {
           historyHeld: true,
         });
       }
-      set({ doc: recipe(get().doc) });
-      persist(get().doc);
+      const next = recipe(get().doc);
+      set({ doc: next });
+      persist(next);
       return;
     }
     const next = recipe(current);
@@ -226,6 +371,20 @@ export const useStudio = create<State>((set, get) => {
     return { page, elements: page.elements.filter((el) => selectedIds.includes(el.id)) };
   }
 
+  function maybePaginateGuided(nextDoc: Doc): Doc {
+    if (get().editorMode !== "guided") return nextDoc;
+    const res = paginateDocFlow(nextDoc);
+    const activeExists = res.doc.pages.some((p) => p.id === get().activePageId);
+    const nextActiveId = activeExists
+      ? get().activePageId
+      : res.doc.pages[res.doc.pages.length - 1]?.id ?? res.doc.pages[0].id;
+    set({
+      paginationBlocked: res.blockedByFreeElement,
+      activePageId: nextActiveId,
+    });
+    return res.doc;
+  }
+
   return {
     doc: initial,
     past: [],
@@ -237,6 +396,12 @@ export const useStudio = create<State>((set, get) => {
     zoom: 0.85,
     editorMode: "pro",
     activeTemplate: "modern",
+    layoutCustomized: false,
+    paginationBlocked: false,
+    readabilityModalOpen: false,
+    plainTextModalOpen: false,
+    pendingExportConfirm: false,
+    confirmModal: null,
     showGrid: false,
     snap: true,
     guides: true,
@@ -252,7 +417,82 @@ export const useStudio = create<State>((set, get) => {
     mobileTouchMode: false,
     onboarding: false,
 
-    setEditorMode: (mode) => set({ editorMode: mode }),
+    setEditorMode: (mode) => {
+      if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      set({ editorMode: mode, editingId: null });
+      saveMeta({ editorMode: mode });
+    },
+    setConfirmModal: (req) => set({ confirmModal: req }),
+    setReadabilityModalOpen: (open, pendingExport = false) =>
+      set({ readabilityModalOpen: open, pendingExportConfirm: open ? pendingExport : false }),
+    setPlainTextModalOpen: (open) => set({ plainTextModalOpen: open }),
+
+    paginateDocument: () => {
+      commit((doc) => {
+        const res = paginateDocFlow(doc, { force: true });
+        const activeExists = res.doc.pages.some((p) => p.id === get().activePageId);
+        const nextActiveId = activeExists
+          ? get().activePageId
+          : res.doc.pages[res.doc.pages.length - 1]?.id ?? res.doc.pages[0].id;
+        set({
+          paginationBlocked: false,
+          activePageId: nextActiveId,
+        });
+        return res.doc;
+      }, false);
+      get().notify("✓ Contenu réparti sur les pages A4");
+    },
+
+    compactSpacing: (targetPageId) => {
+      commit((doc) => {
+        const compacted = compactPageSpacing(doc, targetPageId);
+        const activeExists = compacted.pages.some((p) => p.id === get().activePageId);
+        const nextActiveId = activeExists
+          ? get().activePageId
+          : compacted.pages[compacted.pages.length - 1]?.id ?? compacted.pages[0].id;
+        set({
+          paginationBlocked: false,
+          activePageId: nextActiveId,
+        });
+        return compacted;
+      }, false);
+      get().notify("✓ Espacement vertical optimisé");
+    },
+
+    focusAuditIssue: (issue) => {
+      set({
+        activePageId: issue.pageId,
+        selectedIds: issue.elementIds,
+        editingId: null,
+      });
+      saveMeta({ activePageId: issue.pageId });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cv-focus-issue", { detail: issue }));
+        window.setTimeout(() => {
+          const targetId = issue.elementIds[0];
+          const selector = targetId
+            ? `[data-sheet="${issue.pageId}"] [data-element="${targetId}"], [data-element="${targetId}"]`
+            : `[data-sheet="${issue.pageId}"]`;
+          const node = document.querySelector(selector);
+          if (node instanceof HTMLElement) {
+            node.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+          }
+        }, 40);
+      }
+    },
+
+    requestPdfExport: async () => {
+      const { doc, editorMode, paginationBlocked } = get();
+      const audit = auditDocument(doc, { editorMode, paginationBlocked });
+      if (audit.hasCriticalExportIssues) {
+        set({ readabilityModalOpen: true, pendingExportConfirm: true });
+        return;
+      }
+      await get().directPdfExport();
+    },
+
     setCloudModalOpen: (open) => set({ cloudModalOpen: open }),
     setExtractorModalOpen: (open) => set({ extractorModalOpen: open }),
     setMobileTouchMode: (active) => set({ mobileTouchMode: active }),
@@ -271,8 +511,9 @@ export const useStudio = create<State>((set, get) => {
         }
       }
 
-      // 2. Retrieve local storage CV and stored sync code
+      // 2. Retrieve local storage CV, metadata, and stored sync code
       const loaded = readStorage();
+      const meta = readMeta();
       let storedSyncCode: string | null = null;
       if (typeof window !== "undefined") {
         try {
@@ -287,16 +528,28 @@ export const useStudio = create<State>((set, get) => {
         set({ syncCode: activeCode });
       }
 
+      if (meta) {
+        set({
+          editorMode: meta.editorMode === "guided" || meta.editorMode === "pro" ? meta.editorMode : get().editorMode,
+          activeTemplate: meta.activeTemplate ?? get().activeTemplate,
+          layoutCustomized: Boolean(meta.layoutCustomized),
+        });
+      }
+
       if (urlSyncCode) {
-        // If an explicit sync code is passed in URL, load it directly from the cloud
         get().loadFromCloud(urlSyncCode);
         return;
       }
 
       if (!loaded) return;
+      const syncedDoc = syncBoundElementsFromProfile(loaded, true);
+      const validPageId =
+        meta?.activePageId && syncedDoc.pages.some((p) => p.id === meta.activePageId)
+          ? meta.activePageId
+          : syncedDoc.pages[0].id;
       set({
-        doc: loaded,
-        activePageId: loaded.pages[0].id,
+        doc: syncedDoc,
+        activePageId: validPageId,
         selectedIds: [],
         editingId: null,
         past: [],
@@ -393,6 +646,7 @@ export const useStudio = create<State>((set, get) => {
 
     saveNow: () => {
       flushSave(get().doc);
+      saveMeta();
       get().notify("✓ Sauvegardé en temps réel");
     },
 
@@ -401,10 +655,17 @@ export const useStudio = create<State>((set, get) => {
     notify: (msg) => {
       set({ notice: msg });
       window.clearTimeout(noticeTimer);
-      noticeTimer = window.setTimeout(() => set({ notice: null }), 2400);
+      noticeTimer = window.setTimeout(() => set({ notice: null }), 5000);
     },
-    select: (ids) => set({ selectedIds: ids, editingId: get().editingId && ids.includes(get().editingId!) ? get().editingId : null }),
-    setActive: (id) => set({ activePageId: id }),
+    select: (ids) =>
+      set({
+        selectedIds: ids,
+        editingId: get().editingId && ids.includes(get().editingId!) ? get().editingId : null,
+      }),
+    setActive: (id) => {
+      set({ activePageId: id });
+      saveMeta({ activePageId: id });
+    },
     setEditing: (id) => set({ editingId: id, selectedIds: id ? [id] : get().selectedIds }),
 
     undo: () => {
@@ -458,30 +719,54 @@ export const useStudio = create<State>((set, get) => {
 
     patchElements: (pageId, patches) => {
       if (!get().historyHeld) get().hold();
-      set({
-        doc: mapPage(get().doc, pageId, (page) => ({
-          ...page,
-          elements: page.elements.map((el) => (patches[el.id] ? mergeElement(el, patches[el.id]) : el)),
-        })),
-      });
+      const nextDoc = mapPage(get().doc, pageId, (page) => ({
+        ...page,
+        elements: page.elements.map((el) => (patches[el.id] ? mergeElement(el, patches[el.id]) : el)),
+      }));
+      set({ doc: nextDoc, layoutCustomized: true });
+      persist(nextDoc);
     },
 
     patchElement: (pageId, id, patch, live = false) => {
+      const isLayoutChange =
+        patch.x !== undefined ||
+        patch.y !== undefined ||
+        patch.w !== undefined ||
+        patch.h !== undefined ||
+        patch.rotation !== undefined ||
+        patch.style !== undefined;
+      if (isLayoutChange && !get().layoutCustomized) {
+        set({ layoutCustomized: true });
+      }
       commit((doc) => {
         let profile = doc.profile;
+        let boundContentModified = false;
         const pages = doc.pages.map((page) => {
-          if (page.id !== pageId) return page;
-          return {
-            ...page,
-            elements: page.elements.map((el) => {
-              if (el.id !== id) return el;
-              const next = mergeElement(el, patch);
-              if (patch.content) profile = syncProfile(profile, next.bind, next.content);
-              return next;
-            }),
-          };
+          if (page.id !== pageId && !page.elements.some((e) => e.id === id)) return page;
+          let resized: { id: string; nextH: number } | null = null;
+          const elements = page.elements.map((el) => {
+            if (el.id !== id) return el;
+            const next = mergeElement(el, patch);
+            if (patch.content) {
+              profile = syncProfile(profile, next.bind, next.content);
+              if (next.bind) boundContentModified = true;
+              if (["experience", "education", "text", "skills", "meters"].includes(next.type)) {
+                const nextH = computeElementAutoHeight(next);
+                if (Math.abs(nextH - next.h) >= 2) {
+                  resized = { id: next.id, nextH };
+                }
+              }
+            }
+            return next;
+          });
+          let nextPage: Page = { ...page, elements };
+          if (resized) {
+            nextPage = resizeElementWithFlow(nextPage, (resized as { id: string; nextH: number }).id, (resized as { id: string; nextH: number }).nextH);
+          }
+          return nextPage;
         });
-        return { ...doc, profile, pages };
+        const updatedDoc = { ...doc, profile, pages };
+        return boundContentModified ? maybePaginateGuided(updatedDoc) : updatedDoc;
       }, live);
     },
 
@@ -489,6 +774,7 @@ export const useStudio = create<State>((set, get) => {
       const { page, elements } = selectedOnActive();
       if (!elements.length) return;
       const ids = new Set(elements.map((e) => e.id));
+      set({ layoutCustomized: true });
       commit(
         (doc) =>
           mapPage(doc, page.id, (p) => ({
@@ -500,24 +786,84 @@ export const useStudio = create<State>((set, get) => {
     },
 
     setIdentity: (field, value) => {
-      if (!get().historyHeld) get().hold();
-      const doc = applyIdentity(get().doc, field, value);
-      set({ doc });
-      persist(doc);
+      commit((doc) => maybePaginateGuided(applyIdentity(doc, field, value)), true);
+    },
+
+    updateExperience: (index, patch, live = true) => {
+      commit((doc) => maybePaginateGuided(applyExperienceUpdate(doc, index, patch)), live);
+    },
+
+    addExperience: () => {
+      const pageId = get().activePageId;
+      commit((doc) => maybePaginateGuided(applyExperienceAdd(doc, pageId)), false);
+      get().notify("Nouvelle expérience ajoutée");
+    },
+
+    removeExperience: (index) => {
+      commit((doc) => maybePaginateGuided(applyExperienceRemove(doc, index)), false);
+      get().notify("Expérience supprimée");
+    },
+
+    updateEducation: (index, patch, live = true) => {
+      commit((doc) => maybePaginateGuided(applyEducationUpdate(doc, index, patch)), live);
+    },
+
+    addEducation: () => {
+      const pageId = get().activePageId;
+      commit((doc) => maybePaginateGuided(applyEducationAdd(doc, pageId)), false);
+      get().notify("Formation ajoutée");
+    },
+
+    removeEducation: (index) => {
+      commit((doc) => maybePaginateGuided(applyEducationRemove(doc, index)), false);
+      get().notify("Formation supprimée");
+    },
+
+    updateSkills: (skills, live = true) => {
+      commit((doc) => maybePaginateGuided(applySkillsUpdate(doc, skills)), live);
+    },
+
+    updateLanguages: (languages, live = true) => {
+      commit((doc) => maybePaginateGuided(applyLanguagesUpdate(doc, languages)), live);
     },
 
     deleteSelected: () => {
-      const { page } = selectedOnActive();
+      const { page, elements } = selectedOnActive();
       const ids = new Set(get().selectedIds);
       if (!ids.size) return;
-      commit(
-        (doc) =>
-          mapPage(doc, page.id, (p) => ({
-            ...p,
-            elements: p.elements.filter((el) => !ids.has(el.id)),
-          })),
-        false,
-      );
+      set({ layoutCustomized: true });
+      commit((doc) => {
+        let nextDoc = mapPage(doc, page.id, (p) => ({
+          ...p,
+          elements: p.elements.filter((el) => !ids.has(el.id)),
+        }));
+        // If any deleted element was bound to experience or education, keep profile in sync
+        const expIndices = elements
+          .filter((el) => el.bind?.kind === "experience")
+          .map((el) => (el.bind as { kind: "experience"; index: number }).index)
+          .sort((a, b) => b - a);
+        for (const idx of expIndices) {
+          const stillBound = nextDoc.pages.some((p) =>
+            p.elements.some((el) => el.bind?.kind === "experience" && el.bind.index === idx),
+          );
+          if (!stillBound) {
+            nextDoc = applyExperienceRemove(nextDoc, idx);
+          }
+        }
+        const eduIndices = elements
+          .filter((el) => el.bind?.kind === "education")
+          .map((el) => (el.bind as { kind: "education"; index: number }).index)
+          .sort((a, b) => b - a);
+        for (const idx of eduIndices) {
+          const stillBound = nextDoc.pages.some((p) =>
+            p.elements.some((el) => el.bind?.kind === "education" && el.bind.index === idx),
+          );
+          if (!stillBound) {
+            nextDoc = applyEducationRemove(nextDoc, idx);
+          }
+        }
+        return nextDoc;
+      }, false);
       set({ selectedIds: [], editingId: null });
     },
 
@@ -533,6 +879,7 @@ export const useStudio = create<State>((set, get) => {
         z: maxZ + 1 + i,
         bind: undefined,
       }));
+      set({ layoutCustomized: true });
       commit(
         (doc) =>
           mapPage(doc, page.id, (p) => ({
@@ -564,6 +911,7 @@ export const useStudio = create<State>((set, get) => {
         z: maxZ + 1 + i,
         bind: undefined,
       }));
+      set({ layoutCustomized: true });
       commit(
         (doc) =>
           mapPage(doc, page.id, (p) => ({
@@ -585,6 +933,7 @@ export const useStudio = create<State>((set, get) => {
       const midX = (minX + maxX) / 2;
       const midY = (minY + maxY) / 2;
       const ids = new Set(elements.map((e) => e.id));
+      set({ layoutCustomized: true });
       commit(
         (doc) =>
           mapPage(doc, page.id, (p) => ({
@@ -611,6 +960,7 @@ export const useStudio = create<State>((set, get) => {
       const last = axis === "x" ? sorted[sorted.length - 1].x : sorted[sorted.length - 1].y;
       const step = (last - first) / (sorted.length - 1);
       const pos = new Map(sorted.map((el, i) => [el.id, Math.round(first + step * i)]));
+      set({ layoutCustomized: true });
       commit(
         (doc) =>
           mapPage(doc, page.id, (p) => ({
@@ -632,6 +982,7 @@ export const useStudio = create<State>((set, get) => {
       const max = Math.max(...zs);
       const min = Math.min(...zs);
       const ids = new Set(elements.map((e) => e.id));
+      set({ layoutCustomized: true });
       commit(
         (doc) =>
           mapPage(doc, page.id, (p) => ({
@@ -671,6 +1022,102 @@ export const useStudio = create<State>((set, get) => {
           })),
         false,
       );
+    },
+
+    toggleSectionVisibility: (sectionId) => {
+      commit((doc) => {
+        const matches = (el: CVElement) => {
+          if (!el.bind) return false;
+          if (sectionId === "profile" && ["name", "role", "contact"].includes(el.bind.kind)) return true;
+          if (sectionId === "summary" && el.bind.kind === "summary") return true;
+          if (sectionId === "experience" && el.bind.kind === "experience") return true;
+          if (sectionId === "education" && el.bind.kind === "education") return true;
+          if (sectionId === "skills" && el.bind.kind === "skills") return true;
+          if (sectionId === "languages" && el.bind.kind === "languages") return true;
+          return false;
+        };
+        const anyVisible = doc.pages.some((p) => p.elements.some((el) => matches(el) && !el.hidden));
+        const targetHidden = anyVisible;
+        const pages = doc.pages.map((page) => ({
+          ...page,
+          elements: page.elements.map((el) => (matches(el) ? { ...el, hidden: targetHidden } : el)),
+        }));
+        return { ...doc, pages };
+      }, false);
+    },
+
+    moveSection: (sectionId, direction) => {
+      commit((doc) => {
+        const pageId = get().activePageId;
+        const updated = mapPage(doc, pageId, (page) => {
+          const getSectionElements = (sid: string) => {
+            const boundEls = page.elements.filter((el) => {
+              if (!el.bind) return false;
+              if (sid === "profile" && ["name", "role", "contact"].includes(el.bind.kind)) return true;
+              if (sid === "summary" && el.bind.kind === "summary") return true;
+              if (sid === "experience" && el.bind.kind === "experience") return true;
+              if (sid === "education" && el.bind.kind === "education") return true;
+              if (sid === "skills" && el.bind.kind === "skills") return true;
+              if (sid === "languages" && el.bind.kind === "languages") return true;
+              return false;
+            });
+            if (!boundEls.length || sid === "profile") return boundEls;
+            const firstBound = [...boundEls].sort((a, b) => a.y - b.y)[0];
+            const attachedHeaders = page.elements.filter(
+              (el) =>
+                !el.bind &&
+                !isStudioFreeElement(el) &&
+                el.type === "heading" &&
+                Math.min(el.x + el.w, firstBound.x + firstBound.w) - Math.max(el.x, firstBound.x) > 32 &&
+                firstBound.y - el.y >= 6 &&
+                firstBound.y - el.y <= 38,
+            );
+            return [...attachedHeaders, ...boundEls];
+          };
+
+          const sectionOrder = ["profile", "summary", "experience", "education", "skills", "languages"];
+          const idx = sectionOrder.indexOf(sectionId);
+          if (idx === -1) return page;
+          const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+          if (targetIdx < 0 || targetIdx >= sectionOrder.length) return page;
+          const otherSectionId = sectionOrder[targetIdx];
+
+          const elsA = getSectionElements(sectionId);
+          const elsB = getSectionElements(otherSectionId);
+          if (!elsA.length || !elsB.length) return page;
+
+          const minY_A = Math.min(...elsA.map((e) => e.y));
+          const minY_B = Math.min(...elsB.map((e) => e.y));
+
+          const upper = minY_A <= minY_B ? elsA : elsB;
+          const lower = minY_A <= minY_B ? elsB : elsA;
+
+          const topU = Math.min(...upper.map((e) => e.y));
+          const bottomU = Math.max(...upper.map((e) => e.y + e.h));
+          const hU = bottomU - topU;
+
+          const topL = Math.min(...lower.map((e) => e.y));
+          const bottomL = Math.max(...lower.map((e) => e.y + e.h));
+          const hL = bottomL - topL;
+
+          const gap = Math.max(12, topL - bottomU);
+          const dyLower = topU - topL;
+          const dyUpper = hL + gap;
+
+          const idsUpper = new Set(upper.map((e) => e.id));
+          const idsLower = new Set(lower.map((e) => e.id));
+
+          return {
+            ...page,
+            elements: page.elements.map((el) => {
+              if (idsUpper.has(el.id)) return { ...el, y: Math.round(el.y + dyUpper) };
+              if (idsLower.has(el.id)) return { ...el, y: Math.round(el.y + dyLower) };
+              return el;
+            }),
+          };
+        });
+        return maybePaginateGuided(updated);
+      }, false);
     },
 
     addElement: (type) => {
@@ -763,6 +1210,9 @@ export const useStudio = create<State>((set, get) => {
         style,
       };
 
+      if (!bind) {
+        set({ layoutCustomized: true });
+      }
       commit((doc) => {
         const withProfile = type === "experience" || type === "education" ? { ...doc, profile } : doc;
         return mapPage(withProfile, page.id, (p) => ({ ...p, elements: [...p.elements, element] }));
@@ -771,33 +1221,92 @@ export const useStudio = create<State>((set, get) => {
     },
 
     applyTemplate: (id) => {
-      const pageId = get().activePageId;
+      set({ activeTemplate: id, layoutCustomized: false, selectedIds: [], editingId: null, paginationBlocked: false });
       commit((doc) => {
-        const page = doc.pages.find((p) => p.id === pageId) ?? doc.pages[0];
-        return mapPage(doc, page.id, (p) => ({
-          ...p,
-          background: SHEET,
-          elements: buildTemplate(id, doc.profile, `${id}-${uid()}`),
-        }));
+        const firstId = doc.pages[0]?.id || "page-1";
+        return buildPaginatedDocFromProfile(doc.profile, id, firstId);
       }, false);
-      set({ selectedIds: [], editingId: null, activeTemplate: id });
+      const firstId = get().doc.pages[0]?.id || "page-1";
+      set({ activePageId: firstId });
+      saveMeta({ activeTemplate: id, layoutCustomized: false, activePageId: firstId });
       get().notify(`Modèle ${id} appliqué`);
+    },
+
+    requestApplyTemplate: (id) => {
+      const { doc, activePageId, layoutCustomized, activeTemplate } = get();
+      const page = doc.pages.find((p) => p.id === activePageId) ?? doc.pages[0];
+      const unbound = getStudioUnboundElements(page);
+      if (layoutCustomized || unbound.length > 0) {
+        get().setConfirmModal({
+          title: id === activeTemplate ? "Réinitialiser la mise en page du modèle ?" : `Appliquer le modèle « ${id} » ?`,
+          message:
+            unbound.length > 0
+              ? `Cette action réappliquera la mise en page du modèle « ${id} » et retirera les ${unbound.length} élément(s) libre(s) ajouté(s) dans le Studio. Vos informations de candidat (profil, expériences, formations, compétences) seront intégralement conservées.`
+              : `Vous avez déplacé ou ajusté des blocs dans le Studio. Appliquer le modèle « ${id} » réinitialisera la disposition des blocs tout en conservant l'intégralité de vos textes et informations de candidat.`,
+          confirmLabel: id === activeTemplate ? "Réinitialiser la disposition" : `Appliquer le modèle`,
+          variant: "warning",
+          onConfirm: () => {
+            get().setConfirmModal(null);
+            get().applyTemplate(id);
+          },
+        });
+        return;
+      }
+      get().applyTemplate(id);
+    },
+
+    resetLayout: () => {
+      const id = get().activeTemplate;
+      get().applyTemplate(id);
+      get().notify("Mise en page réinitialisée (informations conservées)");
+    },
+
+    requestResetLayout: () => {
+      const { activeTemplate } = get();
+      get().setConfirmModal({
+        title: "Réinitialiser la mise en page ?",
+        message: `Les déplacements de blocs et les éléments libres ajoutés dans le Studio seront remis à zéro selon le modèle « ${activeTemplate} ». Vos textes et informations de candidat (profil, expériences, formations, compétences) seront intégralement conservés.`,
+        confirmLabel: "Réinitialiser la mise en page",
+        variant: "warning",
+        onConfirm: () => {
+          get().setConfirmModal(null);
+          get().resetLayout();
+        },
+      });
     },
 
     applyJobPreset: (presetId) => {
       const preset = JOB_PRESETS.find((p) => p.id === presetId);
       if (!preset) return;
       const pageId = get().activePageId;
+      const tpl = get().activeTemplate;
+      set({ layoutCustomized: false, selectedIds: [], editingId: null });
       commit((doc) => {
         const page = doc.pages.find((p) => p.id === pageId) ?? doc.pages[0];
         const nextProfile = structuredClone(preset.profile);
         return mapPage({ ...doc, profile: nextProfile }, page.id, (p) => ({
           ...p,
-          elements: buildTemplate("modern", nextProfile, `preset-${uid()}`),
+          elements: buildTemplate(tpl, nextProfile, `preset-${uid()}`),
         }));
       }, false);
-      set({ selectedIds: [], editingId: null });
+      saveMeta({ layoutCustomized: false });
       get().notify(`⚡ Métier "${preset.label}" chargé !`);
+    },
+
+    requestApplyJobPreset: (presetId) => {
+      const preset = JOB_PRESETS.find((p) => p.id === presetId);
+      if (!preset) return;
+      get().setConfirmModal({
+        title: `Remplacer par l'exemple « ${preset.label} » ?`,
+        message:
+          "Attention : cette action remplacera les informations actuelles du candidat (nom, expériences, formations, compétences) ainsi que la mise en page par cet exemple pré-rédigé.",
+        confirmLabel: "Remplacer mes données par l'exemple",
+        variant: "danger",
+        onConfirm: () => {
+          get().setConfirmModal(null);
+          get().applyJobPreset(presetId);
+        },
+      });
     },
 
     applyPalette: (paletteId) => {
@@ -835,15 +1344,43 @@ export const useStudio = create<State>((set, get) => {
       const bottom = page.elements.reduce((m, el) => Math.max(m, el.hidden ? m : el.y + el.h), 48);
       const startY = Math.min(PAGE_H - 120, bottom + 20);
       const maxZ = Math.max(1, ...page.elements.map((e) => e.z)) + 1;
-      const { elements: newElements } = pack.createElements(startY, maxZ);
+      const { elements: rawElements } = pack.createElements(startY, maxZ);
 
+      set({ layoutCustomized: true });
       commit((doc) => {
-        return mapPage(doc, page.id, (p) => ({
+        let profile = {
+          ...doc.profile,
+          experiences: [...doc.profile.experiences],
+          educations: [...doc.profile.educations],
+        };
+        const newElements = rawElements.map((el) => {
+          if (el.type === "experience" && !el.bind) {
+            const index = profile.experiences.length;
+            profile.experiences.push({
+              role: el.content.role ?? "Nouveau poste",
+              company: el.content.company ?? "Entreprise",
+              date: el.content.date ?? "Dates",
+              desc: el.content.desc ?? "",
+            });
+            return { ...el, bind: { kind: "experience" as const, index } };
+          }
+          if (el.type === "education" && !el.bind) {
+            const index = profile.educations.length;
+            profile.educations.push({
+              degree: el.content.degree ?? "Diplôme",
+              school: el.content.school ?? "Établissement",
+              date: el.content.date ?? "Années",
+            });
+            return { ...el, bind: { kind: "education" as const, index } };
+          }
+          return el;
+        });
+        return mapPage({ ...doc, profile }, page.id, (p) => ({
           ...p,
           elements: [...p.elements, ...newElements],
         }));
       }, false);
-      set({ selectedIds: newElements.map((e) => e.id), editingId: null });
+      set({ selectedIds: rawElements.map((e) => e.id), editingId: null });
       get().notify(`Pack "${pack.name}" ajouté`);
     },
 
@@ -869,6 +1406,7 @@ export const useStudio = create<State>((set, get) => {
       const page: Page = { id: uid(), name: `Page ${get().doc.pages.length + 1}`, background: SHEET, elements: [] };
       commit((doc) => ({ ...doc, pages: [...doc.pages, page] }), false);
       set({ activePageId: page.id, selectedIds: [], editingId: null });
+      saveMeta({ activePageId: page.id });
     },
 
     duplicatePage: () => {
@@ -881,6 +1419,7 @@ export const useStudio = create<State>((set, get) => {
       };
       commit((doc) => ({ ...doc, pages: [...doc.pages, page] }), false);
       set({ activePageId: page.id, selectedIds: [] });
+      saveMeta({ activePageId: page.id });
     },
 
     deletePage: (id) => {
@@ -889,7 +1428,11 @@ export const useStudio = create<State>((set, get) => {
         return;
       }
       commit((doc) => ({ ...doc, pages: doc.pages.filter((p) => p.id !== id) }), false);
-      if (get().activePageId === id) set({ activePageId: get().doc.pages[0].id, selectedIds: [] });
+      if (get().activePageId === id) {
+        const firstId = get().doc.pages[0].id;
+        set({ activePageId: firstId, selectedIds: [] });
+        saveMeta({ activePageId: firstId });
+      }
     },
 
     renamePage: (id, name) => {
@@ -905,9 +1448,30 @@ export const useStudio = create<State>((set, get) => {
 
     newDocument: () => {
       const doc = freshDoc();
+      set({
+        activePageId: doc.pages[0].id,
+        activeTemplate: "modern",
+        layoutCustomized: false,
+        selectedIds: [],
+        editingId: null,
+      });
       commit(() => doc, false);
-      set({ activePageId: doc.pages[0].id, selectedIds: [], editingId: null });
+      saveMeta({ activePageId: doc.pages[0].id, activeTemplate: "modern", layoutCustomized: false });
       get().notify("Nouveau document");
+    },
+
+    requestNewDocument: () => {
+      get().setConfirmModal({
+        title: "Réinitialiser tout le document ?",
+        message:
+          "Cette action est destructive : toutes vos informations (profil, expériences, formations, compétences) et votre mise en page personnalisée seront remplacées par un nouveau document par défaut.",
+        confirmLabel: "Tout réinitialiser",
+        variant: "danger",
+        onConfirm: () => {
+          get().setConfirmModal(null);
+          get().newDocument();
+        },
+      });
     },
 
     loadDocument: (doc) => {
@@ -915,48 +1479,58 @@ export const useStudio = create<State>((set, get) => {
         get().notify("Fichier illisible");
         return;
       }
-      commit(() => doc, false);
-      set({ activePageId: doc.pages[0].id, selectedIds: [], editingId: null });
+      const synced = syncBoundElementsFromProfile(doc);
+      commit(() => synced, false);
+      set({ activePageId: synced.pages[0].id, selectedIds: [], editingId: null });
+      saveMeta({ activePageId: synced.pages[0].id });
       get().notify("Projet ouvert");
     },
 
-    importExtractedProfile: (profile, template = "modern", asNewPage = false) => {
-      const activeId = get().activePageId;
+    importExtractedProfile: (profile, template = "executive", asNewPage = false) => {
+      set({
+        activeTemplate: template,
+        layoutCustomized: false,
+        paginationBlocked: false,
+        editorMode: "guided",
+        onboarding: false,
+        extractorModalOpen: false,
+      });
       commit((doc) => {
-        const nextProfile = { ...doc.profile, ...profile };
+        const nextProfile: Profile = structuredClone(profile);
         if (asNewPage) {
           const newPageId = `page-${uid()}`;
           const newPage: Page = {
             id: newPageId,
-            name: `Page ${doc.pages.length + 1} (${profile.name.split(" ")[0] || "CV"})`,
+            name: `Page ${doc.pages.length + 1} (${nextProfile.name.split(" ")[0] || "CV"})`,
             background: SHEET,
             elements: buildTemplate(template, nextProfile, `${template}-${uid()}`),
           };
-          return {
+          return syncBoundElementsFromProfile({
             ...doc,
             profile: nextProfile,
             pages: [...doc.pages, newPage],
-          };
+          });
         } else {
-          return mapPage({ ...doc, profile: nextProfile }, activeId, (p) => ({
-            ...p,
-            elements: buildTemplate(template, nextProfile, `${template}-${uid()}`),
-          }));
+          return buildPaginatedDocFromProfile(nextProfile, template, "page-1");
         }
       }, false);
-      if (asNewPage) {
-        const pages = get().doc.pages;
-        const lastPage = pages[pages.length - 1];
-        if (lastPage) set({ activePageId: lastPage.id });
-      }
-      set({ selectedIds: [], editingId: null });
-      get().notify(`CV extrait : ${profile.name} (${profile.experiences.length} exp, ${profile.educations.length} form)`);
+      const pages = get().doc.pages;
+      const targetPageId = asNewPage ? (pages[pages.length - 1]?.id || "page-1") : (pages[0]?.id || "page-1");
+      set({ activePageId: targetPageId, selectedIds: [], editingId: null });
+      flushSave(get().doc);
+      saveMeta({
+        editorMode: "guided",
+        activeTemplate: template,
+        activePageId: targetPageId,
+        layoutCustomized: false,
+      });
+      get().notify("Ton CV a été importé. Vérifie les informations détectées et personnalise-le.");
     },
 
     importText: (raw, template) => {
       const pageId = get().activePageId;
+      set({ activeTemplate: template, layoutCustomized: false });
       commit((doc) => {
-        // Run full CV extraction using CV_extractor engine
         let profile: Profile;
         try {
           const res = extractFromText(raw, doc.profile);
@@ -964,10 +1538,12 @@ export const useStudio = create<State>((set, get) => {
         } catch {
           profile = parseProfile(raw, doc.profile);
         }
-        return mapPage({ ...doc, profile }, pageId, (p) => ({
-          ...p,
-          elements: buildTemplate(template, profile, `${template}-${uid()}`),
-        }));
+        return syncBoundElementsFromProfile(
+          mapPage({ ...doc, profile }, pageId, (p) => ({
+            ...p,
+            elements: buildTemplate(template, profile, `${template}-${uid()}`),
+          })),
+        );
       }, false);
       set({ selectedIds: [], editingId: null });
       get().notify("CV textuel analysé et disposé");

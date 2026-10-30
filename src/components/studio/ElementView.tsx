@@ -292,7 +292,10 @@ export function ElementView({
       }}
     >
       <div
-        className="h-full w-full overflow-hidden"
+        className={cn(
+          "h-full w-full",
+          ["photo", "rect", "ellipse", "rule"].includes(el.type) ? "overflow-hidden" : "overflow-visible",
+        )}
         style={{
           background: s.backgroundColor,
           borderRadius: radius,

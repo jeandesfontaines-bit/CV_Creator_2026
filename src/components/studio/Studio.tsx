@@ -31,6 +31,9 @@ import { CloudSyncModal } from "@/components/studio/CloudSyncModal";
 import { MobileTouchEditor } from "@/components/studio/MobileTouchEditor";
 import { CvExtractorModal } from "@/components/studio/CvExtractorModal";
 import { OnboardingFlow } from "@/components/studio/OnboardingFlow";
+import { DocumentAlertBanner } from "@/components/studio/DocumentAlertBanner";
+import { ReadabilityModal } from "@/components/studio/ReadabilityModal";
+import { PlainTextModal } from "@/components/studio/PlainTextModal";
 import { computeCVHealth } from "@/cv/health";
 import { activePage, useStudio } from "@/cv/store";
 import { PAGE_H, PAGE_W } from "@/cv/types";
@@ -70,6 +73,9 @@ export function Studio() {
   const setCloudModalOpen = useStudio((s) => s.setCloudModalOpen);
   const setExtractorModalOpen = useStudio((s) => s.setExtractorModalOpen);
   const directPdfExport = useStudio((s) => s.directPdfExport);
+  const requestPdfExport = useStudio((s) => s.requestPdfExport);
+  const setReadabilityModalOpen = useStudio((s) => s.setReadabilityModalOpen);
+  const setPlainTextModalOpen = useStudio((s) => s.setPlainTextModalOpen);
   const addSectionPack = useStudio((s) => s.addSectionPack);
   const boostElementText = useStudio((s) => s.boostElementText);
   const mobileTouchMode = useStudio((s) => s.mobileTouchMode);
@@ -231,16 +237,139 @@ export function Studio() {
     }
   };
 
+  const confirmModal = useStudio((s) => s.confirmModal);
+  const setConfirmModal = useStudio((s) => s.setConfirmModal);
+  const requestResetLayout = useStudio((s) => s.requestResetLayout);
+  const requestNewDocument = useStudio((s) => s.requestNewDocument);
+  const layoutCustomized = useStudio((s) => s.layoutCustomized);
+
+  const sharedOverlays = (
+    <>
+      <CloudSyncModal isOpen={cloudModalOpen} onClose={() => setCloudModalOpen(false)} />
+      <CvExtractorModal />
+
+      {confirmModal && (
+        <div
+          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
+          onClick={() => setConfirmModal(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={cn(
+                    "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                    confirmModal.variant === "danger"
+                      ? "bg-red-100 text-red-600"
+                      : "bg-amber-100 text-amber-700",
+                  )}
+                >
+                  <AlertCircle size={18} />
+                </div>
+                <h3 id="confirm-modal-title" className="text-sm font-bold text-slate-900">
+                  {confirmModal.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex size-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Fermer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <p className="text-xs leading-relaxed text-slate-600">{confirmModal.message}</p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmModal.onConfirm()}
+                className={cn(
+                  "rounded-lg px-4 py-2 text-xs font-bold text-white transition shadow-xs",
+                  confirmModal.variant === "danger"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-slate-900 hover:bg-slate-800",
+                )}
+              >
+                {confirmModal.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {notice && (
+        <div className="no-print pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-xl">
+          {notice}
+        </div>
+      )}
+
+      <ReadabilityModal />
+      <PlainTextModal />
+
+      <div className="print-root">
+        {doc.pages.map((item) => (
+          <div key={item.id} className="print-sheet" style={{ width: PAGE_W, height: PAGE_H }}>
+            <PageSheet
+              page={item}
+              interactive={false}
+              exportSheetId={`print-${item.id}`}
+              selectedIds={[]}
+              editingId={null}
+              showGrid={false}
+              showMargins={false}
+              guides={{ x: [], y: [] }}
+              marquee={null}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Feuilles A4 1:1 dédiées à l'export PDF et PNG dans tous les modes */}
+      <div className="no-print pointer-events-none fixed top-0 -left-[12000px]" aria-hidden>
+        {doc.pages.map((item) => (
+          <div
+            key={item.id}
+            ref={item.id === page.id ? captureRef : undefined}
+            style={{ width: PAGE_W, height: PAGE_H }}
+          >
+            <PageSheet
+              page={item}
+              interactive={false}
+              exportSheetId={item.id}
+              selectedIds={[]}
+              editingId={null}
+              showGrid={false}
+              showMargins={false}
+              guides={{ x: [], y: [] }}
+              marquee={null}
+            />
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
   if (onboarding) {
     return (
       <>
         <OnboardingFlow />
-        <CvExtractorModal />
-        {notice && (
-          <div className="no-print pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-xl">
-            {notice}
-          </div>
-        )}
+        {sharedOverlays}
       </>
     );
   }
@@ -249,13 +378,7 @@ export function Studio() {
     return (
       <>
         <SimpleEditor />
-        <CloudSyncModal isOpen={cloudModalOpen} onClose={() => setCloudModalOpen(false)} />
-        <CvExtractorModal />
-        {notice && (
-          <div className="no-print pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-xl">
-            {notice}
-          </div>
-        )}
+        {sharedOverlays}
       </>
     );
   }
@@ -266,7 +389,13 @@ export function Studio() {
       <header className="no-print relative z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3.5 sm:px-5">
         {/* ZONE 1 : Identité du Studio, Page active & Sauvegarde automatique */}
         <div className="flex items-center gap-3 min-w-0 shrink-0">
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            data-testid="open-onboarding-btn"
+            onClick={() => setOnboarding(true)}
+            className="flex items-center gap-2.5 rounded-lg p-1 text-left hover:bg-slate-100 transition"
+            title="Ouvrir l'accueil / parcours de création"
+          >
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 font-display text-xs font-bold tracking-tight text-white">
               CV
             </div>
@@ -275,10 +404,10 @@ export function Studio() {
                 Atelier CV
               </div>
               <div className="mt-0.5 text-[11px] font-medium text-slate-500 leading-none">
-                Studio d’édition A4
+                Accueil · Studio A4
               </div>
             </div>
-          </div>
+          </button>
 
           <div className="hidden md:block h-4 w-px bg-slate-200" />
 
@@ -298,12 +427,22 @@ export function Studio() {
 
         {/* ZONE 2 : Outils du document (Mode, Annuler/Rétablir, Zoom, Qualité) */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Sélecteur de vue segmenté */}
+          {/* Sélecteur de vue segmenté toujours accessible */}
           <div
             role="tablist"
             aria-label="Mode d'édition"
-            className="hidden lg:flex items-center rounded-lg bg-slate-100 p-0.5 border border-slate-200/80"
+            className="flex items-center rounded-lg bg-slate-100 p-0.5 border border-slate-200/80"
           >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              onClick={() => setEditorMode("guided")}
+              className="rounded-md px-3 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition whitespace-nowrap"
+              title="Revenir au mode Saisie guidée sans perdre la mise en page"
+            >
+              Saisie guidée
+            </button>
             <button
               type="button"
               role="tab"
@@ -311,16 +450,7 @@ export function Studio() {
               onClick={() => setEditorMode("pro")}
               className="rounded-md bg-white px-3 py-1 text-xs font-semibold text-slate-900 shadow-2xs transition whitespace-nowrap"
             >
-              Mise en page
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={false}
-              onClick={() => setEditorMode("guided")}
-              className="rounded-md px-3 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition whitespace-nowrap"
-            >
-              Saisie guidée
+              Studio libre
             </button>
           </div>
 
@@ -464,12 +594,36 @@ export function Studio() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
+            data-testid="open-plain-text-btn"
+            onClick={() => setPlainTextModalOpen(true)}
+            className="hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap"
+            title="Aperçu texte brut (lecture ATS)"
+          >
+            <FileText size={13} className="text-slate-500 shrink-0" />
+            <span className="hidden lg:inline">Aperçu texte brut</span>
+            <span className="lg:hidden">Texte brut</span>
+          </button>
+
+          <button
+            type="button"
+            data-testid="open-readability-btn"
+            onClick={() => setReadabilityModalOpen(true, false)}
+            className="hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap"
+            title="Contrôle de lisibilité et de mise en page avant export"
+          >
+            <CheckCircle2 size={13} className="text-slate-500 shrink-0" />
+            <span>Contrôle</span>
+          </button>
+
+          <button
+            type="button"
+            data-testid="studio-import-cv-btn"
             onClick={() => setExtractorModalOpen(true)}
-            className="hidden md:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap"
+            className="hidden md:flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition whitespace-nowrap"
             title="Importer un CV existant (PDF, Word ou texte)"
           >
             <Upload size={13} className="text-slate-500 shrink-0" />
-            <span>Importer</span>
+            <span>Importer mon CV</span>
           </button>
 
           <button
@@ -487,7 +641,8 @@ export function Studio() {
             <div className="flex items-center rounded-lg bg-signal text-white shadow-2xs hover:bg-blue-700 transition">
               <button
                 type="button"
-                onClick={() => directPdfExport()}
+                data-testid="export-pdf-btn"
+                onClick={() => requestPdfExport()}
                 className="flex h-8 items-center gap-1.5 px-3.5 text-xs font-semibold whitespace-nowrap"
                 title="Exporter le CV au format PDF A4 haute définition"
               >
@@ -506,12 +661,12 @@ export function Studio() {
             </div>
 
             {exportOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-xl z-50">
+              <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-xl z-50">
                 <button
                   type="button"
                   onClick={() => {
                     setExportOpen(false);
-                    directPdfExport();
+                    requestPdfExport();
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition"
                 >
@@ -592,12 +747,24 @@ export function Studio() {
                   type="button"
                   onClick={() => {
                     setExportOpen(false);
-                    useStudio.getState().newDocument();
+                    requestResetLayout();
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs text-amber-700 hover:bg-amber-50 transition"
+                >
+                  <RotateCcw size={13} className="shrink-0" />
+                  <span>Réinitialiser la mise en page{layoutCustomized ? " *" : ""}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExportOpen(false);
+                    requestNewDocument();
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 transition"
                 >
                   <RotateCcw size={13} className="shrink-0" />
-                  <span>Réinitialiser le document</span>
+                  <span>Réinitialiser tout le document</span>
                 </button>
               </div>
             )}
@@ -625,6 +792,8 @@ export function Studio() {
           />
         </div>
       </header>
+
+      <DocumentAlertBanner />
 
       {/* CORPS DE L'ESPACE DE TRAVAIL : PANNEAU GAUCHE + CANVAS CENTRAL + INSPECTEUR DROIT */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -678,9 +847,6 @@ export function Studio() {
         {!narrow && <Inspector />}
       </div>
 
-      <CloudSyncModal isOpen={cloudModalOpen} onClose={() => setCloudModalOpen(false)} />
-      <CvExtractorModal />
-
       {narrow && panel && (
         <div className="no-print fixed inset-0 z-40 flex bg-slate-900/40 backdrop-blur-2xs" onClick={() => setPanel(null)}>
           <div className="h-full max-w-full" onClick={(event) => event.stopPropagation()}>
@@ -695,43 +861,7 @@ export function Studio() {
         </div>
       )}
 
-      {notice && (
-        <div className="no-print pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-xl">
-          {notice}
-        </div>
-      )}
-
-      <div className="print-root">
-        {doc.pages.map((item) => (
-          <div key={item.id} className="print-sheet" style={{ width: PAGE_W, height: PAGE_H }}>
-            <PageSheet
-              page={item}
-              interactive={false}
-              selectedIds={[]}
-              editingId={null}
-              showGrid={false}
-              showMargins={false}
-              guides={{ x: [], y: [] }}
-              marquee={null}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="no-print pointer-events-none fixed top-0 -left-[12000px]" aria-hidden>
-        <div ref={captureRef} style={{ width: PAGE_W, height: PAGE_H }}>
-          <PageSheet
-            page={page}
-            interactive={false}
-            selectedIds={[]}
-            editingId={null}
-            showGrid={false}
-            showMargins={false}
-            guides={{ x: [], y: [] }}
-            marquee={null}
-          />
-        </div>
-      </div>
+      {sharedOverlays}
     </div>
   );
 }

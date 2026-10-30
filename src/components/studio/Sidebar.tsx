@@ -239,7 +239,7 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                       key={tpl.id}
                       type="button"
                       onClick={() => {
-                        useStudio.getState().applyTemplate(tpl.id);
+                        useStudio.getState().requestApplyTemplate(tpl.id);
                         done();
                       }}
                       className={cn(
@@ -313,7 +313,7 @@ export function Sidebar({ onDone }: { onDone?: () => void }) {
                     key={preset.id}
                     type="button"
                     onClick={() => {
-                      useStudio.getState().applyJobPreset(preset.id);
+                      useStudio.getState().requestApplyJobPreset(preset.id);
                       done();
                     }}
                     className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50 transition"
