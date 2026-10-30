@@ -133,7 +133,6 @@ export function SimpleEditor() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <button className={`${button} md:hidden`} onClick={() => setMobilePreview((v) => !v)}>{mobilePreview ? "Saisie" : "Aperçu"}</button>
         {step === "finish" && <button className={primary} data-testid="export-pdf-btn" onClick={() => void s.requestPdfExport()}>Télécharger le PDF</button>}
       </div>
     </header>
@@ -148,6 +147,7 @@ export function SimpleEditor() {
               <p className="mt-2 text-sm leading-relaxed text-slate-500">{current.help}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3 pt-1">
+              <button className={`${button} md:hidden`} onClick={() => setMobilePreview((v) => !v)}>{mobilePreview ? "Saisie" : "Aperçu"}</button>
               <button className="text-xs text-slate-500 underline disabled:opacity-40" disabled={!s.past.length} onClick={s.undo}>Annuler</button>
               <button className="text-xs text-slate-500 underline disabled:opacity-40" disabled={!s.future.length} onClick={s.redo}>Rétablir</button>
             </div>
