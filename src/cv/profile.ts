@@ -3,45 +3,19 @@ import { baseStyle, INK, PAGE_H } from "@/cv/types";
 import { uid } from "@/cv/geometry";
 import { buildTemplate, TEMPLATES } from "@/cv/templates";
 
+// Legacy export used by freshDoc and reset paths. Fictional examples live in JOB_PRESETS.
 export const SAMPLE: Profile = {
-  name: "Alexandra Dubois",
-  role: "Product Designer Senior",
-  email: "alexandra.dubois@email.com",
-  phone: "+33 6 12 34 56 78",
-  location: "Paris, France",
-  link: "linkedin.com/in/alexandra",
-  summary:
-    "Designer produit avec 8 ans d'expérience. Design systems, recherche et prototypes haute fidélité — je cherche le point où une interface devient évidente.",
-  experiences: [
-    {
-      role: "Lead Product Designer",
-      company: "Mira Studio — Paris",
-      date: "2021 — Aujourd'hui",
-      desc: "Équipe de 6 designers. Refonte de la plateforme SaaS, +34 % de rétention. Design system utilisé par une quarantaine de produits.",
-    },
-    {
-      role: "Senior UI/UX Designer",
-      company: "Atelier Noir — Lyon",
-      date: "2018 — 2021",
-      desc: "Applications pour des maisons de luxe et des institutions. Direction artistique sur douze projets, prix Design Lumen 2020.",
-    },
-    {
-      role: "UI Designer",
-      company: "Indépendante",
-      date: "2015 — 2018",
-      desc: "Startups early-stage, de la fintech à l'éducation. Une trentaine de produits accompagnés jusqu'au lancement.",
-    },
-  ],
-  educations: [
-    { degree: "Master Design d'interaction", school: "ENSAD Paris", date: "2013 — 2015" },
-    { degree: "Bachelor Arts appliqués", school: "École Boulle", date: "2010 — 2013" },
-  ],
-  skills: ["Figma", "Design system", "Recherche", "Prototypage", "Direction artistique", "HTML / CSS"],
-  languages: [
-    { label: "Français", value: 100 },
-    { label: "Anglais", value: 90 },
-    { label: "Espagnol", value: 60 },
-  ],
+  name: "",
+  role: "",
+  email: "",
+  phone: "",
+  location: "",
+  link: "",
+  summary: "",
+  experiences: [],
+  educations: [],
+  skills: [],
+  languages: [],
 };
 
 export function computeElementAutoHeight(el: CVElement, minH?: number): number {
