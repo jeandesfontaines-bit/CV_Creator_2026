@@ -126,26 +126,25 @@ export function SimpleEditor() {
   };
 
   return <div className="flex h-dvh flex-col overflow-hidden bg-slate-100 text-slate-900">
-    <header className="no-print flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
-      <div className="flex items-center gap-2">
-        <button className={button} onClick={() => s.setOnboarding(true)}>← Parcours</button>
-        <span className="hidden text-xs text-slate-500 sm:inline" role="status">{s.saveStatus === "saving" ? "Enregistrement…" : s.saveStatus === "unsaved" ? "Non enregistré" : "Enregistré"}</span>
-        <button className={button} aria-label="Annuler" disabled={!s.past.length} onClick={s.undo}>↶</button>
-        <button className={button} aria-label="Rétablir" disabled={!s.future.length} onClick={s.redo}>↷</button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
+    <header className="no-print flex shrink-0 items-center justify-between gap-3 overflow-x-auto border-b border-slate-200 bg-white px-4 py-2.5">
+      <nav aria-label="Étapes du CV" className="flex min-w-0 shrink-0 items-center gap-1">
+        {STEPS.map((item, i) => <button key={item.id} type="button" data-testid={`guided-step-tab-${item.id}`} aria-current={step === item.id ? "step" : undefined}
+          className={`shrink-0 rounded-lg px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 ${step === item.id ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}
+          onClick={() => go(item.id)}>{i + 1}. {item.label}</button>)}
+      </nav>
+
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="hidden text-xs text-slate-500 lg:inline" role="status">{s.saveStatus === "saving" ? "Enregistrement…" : s.saveStatus === "unsaved" ? "Non enregistré" : "Enregistré"}</span>
+        <button className={`${button} hidden sm:inline-flex`} aria-label="Annuler" disabled={!s.past.length} onClick={s.undo}>↶</button>
+        <button className={`${button} hidden sm:inline-flex`} aria-label="Rétablir" disabled={!s.future.length} onClick={s.redo}>↷</button>
         <button className={button} data-testid="guided-import-cv-btn" onClick={() => s.setExtractorModalOpen(true)}>Importer</button>
         <button className={button} onClick={() => { release(); s.setEditorMode("pro"); }}>Studio libre ↗</button>
+        <button className={`${button} hidden sm:inline-flex`} onClick={() => s.setOnboarding(true)} title="Revenir à l’accueil">Accueil</button>
         <button className={`${button} md:hidden`} onClick={() => setMobilePreview((v) => !v)}>{mobilePreview ? "Saisie" : "Aperçu"}</button>
         <button className={primary} data-testid="export-pdf-btn" onClick={() => void s.requestPdfExport()}>Télécharger le PDF</button>
       </div>
     </header>
     <DocumentAlertBanner />
-    <nav aria-label="Étapes du CV" className="no-print flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 bg-white px-4 py-2">
-      {STEPS.map((item, i) => <button key={item.id} type="button" data-testid={`guided-step-tab-${item.id}`} aria-current={step === item.id ? "step" : undefined}
-        className={`shrink-0 rounded-lg px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 ${step === item.id ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-500 hover:bg-slate-50"}`}
-        onClick={() => go(item.id)}>{i + 1}. {item.label}</button>)}
-    </nav>
     <main className="flex min-h-0 flex-1">
       <section aria-label="Saisie accompagnée" className={`${mobilePreview ? "hidden" : "flex"} min-h-0 w-full flex-col border-r border-slate-200 bg-white md:flex md:w-[44%] md:max-w-[600px] md:min-w-[360px]`}>
         <div ref={workspace} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
